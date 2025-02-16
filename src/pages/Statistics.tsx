@@ -8,7 +8,13 @@ import { useToast } from '@/hooks/use-toast';
 import { StatsHeader } from '@/components/stats/StatsHeader';
 import { StatsCard } from '@/components/stats/StatsCard';
 import { StatsChart } from '@/components/stats/StatsChart';
-import { getSuccessRate, getTrendIndicator, getWeeklyDistribution, getStreakDistribution } from '@/utils/statistics';
+import { 
+  getSuccessRate, 
+  getTrendIndicator, 
+  getWeeklyDistribution, 
+  getStreakDistribution,
+  getMonthsBetween
+} from '@/utils/statistics';
 
 export default function Statistics() {
   const { habits } = useHabits();
