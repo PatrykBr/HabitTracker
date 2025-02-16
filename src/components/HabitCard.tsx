@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { formatTimeSince } from '@/utils/format-time';
-import { Clock, RotateCcw, History, Plus } from 'lucide-react';
+import { Clock, RotateCcw, History, Plus, CalendarDays, List } from 'lucide-react';
+import { DayPicker } from 'react-day-picker';
 import type { Habit } from '@/hooks/use-habits';
+import 'react-day-picker/dist/style.css';
 
 interface HabitCardProps {
   habit: Habit;
@@ -19,6 +21,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
   const [showHistory, setShowHistory] = useState(false);
   const [showAddReset, setShowAddReset] = useState(false);
   const [customResetTime, setCustomResetTime] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
 
   const handleAddCustomReset = () => {
     if (customResetTime && onAddCustomReset) {
@@ -27,6 +30,9 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       setShowAddReset(false);
     }
   };
+
+  // Convert reset dates to Day objects for the calendar
+  const resetDays = habit.resets.map(reset => new Date(reset));
 
   return (
     <>
@@ -53,9 +59,31 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Card>
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Reset History</DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Reset History</DialogTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('calendar')}
+                  className={viewMode === 'calendar' ? 'bg-secondary' : ''}
+                >
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Calendar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' ? 'bg-secondary' : ''}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  List
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
           <div className="space-y-4">
             <Button
@@ -66,18 +94,35 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
               <Plus className="h-4 w-4 mr-2" />
               Add Custom Reset
             </Button>
-            {habit.resets.map((reset, index) => (
-              <div key={index} className="flex justify-between items-center p-2 rounded bg-secondary">
-                <span>{new Date(reset).toLocaleString()}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteReset(index)}
-                >
-                  Remove
-                </Button>
+
+            {viewMode === 'calendar' ? (
+              <div className="flex justify-center p-4 bg-secondary/30 rounded-lg">
+                <DayPicker
+                  mode="multiple"
+                  selected={resetDays}
+                  footer={`${resetDays.length} resets total`}
+                  classNames={{
+                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                    day_today: "bg-accent text-accent-foreground",
+                  }}
+                />
               </div>
-            )).reverse()}
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {habit.resets.map((reset, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 rounded bg-secondary">
+                    <span>{new Date(reset).toLocaleString()}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteReset(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )).reverse()}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
