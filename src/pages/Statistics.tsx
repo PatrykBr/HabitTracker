@@ -200,7 +200,8 @@ export default function Statistics() {
   };
 
   const stats = calculateStats();
-  const selectedStat = stats.find(s => s.name === habits.find(h => h.id === selectedHabitId)?.name);
+  const selectedHabit = habits.find(h => h.id === selectedHabitId);
+  const selectedStat = stats.find(s => s.name === selectedHabit?.name);
   
   const getWeeklyDistribution = (resets: Date[]) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -217,7 +218,7 @@ export default function Statistics() {
   const getSuccessRateOverTime = (monthlyResets: { month: string, count: number }[]) => {
     return monthlyResets.map(month => ({
       ...month,
-      successRate: Math.max(0, 100 - (month.count * 20)) // Simple conversion of resets to success rate
+      successRate: Math.max(0, 100 - (month.count * 20))
     }));
   };
 
@@ -242,6 +243,24 @@ export default function Statistics() {
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  if (habits.length === 0) {
+    return (
+      <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
+        <div className="max-w-6xl mx-auto">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-center text-gray-500">No habits found. Add some habits to see statistics.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const weeklyData = selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
+  const successRateData = selectedStat ? getSuccessRateOverTime(selectedStat.monthlyResets) : [];
+  const streakDistributionData = selectedStat ? getStreakDistribution(selectedStat) : [];
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
@@ -358,21 +377,27 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={getSuccessRateOverTime(selectedStat.monthlyResets)}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Line 
-                          type="monotone" 
-                          dataKey="successRate" 
-                          stroke="#8884d8" 
-                          name="Success Rate"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {successRateData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={successRateData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Line 
+                            type="monotone" 
+                            dataKey="successRate" 
+                            stroke="#8884d8" 
+                            name="Success Rate"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-gray-500">
+                        No data available
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -385,19 +410,25 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={getWeeklyDistribution(habits.find(h => h.id === selectedHabitId)?.resets || [])}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="count" fill="#8884d8">
-                          {getWeeklyDistribution(habits.find(h => h.id === selectedHabitId)?.resets || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {weeklyData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weeklyData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Bar dataKey="count" fill="#8884d8">
+                            {weeklyData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-gray-500">
+                        No data available
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -410,25 +441,31 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={getStreakDistribution(selectedStat)}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {getStreakDistribution(selectedStat).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    {streakDistributionData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={streakDistributionData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="count"
+                          >
+                            {streakDistributionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-gray-500">
+                        No data available
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
