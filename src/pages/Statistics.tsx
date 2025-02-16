@@ -242,6 +242,24 @@ export default function Statistics() {
     return ranges;
   };
 
+  const getTrendIndicator = (stat: typeof selectedStat) => {
+    if (!stat) return null;
+    const improvement = stat.shortTermImprovement;
+    if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Strong Improvement", color: "text-green-600" };
+    if (improvement > 0) return { icon: <ArrowUp className="h-4 w-4 text-emerald-600" />, text: "Improving", color: "text-emerald-600" };
+    if (improvement > -20) return { icon: <ArrowDown className="h-4 w-4 text-amber-600" />, text: "Slight Decline", color: "text-amber-600" };
+    return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "Needs Attention", color: "text-red-600" };
+  };
+
+  const getSuccessRate = (stat: typeof selectedStat) => {
+    if (!stat) return { rate: 0, quality: "" };
+    const rate = stat.successRate;
+    if (rate >= 90) return { rate, quality: "Exceptional" };
+    if (rate >= 75) return { rate, quality: "Strong" };
+    if (rate >= 50) return { rate, quality: "Good" };
+    return { rate, quality: "Needs Improvement" };
+  };
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (habits.length === 0) {
@@ -296,114 +314,166 @@ export default function Statistics() {
 
         {selectedStat ? (
           <>
-            {/* Top Stats Cards */}
+            {/* Enhanced Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-br from-blue-50 to-white">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-blue-600" />
                     Current Streak
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {selectedStat.currentStreak} days
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedStat.progressIndicators.isOnLongestStreak && "Personal Best!"}
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold text-blue-600">
+                      {selectedStat.currentStreak} days
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedStat.progressIndicators.isOnLongestStreak 
+                        ? "🎉 Personal Best!" 
+                        : `Best: ${selectedStat.longestStreak} days`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {selectedStat.progressIndicators.isAboveAverage 
+                        ? "Above your average performance" 
+                        : "Keep pushing to exceed your average"}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-green-50 to-white">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-green-600" />
                     Success Rate
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-600">
-                    {selectedStat.successRate}%
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Overall completion rate
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold text-green-600">
+                      {getSuccessRate(selectedStat).rate}%
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {getSuccessRate(selectedStat).quality}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      {getTrendIndicator(selectedStat)?.icon}
+                      <p className="text-xs text-gray-500">
+                        {getTrendIndicator(selectedStat)?.text}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-purple-50 to-white">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Timer className="h-5 w-5 text-purple-600" />
                     Consistency
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-purple-600">
-                    {selectedStat.streakConsistency}%
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Streak stability score
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold text-purple-600">
+                      {selectedStat.streakConsistency}%
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedStat.streakConsistency >= 75 
+                        ? "Very Consistent" 
+                        : selectedStat.streakConsistency >= 50 
+      ? "Moderately Consistent" 
+      : "Needs More Consistency"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Based on streak stability over time
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-orange-50 to-white">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-orange-600" />
-                    Trend
+                    <Sparkles className="h-5 w-5 text-orange-600" />
+                    Overall Score
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-orange-600">
-                    {Math.abs(Math.round(selectedStat.shortTermImprovement))}%
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedStat.shortTermImprovement > 0 ? 'Improvement' : 'Decline'} vs last month
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold text-orange-600">
+                      {Math.max(0, Math.min(100, selectedStat.trendScore))}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedStat.trendScore >= 75 
+                        ? "Excellent Progress" 
+                        : selectedStat.trendScore >= 50 
+      ? "Good Progress" 
+      : "Room for Improvement"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Combined performance metrics
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Charts Grid */}
+            {/* Charts Grid with Enhanced Tooltips */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Progress Over Time */}
               <Card className="col-span-2">
                 <CardHeader>
-                  <CardTitle>Progress Over Time</CardTitle>
-                  <CardDescription>Monthly success rate trend</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Progress Over Time
+                  </CardTitle>
+                  <CardDescription>
+                    Monthly success rate trend with detailed analysis
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {successRateData.length > 0 && (
+                    {successRateData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={successRateData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <LineChart data={successRateData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
                           <YAxis domain={[0, 100]} />
-                          <RechartsTooltip />
-                          <Line 
-                            type="monotone" 
-                            dataKey="successRate" 
-                            stroke="#8884d8" 
-                            name="Success Rate"
+                          <RechartsTooltip
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                    <p className="font-semibold">{label}</p>
+                                    <p className="text-green-600">
+                                      Success Rate: {payload[0].value.toFixed(1)}%
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="successRate"
+                            stroke="#8884d8"
                             strokeWidth={2}
+                            dot={{ strokeWidth: 2 }}
+                            activeDot={{ r: 8 }}
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                    )}
-                    {successRateData.length === 0 && (
+                    ) : (
                       <div className="h-full flex items-center justify-center text-gray-500">
-                        No data available
+                        No data available yet
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Weekly Distribution */}
               <Card>
                 <CardHeader>
                   <CardTitle>Weekly Pattern</CardTitle>
@@ -435,7 +505,6 @@ export default function Statistics() {
                 </CardContent>
               </Card>
 
-              {/* Streak Distribution */}
               <Card>
                 <CardHeader>
                   <CardTitle>Streak Distribution</CardTitle>
@@ -474,51 +543,68 @@ export default function Statistics() {
               </Card>
             </div>
 
-            {/* Risk Assessment */}
-            <Card>
+            {/* Enhanced Risk Assessment */}
+            <Card className="col-span-2">
               <CardHeader>
-                <CardTitle>Risk Assessment & Recommendations</CardTitle>
-                <CardDescription>Actionable insights based on your data</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Insights & Recommendations
+                </CardTitle>
+                <CardDescription>
+                  Actionable insights based on your performance data
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className={`p-4 rounded-lg ${
-                  selectedStat.riskLevel === 'low' ? 'bg-green-50' :
-                  selectedStat.riskLevel === 'medium' ? 'bg-yellow-50' :
-                  'bg-red-50'
+                  selectedStat.riskLevel === 'low' ? 'bg-green-50 border border-green-200' :
+                  selectedStat.riskLevel === 'medium' ? 'bg-yellow-50 border border-yellow-200' :
+                  'bg-red-50 border border-red-200'
                 }`}>
-                  <h3 className="font-semibold mb-2">Current Risk Level: {selectedStat.riskLevel.toUpperCase()}</h3>
+                  <h3 className="font-semibold mb-2 flex items-center gap-2">
+                    <Flame className="h-4 w-4" />
+                    Current Status: {selectedStat.riskLevel.toUpperCase()}
+                  </h3>
                   <p className="text-sm">
                     {selectedStat.riskLevel === 'low' 
-                      ? "You're doing great! Keep maintaining your current habits."
+                      ? "You're maintaining excellent control over this habit. Keep up the great work!" 
                       : selectedStat.riskLevel === 'medium'
-                      ? "Stay vigilant - you're in a sensitive period. Focus on maintaining consistency."
-                      : "High risk of breaking your streak. Consider implementing additional accountability measures."}
+                        ? "You're in a sensitive period. Stay focused on your goals and maintain awareness."
+                        : "This is a critical period. Consider implementing additional support strategies."}
                   </p>
                 </div>
 
                 {selectedStat.hasImprovedPattern && (
-                  <div className="p-4 rounded-lg bg-blue-50">
+                  <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
                     <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      <Award className="h-4 w-4 text-blue-600" />
                       Positive Pattern Detected
                     </h3>
                     <p className="text-sm">
-                      You're showing consistent improvement in your habit maintenance!
+                      You're showing consistent improvement! Your recent performance indicates a strong positive trend.
                     </p>
                   </div>
                 )}
 
-                <div className="p-4 rounded-lg bg-purple-50">
-                  <h3 className="font-semibold mb-2">Recommendations</h3>
+                <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                  <h3 className="font-semibold mb-2">Key Recommendations</h3>
                   <ul className="text-sm space-y-2">
                     {selectedStat.currentStreak < selectedStat.avgDaysBetweenResets && (
-                      <li>• Focus on surpassing your average streak duration of {selectedStat.avgDaysBetweenResets} days</li>
+                      <li className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-purple-600" />
+                        Focus on surpassing your average streak duration of {selectedStat.avgDaysBetweenResets} days
+                      </li>
                     )}
                     {selectedStat.streakConsistency < 75 && (
-                      <li>• Work on improving your consistency score by maintaining regular streaks</li>
+                      <li className="flex items-center gap-2">
+                        <Timer className="h-4 w-4 text-purple-600" />
+                        Work on improving your consistency score through regular practice
+                      </li>
                     )}
                     {selectedStat.shortTermImprovement < 0 && (
-                      <li>• Your recent performance has declined - consider reviewing your triggers and obstacles</li>
+                      <li className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-purple-600" />
+                        Review your recent challenges and adjust your strategy
+                      </li>
                     )}
                   </ul>
                 </div>
