@@ -242,14 +242,22 @@ export default function Statistics() {
     );
   }
 
+  const getWeeklyDistributionForAll = () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const combinedData = days.map(day => ({ name: day, count: 0 }));
+    
+    habits.forEach(habit => {
+      const habitWeekly = getWeeklyDistribution(habit.resets);
+      habitWeekly.forEach((day, index) => {
+        combinedData[index].count += day.count;
+      });
+    });
+    
+    return combinedData;
+  };
+
   const weeklyData = selectedHabitId === 'all'
-    ? habits.reduce((acc, habit) => {
-        const habitWeekly = getWeeklyDistribution(habit.resets);
-        return habitWeekly.map((day, index) => ({
-          name: day.name,
-          count: (acc[index]?.count || 0) + day.count
-        }));
-      }, [] as { name: string; count: number }[])
+    ? getWeeklyDistributionForAll()
     : selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
 
   const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
