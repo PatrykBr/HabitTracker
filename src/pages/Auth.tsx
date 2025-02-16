@@ -52,13 +52,13 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-secondary to-white">
-      <Card className="w-full max-w-md p-6 space-y-6">
+      <Card className="w-full max-w-sm p-4 sm:p-6 space-y-4">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold">Welcome to Habit Tracker</h1>
-          <p className="text-muted-foreground">Sign in or create an account to continue</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Welcome to Habit Tracker</h1>
+          <p className="text-sm text-muted-foreground">Sign in or create an account to continue</p>
         </div>
 
-        <div className="flex justify-center p-1 bg-secondary rounded-lg mb-6">
+        <div className="flex justify-center p-1 bg-secondary rounded-lg mb-4">
           <div className="relative w-full grid grid-cols-2">
             <motion.div
               className="absolute h-full bg-primary rounded"
@@ -70,7 +70,7 @@ export default function Auth() {
               style={{ width: '50%' }}
             />
             <button
-              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-2 py-2 text-sm font-medium transition-colors duration-200 ${
                 isLogin ? 'text-primary-foreground' : 'text-foreground'
               }`}
               onClick={() => setIsLogin(true)}
@@ -78,7 +78,7 @@ export default function Auth() {
               Sign In
             </button>
             <button
-              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-2 py-2 text-sm font-medium transition-colors duration-200 ${
                 !isLogin ? 'text-primary-foreground' : 'text-foreground'
               }`}
               onClick={() => setIsLogin(false)}

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
   const [showAddReset, setShowAddReset] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState(format(new Date(), 'HH:mm'));
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   const handleAddCustomReset = () => {
     if (selectedDate && selectedTime && onAddCustomReset) {
@@ -35,25 +34,24 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
     }
   };
 
-  // Reset days for the calendar
   const resetDays = habit.resets.map(reset => new Date(reset));
 
   return (
     <>
-      <Card className="w-full p-6 backdrop-blur-sm bg-white/90 hover:bg-white/95 transition-all duration-300 animate-fade-in">
-        <div className="flex flex-col gap-4">
+      <Card className="w-full p-4 backdrop-blur-sm bg-white/90 hover:bg-white/95 transition-all duration-300 animate-fade-in">
+        <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">{habit.name}</h3>
-            <Button variant="ghost" size="icon" onClick={() => setShowHistory(true)}>
+            <h3 className="text-base sm:text-lg font-semibold">{habit.name}</h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowHistory(true)}>
               <History className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span>{formatTimeSince(habit.lastReset)}</span>
           </div>
           <Button
-            className="w-full gap-2"
+            className="w-full gap-2 text-sm"
             onClick={onReset}
           >
             <RotateCcw className="h-4 w-4" />
@@ -63,7 +61,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Card>
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex justify-between items-center">
               <DialogTitle>Reset History</DialogTitle>
@@ -132,7 +130,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Dialog>
 
       <Dialog open={showAddReset} onOpenChange={setShowAddReset}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] w-[95vw]">
           <DialogHeader>
             <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>

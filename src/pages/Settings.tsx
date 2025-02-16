@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,28 +61,28 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Settings2 className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Settings</h1>
+    <div className="min-h-screen p-4 bg-gradient-to-br from-secondary to-white">
+      <div className="max-w-lg mx-auto space-y-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
           </div>
           <Button
             variant="ghost"
+            size="sm"
             className="gap-2"
             onClick={() => navigate('/')}
           >
             <ChevronLeft className="h-4 w-4" />
-            Back to Habits
+            Back
           </Button>
         </div>
 
-        {/* Habits Management Section */}
-        <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg space-y-4">
+        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-lg space-y-4">
           <div className="flex items-center gap-2 mb-4">
-            <Trash2 className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Manage Habits</h2>
+            <Trash2 className="h-4 w-4" />
+            <h2 className="text-base sm:text-lg font-semibold">Manage Habits</h2>
           </div>
           <div className="space-y-2">
             {habits.map((habit) => (
@@ -91,7 +90,7 @@ export default function Settings() {
                 key={habit.id}
                 className="flex items-center justify-between p-3 bg-white/50 rounded-lg"
               >
-                <span>{habit.name}</span>
+                <span className="text-sm sm:text-base">{habit.name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -105,8 +104,7 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Account Section */}
-        <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg">
+        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-lg">
           <Button
             variant="destructive"
             className="w-full"
@@ -118,7 +116,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog 
         open={deleteConfirmation.isOpen} 
         onOpenChange={(isOpen) => 
