@@ -1,4 +1,6 @@
 
+import { TrendingDown, ArrowDown, AlertTriangle, TrendingUp } from "lucide-react";
+
 export const getMonthsBetween = (startDate: Date, endDate: Date) => {
   const months: string[] = [];
   const currentDate = new Date(startDate);
@@ -21,13 +23,6 @@ export const getWeeklyDistribution = (resets: Date[]) => {
   return distribution;
 };
 
-export const getSuccessRateOverTime = (monthlyResets: { month: string, count: number }[]) => {
-  return monthlyResets.map(month => ({
-    ...month,
-    successRate: Math.max(0, 100 - (month.count * 20))
-  }));
-};
-
 export const getStreakDistribution = (selectedHabit: any, stat: any) => {
   if (!stat || !selectedHabit) return [];
   
@@ -39,8 +34,8 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
   ];
 
   const sortedResets = [...selectedHabit.resets].sort((a, b) => a.getTime() - b.getTime());
-
   const streaks: number[] = [];
+  
   for (let i = 0; i < sortedResets.length - 1; i++) {
     const streakDays = Math.floor(
       (sortedResets[i + 1].getTime() - sortedResets[i].getTime()) / (1000 * 60 * 60 * 24)
@@ -62,18 +57,126 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
 
 export const getTrendIndicator = (stat: any) => {
   if (!stat) return null;
-  const improvement = stat.shortTermImprovement;
-  if (improvement > 20) return { icon: 'trending-up', text: "Significantly Fewer Resets", color: "text-green-600" };
-  if (improvement > 0) return { icon: 'arrow-up', text: "Decreasing Resets", color: "text-emerald-600" };
-  if (improvement > -20) return { icon: 'arrow-down', text: "Slight Increase in Resets", color: "text-amber-600" };
-  return { icon: 'alert-triangle', text: "High Reset Frequency", color: "text-red-600" };
+
+  const monthlyResets = stat.monthlyResets;
+  if (monthlyResets.length < 2) return null;
+
+  const currentMonth = monthlyResets[monthlyResets.length - 1].count;
+  const previousMonth = monthlyResets[monthlyResets.length - 2].count;
+  const improvement = ((previousMonth - currentMonth) / previousMonth) * 100;
+
+  if (improvement >= 50) {
+    return { 
+      icon: 'trending-down', 
+      text: "Excellent Progress! Resets down by 50%+", 
+      color: "text-green-600",
+      emoji: "🌟"
+    };
+  }
+  if (improvement >= 25) {
+    return { 
+      icon: 'arrow-down', 
+      text: "Good Progress! Resets decreasing", 
+      color: "text-emerald-600",
+      emoji: "💪"
+    };
+  }
+  if (improvement >= 0) {
+    return { 
+      icon: 'trending-down', 
+      text: "Slight Improvement", 
+      color: "text-blue-600",
+      emoji: "👍"
+    };
+  }
+  if (improvement >= -25) {
+    return { 
+      icon: 'alert-triangle', 
+      text: "Slight Increase in Resets", 
+      color: "text-amber-600",
+      emoji: "⚠️"
+    };
+  }
+  return { 
+    icon: 'alert-triangle', 
+    text: "Significant Increase in Resets", 
+    color: "text-red-600",
+    emoji: "🚨"
+  };
 };
 
 export const getSuccessRate = (stat: any) => {
-  if (!stat) return { rate: 0, quality: "" };
+  if (!stat) return { rate: 0, quality: "", emoji: "" };
   const rate = stat.successRate;
-  if (rate >= 90) return { rate, quality: "Exceptional Control" };
-  if (rate >= 75) return { rate, quality: "Strong Resistance" };
-  if (rate >= 50) return { rate, quality: "Good Progress" };
-  return { rate, quality: "Building Resistance" };
+
+  if (rate >= 90) {
+    return { 
+      rate, 
+      quality: "Outstanding Control",
+      emoji: "🏆",
+      color: "text-green-600"
+    };
+  }
+  if (rate >= 75) {
+    return { 
+      rate, 
+      quality: "Strong Resistance",
+      emoji: "💪",
+      color: "text-emerald-600"
+    };
+  }
+  if (rate >= 50) {
+    return { 
+      rate, 
+      quality: "Good Progress",
+      emoji: "👍",
+      color: "text-blue-600"
+    };
+  }
+  return { 
+    rate, 
+    quality: "Building Strength",
+    emoji: "🌱",
+    color: "text-amber-600"
+  };
+};
+
+export const calculateTimeUntilMilestone = (currentStreak: number) => {
+  const milestones = [7, 14, 30, 60, 90, 180, 365];
+  const nextMilestone = milestones.find(m => m > currentStreak);
+  
+  if (!nextMilestone) {
+    return {
+      days: 0,
+      milestone: currentStreak,
+      message: "You've reached all major milestones! 🎉"
+    };
+  }
+
+  const daysLeft = nextMilestone - currentStreak;
+  return {
+    days: daysLeft,
+    milestone: nextMilestone,
+    message: `${daysLeft} days until ${nextMilestone}-day milestone`
+  };
+};
+
+export const getMotivationalMessage = (stats: any) => {
+  if (!stats) return "";
+  
+  const { currentStreak, longestStreak, successRate } = stats;
+  
+  if (currentStreak === longestStreak && currentStreak > 30) {
+    return "🌟 You're setting a new personal record! Keep going!";
+  }
+  if (successRate >= 90) {
+    return "💫 Exceptional control! You're mastering this!";
+  }
+  if (currentStreak >= 7) {
+    return "🔥 Solid streak! Each day builds your strength!";
+  }
+  if (successRate >= 75) {
+    return "💪 Strong progress! You're building great habits!";
+  }
+  return "🌱 Every day is a new opportunity for growth!";
 };

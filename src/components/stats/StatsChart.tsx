@@ -11,7 +11,7 @@ interface StatsChartProps {
   colors?: string[];
 }
 
-export function StatsChart({ title, description, data, type, dataKey, colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'] }: StatsChartProps) {
+export function StatsChart({ title, description, data, type, dataKey, colors = ['#0EA5E9', '#22C55E', '#F59E0B', '#EF4444'] }: StatsChartProps) {
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="p-4 sm:p-6">
@@ -24,7 +24,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
             <ResponsiveContainer width="100%" height="100%">
               {type === 'bar' ? (
                 <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis 
                     dataKey="name" 
                     tick={{ fontSize: 12 }}
@@ -41,7 +41,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                           <div className="bg-white p-2 border rounded-lg shadow-lg text-xs sm:text-sm">
                             <p className="font-semibold">{label}</p>
                             <p className="text-blue-600">
-                              {payload[0].value} {dataKey}
+                              {payload[0].value} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
                         );
@@ -75,7 +75,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                           <div className="bg-white p-2 border rounded-lg shadow-lg text-xs sm:text-sm">
                             <p className="font-semibold">{data.name}</p>
                             <p className="text-blue-600">
-                              {data[dataKey]} {dataKey !== 'count' ? dataKey : ''}
+                              {data[dataKey]} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
                         );
