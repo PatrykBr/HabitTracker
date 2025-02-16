@@ -2,7 +2,7 @@ import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, BarChart as BarChartIcon, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, BarChart as BarChartIcon, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -40,25 +40,97 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
+
+const getMonthsBetween = (startDate: Date, endDate: Date) => {
+  const months: string[] = [];
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    months.push(currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+  return months;
+};
+
+const getWeeklyDistribution = (resets: Date[]) => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const distribution = days.map(day => ({ name: day, count: 0 }));
+  
+  resets.forEach(date => {
+    const dayIndex = new Date(date).getDay();
+    distribution[dayIndex].count++;
+  });
+  
+  return distribution;
+};
+
+const getSuccessRateOverTime = (monthlyResets: { month: string, count: number }[]) => {
+  return monthlyResets.map(month => ({
+    ...month,
+    successRate: Math.max(0, 100 - (month.count * 20))
+  }));
+};
+
+const getStreakDistribution = (selectedHabit: any, stat: any) => {
+  if (!stat || !selectedHabit) return [];
+  
+  const ranges = [
+    { name: '1-7 days', min: 1, max: 7, count: 0 },
+    { name: '8-14 days', min: 8, max: 14, count: 0 },
+    { name: '15-30 days', min: 15, max: 30, count: 0 },
+    { name: '31+ days', min: 31, max: Infinity, count: 0 }
+  ];
+
+  const sortedResets = [...selectedHabit.resets].sort((a, b) => a.getTime() - b.getTime());
+
+  const streaks: number[] = [];
+  for (let i = 0; i < sortedResets.length - 1; i++) {
+    const streakDays = Math.floor(
+      (sortedResets[i + 1].getTime() - sortedResets[i].getTime()) / (1000 * 60 * 60 * 24)
+    );
+    streaks.push(streakDays);
+  }
+
+  streaks.push(stat.currentStreak);
+
+  streaks.forEach(streakDays => {
+    const range = ranges.find(r => streakDays >= r.min && streakDays <= r.max);
+    if (range) {
+      range.count++;
+    }
+  });
+
+  return ranges.filter(range => range.count > 0);
+};
+
+const getTrendIndicator = (stat: any) => {
+  if (!stat) return null;
+  const improvement = stat.shortTermImprovement;
+  if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Significantly Fewer Resets", color: "text-green-600" };
+  if (improvement > 0) return { icon: <ArrowUp className="h-4 w-4 text-emerald-600" />, text: "Decreasing Resets", color: "text-emerald-600" };
+  if (improvement > -20) return { icon: <ArrowDown className="h-4 w-4 text-amber-600" />, text: "Slight Increase in Resets", color: "text-amber-600" };
+  return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "High Reset Frequency", color: "text-red-600" };
+};
+
+const getSuccessRate = (stat: any) => {
+  if (!stat) return { rate: 0, quality: "" };
+  const rate = stat.successRate;
+  if (rate >= 90) return { rate, quality: "Exceptional Control" };
+  if (rate >= 75) return { rate, quality: "Strong Resistance" };
+  if (rate >= 50) return { rate, quality: "Good Progress" };
+  return { rate, quality: "Building Resistance" };
+};
 
 export default function Statistics() {
   const { habits } = useHabits();
   const navigate = useNavigate();
   const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
+  const { toast } = useToast();
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   const calculateStats = () => {
     const now = new Date();
     
-    const getMonthsBetween = (startDate: Date, endDate: Date) => {
-      const months: string[] = [];
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        months.push(currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
-      return months;
-    };
-
     return habits.map(habit => {
       const resetDates = habit.resets.map(date => new Date(date));
       resetDates.sort((a, b) => a.getTime() - b.getTime());
@@ -236,76 +308,61 @@ export default function Statistics() {
       }), stats[0])
     : stats.find(s => s.name === selectedHabit?.name);
 
-  const getWeeklyDistribution = (resets: Date[]) => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const distribution = days.map(day => ({ name: day, count: 0 }));
-    
-    resets.forEach(date => {
-      const dayIndex = new Date(date).getDay();
-      distribution[dayIndex].count++;
-    });
-    
-    return distribution;
-  };
+  const exportData = () => {
+    try {
+      const stats = calculateStats();
+      const selectedStats = selectedHabitId === 'all' ? stats : stats.filter(s => s.name === habits.find(h => h.id === selectedHabitId)?.name);
+      
+      // Prepare CSV data
+      const csvRows = [
+        // Headers
+        [
+          'Habit Name',
+          'Total Resets',
+          'Average Days Between Resets',
+          'Current Streak',
+          'Longest Streak',
+          'Success Rate (%)',
+          'Consistency Score',
+          'Trend Score'
+        ].join(','),
+        // Data rows
+        ...selectedStats.map(stat => [
+          `"${stat.name}"`,
+          stat.totalResets,
+          stat.avgDaysBetweenResets,
+          stat.currentStreak,
+          stat.longestStreak,
+          stat.successRate,
+          stat.streakConsistency,
+          stat.trendScore
+        ].join(','))
+      ];
 
-  const getSuccessRateOverTime = (monthlyResets: { month: string, count: number }[]) => {
-    return monthlyResets.map(month => ({
-      ...month,
-      successRate: Math.max(0, 100 - (month.count * 20))
-    }));
-  };
+      // Create and download CSV file
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `habit-data-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-  const getStreakDistribution = (stat: typeof selectedStats) => {
-    if (!stat || !selectedHabit) return [];
-    
-    const ranges = [
-      { name: '1-7 days', min: 1, max: 7, count: 0 },
-      { name: '8-14 days', min: 8, max: 14, count: 0 },
-      { name: '15-30 days', min: 15, max: 30, count: 0 },
-      { name: '31+ days', min: 31, max: Infinity, count: 0 }
-    ];
-
-    const sortedResets = [...selectedHabit.resets].sort((a, b) => a.getTime() - b.getTime());
-
-    const streaks: number[] = [];
-    for (let i = 0; i < sortedResets.length - 1; i++) {
-      const streakDays = Math.floor(
-        (sortedResets[i + 1].getTime() - sortedResets[i].getTime()) / (1000 * 60 * 60 * 24)
-      );
-      streaks.push(streakDays);
+      toast({
+        title: "Export Successful",
+        description: "Your habit data has been downloaded as a CSV file.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting your data. Please try again.",
+        variant: "destructive",
+      });
     }
-
-    streaks.push(stat.currentStreak);
-
-    streaks.forEach(streakDays => {
-      const range = ranges.find(r => streakDays >= r.min && streakDays <= r.max);
-      if (range) {
-        range.count++;
-      }
-    });
-
-    return ranges.filter(range => range.count > 0);
   };
-
-  const getTrendIndicator = (stat: typeof selectedStats) => {
-    if (!stat) return null;
-    const improvement = stat.shortTermImprovement;
-    if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Significantly Fewer Resets", color: "text-green-600" };
-    if (improvement > 0) return { icon: <ArrowUp className="h-4 w-4 text-emerald-600" />, text: "Decreasing Resets", color: "text-emerald-600" };
-    if (improvement > -20) return { icon: <ArrowDown className="h-4 w-4 text-amber-600" />, text: "Slight Increase in Resets", color: "text-amber-600" };
-    return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "High Reset Frequency", color: "text-red-600" };
-  };
-
-  const getSuccessRate = (stat: typeof selectedStats) => {
-    if (!stat) return { rate: 0, quality: "" };
-    const rate = stat.successRate;
-    if (rate >= 90) return { rate, quality: "Exceptional Control" };
-    if (rate >= 75) return { rate, quality: "Strong Resistance" };
-    if (rate >= 50) return { rate, quality: "Good Progress" };
-    return { rate, quality: "Building Resistance" };
-  };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (habits.length === 0) {
     return (
@@ -323,7 +380,7 @@ export default function Statistics() {
 
   const weeklyData = selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
   const successRateData = selectedStats ? getSuccessRateOverTime(selectedStats.monthlyResets) : [];
-  const streakDistributionData = selectedStats ? getStreakDistribution(selectedStats) : [];
+  const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
@@ -334,6 +391,15 @@ export default function Statistics() {
             <h1 className="text-2xl font-bold">Progress Analysis</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={exportData}
+            >
+              <Download className="h-4 w-4" />
+              Export Data
+            </Button>
             <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select a habit" />
