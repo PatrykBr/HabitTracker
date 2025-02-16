@@ -129,21 +129,43 @@ export function useHabits() {
         resetTimeRaw: resetTime
       });
       
-      // First, let's verify we can find the reset
-      const { data: existingReset, error: findError } = await supabase
+      // First, fetch all resets for this habit to determine the next latest reset
+      const { data: allResets, error: fetchError } = await supabase
         .from('habit_resets')
-        .select('*')
+        .select('reset_time')
         .eq('habit_id', habitId)
-        .eq('reset_time', resetTime.toISOString());
-      
-      console.log('Existing reset:', { existingReset, findError });
+        .order('reset_time', { ascending: false });
 
-      if (findError) {
-        console.error('Error finding reset:', findError);
-        throw findError;
+      if (fetchError) {
+        console.error('Error fetching resets:', fetchError);
+        throw fetchError;
       }
 
-      // Now attempt to delete
+      // Find the next latest reset time (excluding the one we're about to delete)
+      const nextLatestReset = allResets
+        ?.filter(reset => reset.reset_time !== resetTime.toISOString())
+        .sort((a, b) => new Date(b.reset_time).getTime() - new Date(a.reset_time).getTime())[0];
+
+      console.log('Next latest reset:', nextLatestReset);
+
+      // Update the habit's last_reset first if we're deleting the latest reset
+      if (allResets?.[0]?.reset_time === resetTime.toISOString()) {
+        const { error: updateError } = await supabase
+          .from('habits')
+          .update({ 
+            last_reset: nextLatestReset ? nextLatestReset.reset_time : new Date(0).toISOString() 
+          })
+          .eq('id', habitId);
+
+        if (updateError) {
+          console.error('Error updating habit last reset:', updateError);
+          throw updateError;
+        }
+        
+        console.log('Successfully updated habit last reset');
+      }
+
+      // Now delete the reset
       const { error: deleteError } = await supabase
         .from('habit_resets')
         .delete()
@@ -156,35 +178,6 @@ export function useHabits() {
       }
 
       console.log('Successfully deleted reset');
-
-      // Update last_reset to the most recent remaining reset
-      const { data: resets, error: fetchError } = await supabase
-        .from('habit_resets')
-        .select('reset_time')
-        .eq('habit_id', habitId)
-        .order('reset_time', { ascending: false })
-        .limit(1);
-
-      if (fetchError) {
-        console.error('Error fetching latest reset:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('Latest resets after deletion:', resets);
-
-      if (resets && resets.length > 0) {
-        const { error: updateError } = await supabase
-          .from('habits')
-          .update({ last_reset: resets[0].reset_time })
-          .eq('id', habitId);
-
-        if (updateError) {
-          console.error('Error updating habit last reset:', updateError);
-          throw updateError;
-        }
-        
-        console.log('Successfully updated habit last reset');
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
