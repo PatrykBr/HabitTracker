@@ -298,7 +298,7 @@ export default function Statistics() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BarChartIcon className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Habit Analysis</h1>
+            <h1 className="text-2xl font-bold">Progress Analysis</h1>
           </div>
           <div className="flex items-center gap-4">
             <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
@@ -326,122 +326,139 @@ export default function Statistics() {
 
         {selectedStat ? (
           <>
-            {/* Enhanced Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-br from-blue-50 to-white">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-blue-600" />
-                    Resistance Streak
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-3xl font-bold text-blue-600">
-                      {selectedStat.currentStreak} days
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {selectedStat.progressIndicators.isOnLongestStreak 
-                        ? "🎉 Longest Period of Control!" 
-                        : `Best: ${selectedStat.longestStreak} days without reset`}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {selectedStat.progressIndicators.isAboveAverage 
-                        ? "Exceeding your typical resistance period" 
-                        : "Working towards your best streak"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card className="bg-gradient-to-br from-blue-50 to-white">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-blue-600" />
+                          Current Streak
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <p className="text-3xl font-bold text-blue-600">
+                            {selectedStat.currentStreak} days
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {selectedStat.progressIndicators.isOnLongestStreak 
+                              ? "🎉 Personal Best!" 
+                              : `Record: ${selectedStat.longestStreak} days`}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Days since your last reset. Longer streaks indicate stronger control.</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Card className="bg-gradient-to-br from-green-50 to-white">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-green-600" />
-                    Control Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-3xl font-bold text-green-600">
-                      {getSuccessRate(selectedStat).rate}%
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {getSuccessRate(selectedStat).quality}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      {getTrendIndicator(selectedStat)?.icon}
-                      <p className={`text-xs ${getTrendIndicator(selectedStat)?.color}`}>
-                        {getTrendIndicator(selectedStat)?.text}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card className="bg-gradient-to-br from-green-50 to-white">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <Target className="h-5 w-5 text-green-600" />
+                          Success Rate
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <p className="text-3xl font-bold text-green-600">
+                            {getSuccessRate(selectedStat).rate}%
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {getSuccessRate(selectedStat).quality}
+                          </p>
+                          <div className="flex items-center gap-1">
+                            {getTrendIndicator(selectedStat)?.icon}
+                            <p className={`text-xs ${getTrendIndicator(selectedStat)?.color}`}>
+                              {getTrendIndicator(selectedStat)?.text}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Percentage of days without resets. Higher is better.</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Card className="bg-gradient-to-br from-purple-50 to-white">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <Timer className="h-5 w-5 text-purple-600" />
-                    Resilience
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-3xl font-bold text-purple-600">
-                      {selectedStat.streakConsistency}%
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {selectedStat.streakConsistency >= 75 
-                        ? "Strong Willpower" 
-                        : selectedStat.streakConsistency >= 50 
-      ? "Building Strength" 
-      : "Developing Resilience"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Based on your ability to maintain control
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card className="bg-gradient-to-br from-purple-50 to-white">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <Timer className="h-5 w-5 text-purple-600" />
+                          Consistency
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <p className="text-3xl font-bold text-purple-600">
+                            {selectedStat.streakConsistency}%
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {selectedStat.streakConsistency >= 75 
+                              ? "Very Consistent" 
+                              : selectedStat.streakConsistency >= 50 
+                                ? "Moderately Consistent" 
+                                : "Building Consistency"}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>How regular your streak lengths are. Higher consistency means more stable progress.</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Card className="bg-gradient-to-br from-orange-50 to-white">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-orange-600" />
-                    Overall Control
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-3xl font-bold text-orange-600">
-                      {Math.max(0, Math.min(100, selectedStat.trendScore))}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {selectedStat.trendScore >= 75 
-                        ? "Exceptional Mastery" 
-                        : selectedStat.trendScore >= 50 
-      ? "Growing Stronger" 
-      : "Building Control"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Combined control metrics
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card className="bg-gradient-to-br from-orange-50 to-white">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-orange-600" />
+                          Overall Progress
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <p className="text-3xl font-bold text-orange-600">
+                            {Math.max(0, Math.min(100, selectedStat.trendScore))}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {selectedStat.trendScore >= 75 
+                              ? "Excellent Progress" 
+                              : selectedStat.trendScore >= 50 
+                                ? "Good Progress" 
+                                : "Getting Started"}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Combined score based on all metrics. Higher scores indicate better overall progress.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
-            {/* Charts Grid with Enhanced Tooltips */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Control Strength Over Time
+                    Monthly Progress
                   </CardTitle>
                   <CardDescription>
-                    Monthly progress in maintaining control
+                    Your success rate tracked month by month. Higher values indicate better control.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -460,7 +477,7 @@ export default function Statistics() {
                                   <div className="bg-white p-3 border rounded-lg shadow-lg">
                                     <p className="font-semibold">{label}</p>
                                     <p className="text-green-600">
-                                      Control Rate: {typeof value === 'number' ? value.toFixed(1) : value}%
+                                      Success Rate: {typeof value === 'number' ? value.toFixed(1) : value}%
                                     </p>
                                   </div>
                                 );
@@ -480,6 +497,55 @@ export default function Statistics() {
                       </ResponsiveContainer>
                     ) : (
                       <div className="h-full flex items-center justify-center text-gray-500">
+                        No data available yet. Keep tracking to see your progress!
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Weekly Patterns
+                  </CardTitle>
+                  <CardDescription>
+                    Shows which days of the week tend to be more challenging
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    {weeklyData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weeklyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis allowDecimals={false} />
+                          <RechartsTooltip 
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                    <p className="font-semibold">{label}</p>
+                                    <p className="text-blue-600">
+                                      {payload[0].value} resets
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar dataKey="count" fill="#8884d8">
+                            {weeklyData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-gray-500">
                         No data available yet
                       </div>
                     )}
@@ -489,43 +555,17 @@ export default function Statistics() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly Pattern</CardTitle>
-                  <CardDescription>Reset distribution by day of week</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChartIcon className="h-5 w-5" />
+                    Streak Distribution
+                  </CardTitle>
+                  <CardDescription>
+                    Analysis of how long your streaks typically last
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {weeklyData.length > 0 && (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={weeklyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis allowDecimals={false} />
-                          <RechartsTooltip />
-                          <Bar dataKey="count" fill="#8884d8">
-                            {weeklyData.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                    {weeklyData.length === 0 && (
-                      <div className="h-full flex items-center justify-center text-gray-500">
-                        No data available
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Streak Distribution</CardTitle>
-                  <CardDescription>Duration of streaks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    {streakDistributionData.length > 0 && (
+                    {streakDistributionData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <Pie
@@ -542,13 +582,27 @@ export default function Statistics() {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <RechartsTooltip />
+                          <RechartsTooltip
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                    <p className="font-semibold">{data.name}</p>
+                                    <p className="text-blue-600">
+                                      {data.count} streak{data.count !== 1 ? 's' : ''}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
-                    )}
-                    {streakDistributionData.length === 0 && (
+                    ) : (
                       <div className="h-full flex items-center justify-center text-gray-500">
-                        No data available
+                        No streak data available yet
                       </div>
                     )}
                   </div>
@@ -556,15 +610,14 @@ export default function Statistics() {
               </Card>
             </div>
 
-            {/* Enhanced Risk Assessment */}
-            <Card className="col-span-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
-                  Insights & Support
+                  Insights & Tips
                 </CardTitle>
                 <CardDescription>
-                  Personalized guidance to strengthen your control
+                  Personalized recommendations based on your data
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -575,51 +628,33 @@ export default function Statistics() {
                 }`}>
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
                     <Flame className="h-4 w-4" />
-                    Current Status: {selectedStat.riskLevel.toUpperCase()}
+                    Current Status
                   </h3>
                   <p className="text-sm">
                     {selectedStat.riskLevel === 'low' 
-                      ? "You're showing strong control over this habit. Your resistance is impressive!" 
+                      ? "You're doing great! Your current streak shows strong control." 
                       : selectedStat.riskLevel === 'medium'
-                        ? "Your control is being tested. Stay strong and remember your progress."
-                        : "This is a challenging period. Consider implementing additional support strategies."}
+                        ? "Stay focused - you're in a moderate risk period. Use your proven strategies."
+                        : "This is a higher risk period. Consider what strategies worked well during your longer streaks."}
                   </p>
                 </div>
 
-                {selectedStat.hasImprovedPattern && (
-                  <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Award className="h-4 w-4 text-blue-600" />
-                      Increased Control Detected
-                    </h3>
-                    <p className="text-sm">
-                      You're showing stronger resistance! Your recent pattern shows improved control.
-                    </p>
-                  </div>
-                )}
-
                 <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
-                  <h3 className="font-semibold mb-2">Strengthening Strategies</h3>
-                  <ul className="text-sm space-y-2">
-                    {selectedStat.currentStreak < selectedStat.avgDaysBetweenResets && (
-                      <li className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-purple-600" />
-                        Aim to extend your current streak beyond {selectedStat.avgDaysBetweenResets} days
-                      </li>
+                  <h3 className="font-semibold mb-2">Pattern Analysis</h3>
+                  <div className="space-y-2 text-sm">
+                    {weeklyData.length > 0 && (
+                      <p>
+                        {weeklyData.reduce((max, current) => current.count > max.count ? current : max).name}
+                        {" tends to be your most challenging day."}
+                      </p>
                     )}
-                    {selectedStat.streakConsistency < 75 && (
-                      <li className="flex items-center gap-2">
-                        <Timer className="h-4 w-4 text-purple-600" />
-                        Focus on building consistent resistance through daily mindfulness
-                      </li>
+                    {selectedStat.streakConsistency > 75 && (
+                      <p>Your consistency is excellent - keep maintaining your current approach!</p>
                     )}
-                    {selectedStat.shortTermImprovement < 0 && (
-                      <li className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-purple-600" />
-                        Identify recent triggers and strengthen your coping strategies
-                      </li>
+                    {selectedStat.currentStreak > selectedStat.avgDaysBetweenResets && (
+                      <p>You're currently exceeding your average streak length - great work!</p>
                     )}
-                  </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>
