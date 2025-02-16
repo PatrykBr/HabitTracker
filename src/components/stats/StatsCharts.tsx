@@ -1,7 +1,6 @@
 
 import { StatsChart } from "@/components/stats/StatsChart";
 import { StatType } from "@/utils/statsCalculator";
-import { getWeeklyDistribution, getStreakDistribution } from "@/utils/statistics";
 import { HabitType } from "@/hooks/use-habits";
 
 interface StatsChartsProps {

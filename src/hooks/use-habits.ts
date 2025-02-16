@@ -4,22 +4,22 @@ import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { create } from "zustand";
 
-export interface Habit {
-  id: string;
-  name: string;
-  lastReset: Date;
-  resets: Date[];
-}
-
-type HabitRow = Database['public']['Tables']['habits']['Row'];
-type HabitResetRow = Database['public']['Tables']['habit_resets']['Row'];
-
 export interface HabitType {
   id: string;
   name: string;
   lastReset: Date;
   resets: Date[];
   createdAt: string;
+}
+
+type HabitRow = Database['public']['Tables']['habits']['Row'];
+type HabitResetRow = Database['public']['Tables']['habit_resets']['Row'];
+
+export interface Habit {
+  id: string;
+  name: string;
+  lastReset: Date;
+  resets: Date[];
 }
 
 export function useHabits() {
@@ -35,6 +35,7 @@ export function useHabits() {
           id,
           name,
           last_reset,
+          created_at,
           habit_resets (
             reset_time
           )
@@ -48,6 +49,7 @@ export function useHabits() {
         name: habit.name,
         lastReset: new Date(habit.last_reset),
         resets: habit.habit_resets.map((reset) => new Date(reset.reset_time)),
+        createdAt: habit.created_at
       }));
     },
   });
