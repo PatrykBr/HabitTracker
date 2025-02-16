@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -126,15 +125,19 @@ export function useHabits() {
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
       console.log('Starting reset removal:', { 
         habitId, 
-        resetTime: resetTime.toISOString(),
-        resetTimeRaw: resetTime
+        resetTime: resetTime.toISOString()
       });
       
-      // First, fetch all resets for this habit to determine the next latest reset
+      // Start a Supabase transaction
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // 1. First get all resets to find the next latest
       const { data: allResets, error: fetchError } = await supabase
         .from('habit_resets')
         .select('reset_time')
         .eq('habit_id', habitId)
+        .neq('reset_time', resetTime.toISOString())
         .order('reset_time', { ascending: false });
 
       if (fetchError) {
@@ -142,37 +145,7 @@ export function useHabits() {
         throw fetchError;
       }
 
-      // Convert timestamps to consistent format for comparison
-      const normalizedResetTime = new Date(resetTime).getTime();
-      const isLatestReset = allResets?.length > 0 && 
-        Math.abs(new Date(allResets[0].reset_time).getTime() - normalizedResetTime) < 1000; // Allow 1 second difference
-
-      // Find the next latest reset time (excluding the one we're about to delete)
-      const nextLatestReset = allResets
-        ?.filter(reset => Math.abs(new Date(reset.reset_time).getTime() - normalizedResetTime) >= 1000)
-        .sort((a, b) => new Date(b.reset_time).getTime() - new Date(a.reset_time).getTime())[0];
-
-      console.log('Next latest reset:', nextLatestReset);
-      console.log('Is latest reset:', isLatestReset);
-
-      // Update the habit's last_reset first if we're deleting the latest reset
-      if (isLatestReset) {
-        const { error: updateError } = await supabase
-          .from('habits')
-          .update({ 
-            last_reset: nextLatestReset ? nextLatestReset.reset_time : new Date(0).toISOString() 
-          })
-          .eq('id', habitId);
-
-        if (updateError) {
-          console.error('Error updating habit last reset:', updateError);
-          throw updateError;
-        }
-        
-        console.log('Successfully updated habit last reset');
-      }
-
-      // Now delete the reset
+      // 2. Delete the reset entry first
       const { error: deleteError } = await supabase
         .from('habit_resets')
         .delete()
@@ -185,6 +158,22 @@ export function useHabits() {
       }
 
       console.log('Successfully deleted reset');
+
+      // 3. Update the habit's last_reset to the next latest reset time
+      const nextLatestReset = allResets?.[0]?.reset_time;
+      const { error: updateError } = await supabase
+        .from('habits')
+        .update({ 
+          last_reset: nextLatestReset || new Date(0).toISOString()
+        })
+        .eq('id', habitId);
+
+      if (updateError) {
+        console.error('Error updating habit last reset:', updateError);
+        throw updateError;
+      }
+
+      console.log('Successfully updated habit last reset to:', nextLatestReset || 'epoch');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
