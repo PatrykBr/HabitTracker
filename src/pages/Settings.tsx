@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { useHabits } from '@/hooks/use-habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings2, Trash2, LogOut, Palette } from 'lucide-react';
+import { Settings2, Trash2, LogOut, Palette, ChevronLeft } from 'lucide-react';
 
 const ACCENT_COLORS = [
-  { name: 'Purple', value: '#9b87f5' },
-  { name: 'Blue', value: '#0EA5E9' },
-  { name: 'Green', value: '#10B981' },
-  { name: 'Orange', value: '#F97316' },
-  { name: 'Pink', value: '#EC4899' },
+  { name: 'Purple', value: '#9b87f5', cssProps: { '--accent': '251 80% 74%' } },
+  { name: 'Blue', value: '#0EA5E9', cssProps: { '--accent': '199 89% 48%' } },
+  { name: 'Green', value: '#10B981', cssProps: { '--accent': '160 84% 39%' } },
+  { name: 'Orange', value: '#F97316', cssProps: { '--accent': '24 95% 53%' } },
+  { name: 'Pink', value: '#EC4899', cssProps: { '--accent': '331 86% 60%' } },
 ];
 
 export default function Settings() {
@@ -29,9 +29,11 @@ export default function Settings() {
     });
   };
 
-  const handleColorChange = (color: string) => {
+  const handleColorChange = (color: string, cssProps: Record<string, string>) => {
     setSelectedColor(color);
-    document.documentElement.style.setProperty('--accent', color);
+    Object.entries(cssProps).forEach(([property, value]) => {
+      document.documentElement.style.setProperty(property, value);
+    });
     toast({
       title: "Theme updated",
       description: "The accent color has been updated.",
@@ -46,9 +48,19 @@ export default function Settings() {
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
       <div className="max-w-2xl mx-auto space-y-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Settings2 className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Settings</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Settings2 className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Settings</h1>
+          </div>
+          <Button
+            variant="ghost"
+            className="gap-2"
+            onClick={() => navigate('/')}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Habits
+          </Button>
         </div>
 
         {/* Theme Section */}
@@ -61,7 +73,7 @@ export default function Settings() {
             {ACCENT_COLORS.map((color) => (
               <button
                 key={color.value}
-                onClick={() => handleColorChange(color.value)}
+                onClick={() => handleColorChange(color.value, color.cssProps)}
                 className={`w-10 h-10 rounded-full transition-all duration-200 ${
                   selectedColor === color.value ? 'ring-2 ring-offset-2 ring-black' : ''
                 }`}
@@ -109,14 +121,6 @@ export default function Settings() {
             Log Out
           </Button>
         </div>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => navigate('/')}
-        >
-          Back to Habits
-        </Button>
       </div>
     </div>
   );
