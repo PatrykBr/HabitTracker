@@ -1,6 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTrendIndicator } from "@/utils/statistics";
 import { ArrowDown, TrendingDown, AlertTriangle, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
   title: string;
