@@ -2,7 +2,7 @@
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, BarChart, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target } from 'lucide-react';
+import { ChevronLeft, BarChart, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -32,11 +32,9 @@ export default function Statistics() {
   const calculateStats = () => {
     const now = new Date();
     
-    // Helper function to get all months between two dates
     const getMonthsBetween = (startDate: Date, endDate: Date) => {
       const months: string[] = [];
       const currentDate = new Date(startDate);
-      
       while (currentDate <= endDate) {
         months.push(currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
         currentDate.setMonth(currentDate.getMonth() + 1);
@@ -49,13 +47,14 @@ export default function Statistics() {
       resetDates.sort((a, b) => a.getTime() - b.getTime());
       const totalResets = resetDates.length;
 
-      // Calculate current streak
+      // Current streak calculation
       const currentStreakDays = Math.floor(
         (now.getTime() - new Date(habit.lastReset).getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // Calculate past streaks
+      // Calculate all streaks and patterns
       const streaks: number[] = [];
+      const daysBetweenResets: number[] = [];
       let totalTimeBetween = 0;
 
       if (resetDates.length >= 2) {
@@ -64,39 +63,42 @@ export default function Statistics() {
           const streakDays = Math.floor(timeBetween / (1000 * 60 * 60 * 24));
           totalTimeBetween += timeBetween;
           streaks.push(streakDays);
+          daysBetweenResets.push(streakDays);
         }
       }
-      
-      // Add current streak to streaks array
       streaks.push(currentStreakDays);
 
+      // Enhanced streak analysis
       const avgDaysBetweenResets = totalResets > 1 
         ? Math.round(totalTimeBetween / (totalResets - 1) / (1000 * 60 * 60 * 24)) 
         : currentStreakDays;
-
-      // Calculate longest streak (including current)
-      const longestStreak = Math.max(...streaks, 0);
-
-      // Calculate reset frequency by month with proper chronological ordering
-      const monthlyResets: { [key: string]: number } = {};
       
+      const longestStreak = Math.max(...streaks, 0);
+      const medianStreak = streaks.length > 0 
+        ? streaks.sort((a, b) => a - b)[Math.floor(streaks.length / 2)]
+        : currentStreakDays;
+
+      // Pattern detection
+      const hasImprovedPattern = daysBetweenResets.length >= 3 && 
+        daysBetweenResets.slice(-3).every((days, i, arr) => 
+          i === 0 || days >= arr[i - 1]
+        );
+
+      // Monthly analysis with gap filling
+      const monthlyResets: { [key: string]: number } = {};
       if (resetDates.length > 0) {
         const firstDate = new Date(Math.min(...resetDates.map(d => d.getTime())));
         const allMonths = getMonthsBetween(firstDate, now);
-        
-        // Initialize all months with zero
         allMonths.forEach(month => {
           monthlyResets[month] = 0;
         });
-
-        // Count resets for each month
         resetDates.forEach(date => {
           const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
           monthlyResets[monthYear] = (monthlyResets[monthYear] || 0) + 1;
         });
       }
 
-      // Calculate improvement trends (comparing last 3 months)
+      // Trend analysis
       const monthKeys = Object.keys(monthlyResets).sort((a, b) => {
         const dateA = new Date(a);
         const dateB = new Date(b);
@@ -106,24 +108,25 @@ export default function Statistics() {
       const lastMonth = monthlyResets[monthKeys[monthKeys.length - 1]] || 0;
       const previousMonth = monthlyResets[monthKeys[monthKeys.length - 2]] || 0;
       const twoMonthsAgo = monthlyResets[monthKeys[monthKeys.length - 3]] || 0;
-      
-      // Invert improvement calculation (fewer resets is better)
+
+      // Improvement calculations (inverted - fewer resets is better)
       const shortTermImprovement = previousMonth !== 0
-        ? ((lastMonth - previousMonth) / previousMonth) * -100 // Invert the percentage
+        ? ((lastMonth - previousMonth) / previousMonth) * -100
         : (lastMonth === 0 ? 100 : -100);
       
       const longTermImprovement = twoMonthsAgo !== 0
-        ? ((lastMonth - twoMonthsAgo) / twoMonthsAgo) * -100 // Invert the percentage
+        ? ((lastMonth - twoMonthsAgo) / twoMonthsAgo) * -100
         : (lastMonth === 0 ? 100 : -100);
 
-      // Calculate success rate
+      // Enhanced success metrics
       const firstReset = resetDates[0];
       const totalDays = firstReset 
         ? Math.max(Math.floor((now.getTime() - firstReset.getTime()) / (1000 * 60 * 60 * 24)), 1)
         : currentStreakDays || 1;
+      
       const successRate = Math.min(((totalDays - totalResets) / totalDays) * 100, 100);
-
-      // Calculate streak consistency
+      
+      // Consistency analysis
       const avgStreak = streaks.length > 0 
         ? streaks.reduce((a, b) => a + b, 0) / streaks.length 
         : currentStreakDays;
@@ -132,10 +135,24 @@ export default function Statistics() {
         ? streaks.reduce((a, b) => a + Math.pow(b - avgStreak, 2), 0) / streaks.length
         : 0;
       
-      // Adjust consistency calculation (lower variance means higher consistency)
       const streakConsistency = avgStreak > 0 
         ? Math.max(0, Math.min(100, 100 - (Math.sqrt(streakVariance) / avgStreak * 50)))
         : 100;
+
+      // Risk assessment
+      const riskLevel = (() => {
+        if (currentStreakDays < avgDaysBetweenResets / 2) return 'high';
+        if (currentStreakDays < avgDaysBetweenResets) return 'medium';
+        return 'low';
+      })();
+
+      // Overall score components
+      const trendScore = Math.round(
+        (Math.max(-100, Math.min(100, shortTermImprovement)) * 0.4) +
+        (Math.max(-100, Math.min(100, longTermImprovement)) * 0.3) +
+        (successRate * 0.2) +
+        (streakConsistency * 0.1)
+      );
 
       return {
         name: habit.name,
@@ -143,6 +160,7 @@ export default function Statistics() {
         avgDaysBetweenResets,
         currentStreak: currentStreakDays,
         longestStreak,
+        medianStreak,
         monthlyResets: Object.entries(monthlyResets).map(([month, count]) => ({
           month,
           count
@@ -151,28 +169,29 @@ export default function Statistics() {
         longTermImprovement,
         successRate: Math.round(Math.max(0, successRate)),
         streakConsistency: Math.round(streakConsistency),
-        trendScore: Math.round(
-          (Math.max(-100, Math.min(100, shortTermImprovement)) * 0.4) +
-          (Math.max(-100, Math.min(100, longTermImprovement)) * 0.3) +
-          (successRate * 0.2) +
-          (streakConsistency * 0.1)
-        ),
+        riskLevel,
+        hasImprovedPattern,
+        trendScore,
+        progressIndicators: {
+          isOnLongestStreak: currentStreakDays === longestStreak,
+          isAboveAverage: currentStreakDays > avgDaysBetweenResets,
+          isImproving: shortTermImprovement > 0,
+          isConsistent: streakConsistency > 75
+        }
       };
     });
   };
 
   const stats = calculateStats();
 
-  // Find habit with best current streak
+  // Enhanced insights
   const bestStreak = Math.max(...stats.map(s => s.currentStreak), 0);
   const bestStreakHabit = stats.find(s => s.currentStreak === bestStreak);
 
-  // Find most consistent habit
   const mostConsistent = stats.reduce((prev, current) => 
     (current.streakConsistency > prev.streakConsistency) ? current : prev
   , stats[0] || { name: '', streakConsistency: 0 });
 
-  // Calculate overall improvement (fewer resets is better)
   const overallImprovement = stats.length > 0
     ? stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length
     : 0;
@@ -183,7 +202,7 @@ export default function Statistics() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BarChart className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Statistics</h1>
+            <h1 className="text-2xl font-bold">Statistics & Insights</h1>
           </div>
           <Button
             variant="ghost"
@@ -195,12 +214,12 @@ export default function Statistics() {
           </Button>
         </div>
 
-        {/* Top Performers */}
+        {/* Top Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-green-50 to-white">
+          <Card className={`bg-gradient-to-br ${bestStreak > 30 ? 'from-green-50' : 'from-blue-50'} to-white`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-green-600" />
+                <Trophy className={`h-5 w-5 ${bestStreak > 30 ? 'text-green-600' : 'text-blue-600'}`} />
                 Best Current Streak
               </CardTitle>
               <CardDescription>
@@ -208,13 +227,19 @@ export default function Statistics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-green-600">{bestStreak} days</p>
+              <p className={`text-4xl font-bold ${bestStreak > 30 ? 'text-green-600' : 'text-blue-600'}`}>
+                {bestStreak} days
+                {bestStreakHabit?.progressIndicators.isOnLongestStreak && 
+                  <span className="text-sm ml-2">(Personal Best!)</span>
+                }
+              </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-50 to-white">
+
+          <Card className="bg-gradient-to-br from-purple-50 to-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Timer className="h-5 w-5 text-blue-600" />
+                <Sparkles className="h-5 w-5 text-purple-600" />
                 Most Consistent
               </CardTitle>
               <CardDescription>
@@ -222,20 +247,22 @@ export default function Statistics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-blue-600">
-                {mostConsistent.streakConsistency}% consistent
+              <p className="text-4xl font-bold text-purple-600">
+                {mostConsistent.streakConsistency}% 
+                <span className="text-sm ml-2">stable</span>
               </p>
             </CardContent>
           </Card>
+
           <Card className={`bg-gradient-to-br ${overallImprovement > 0 ? 'from-green-50' : 'from-red-50'} to-white`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {overallImprovement > 0 ? (
-                  <ArrowUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-green-600" />
                 ) : (
-                  <ArrowDown className="h-5 w-5 text-red-600" />
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
                 )}
-                Monthly Trend
+                Overall Trend
               </CardTitle>
               <CardDescription>Last 3 months analysis</CardDescription>
             </CardHeader>
@@ -299,36 +326,57 @@ export default function Statistics() {
                     <th className="px-6 py-3">Current Streak</th>
                     <th className="px-6 py-3">Success Rate</th>
                     <th className="px-6 py-3">Consistency</th>
-                    <th className="px-6 py-3">Short-term Trend</th>
-                    <th className="px-6 py-3">Long-term Trend</th>
+                    <th className="px-6 py-3">Risk Level</th>
+                    <th className="px-6 py-3">Trend</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.map((stat) => (
                     <tr key={stat.name} className="bg-white border-b">
-                      <td className="px-6 py-4 font-medium">{stat.name}</td>
-                      <td className="px-6 py-4">{stat.currentStreak} days</td>
-                      <td className="px-6 py-4">{stat.successRate}%</td>
-                      <td className="px-6 py-4">{stat.streakConsistency}%</td>
-                      <td className="px-6 py-4">
-                        <span className={`flex items-center gap-1 ${stat.shortTermImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {stat.shortTermImprovement > 0 ? (
-                            <ArrowUp className="h-4 w-4" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4" />
+                      <td className="px-6 py-4 font-medium">
+                        <div className="flex items-center gap-2">
+                          {stat.name}
+                          {stat.hasImprovedPattern && (
+                            <Flame className="h-4 w-4 text-orange-500" title="Improving pattern detected!" />
                           )}
-                          {Math.abs(Math.round(stat.shortTermImprovement))}%
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {stat.currentStreak} days
+                          {stat.progressIndicators.isOnLongestStreak && (
+                            <Trophy className="h-4 w-4 text-yellow-500" title="Personal best!" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{stat.successRate}%</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {stat.streakConsistency}%
+                          {stat.progressIndicators.isConsistent && (
+                            <Timer className="h-4 w-4 text-blue-500" title="Highly consistent!" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
+                          ${stat.riskLevel === 'low' ? 'bg-green-100 text-green-800' : 
+                            stat.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-red-100 text-red-800'}`}>
+                          {stat.riskLevel.charAt(0).toUpperCase() + stat.riskLevel.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`flex items-center gap-1 ${stat.longTermImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {stat.longTermImprovement > 0 ? (
-                            <ArrowUp className="h-4 w-4" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4" />
-                          )}
-                          {Math.abs(Math.round(stat.longTermImprovement))}%
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`${stat.shortTermImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {stat.shortTermImprovement > 0 ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : (
+                              <ArrowDown className="h-4 w-4" />
+                            )}
+                          </span>
+                          {Math.abs(Math.round(stat.shortTermImprovement))}%
+                        </div>
                       </td>
                     </tr>
                   ))}
