@@ -23,38 +23,6 @@ export default function Statistics() {
   const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
   const { toast } = useToast();
 
-  const exportData = () => {
-    if (!selectedStats) return;
-
-    const data = {
-      habitName: selectedStats.name,
-      statistics: {
-        totalResets: selectedStats.totalResets,
-        currentStreak: selectedStats.currentStreak,
-        longestStreak: selectedStats.longestStreak,
-        successRate: selectedStats.successRate,
-        streakConsistency: selectedStats.streakConsistency,
-        monthlyResets: selectedStats.monthlyResets,
-        trendScore: selectedStats.trendScore
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${selectedStats.name.toLowerCase().replace(/\s+/g, '-')}-stats.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Statistics Exported",
-      description: "Your statistics have been downloaded as a JSON file.",
-    });
-  };
-
   const calculateStats = () => {
     const now = new Date();
     
@@ -228,6 +196,38 @@ export default function Statistics() {
         }
       }), stats[0])
     : stats.find(s => s.name === selectedHabit?.name);
+
+  const exportData = () => {
+    if (!selectedStats) return;
+
+    const data = {
+      habitName: selectedStats.name,
+      statistics: {
+        totalResets: selectedStats.totalResets,
+        currentStreak: selectedStats.currentStreak,
+        longestStreak: selectedStats.longestStreak,
+        successRate: selectedStats.successRate,
+        streakConsistency: selectedStats.streakConsistency,
+        monthlyResets: selectedStats.monthlyResets,
+        trendScore: selectedStats.trendScore
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedStats.name.toLowerCase().replace(/\s+/g, '-')}-stats.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Statistics Exported",
+      description: "Your statistics have been downloaded as a JSON file.",
+    });
+  };
 
   if (habits.length === 0) {
     return (
