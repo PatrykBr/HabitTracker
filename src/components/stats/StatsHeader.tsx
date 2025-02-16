@@ -29,10 +29,10 @@ export function StatsHeader({ habits, selectedHabitId, onHabitChange, onExport, 
           <span className="hidden sm:inline">Export Data</span>
         </Button>
         <Select value={selectedHabitId} onValueChange={onHabitChange}>
-          <SelectTrigger className="w-[140px] sm:w-[200px]">
+          <SelectTrigger className="w-[140px] sm:w-[200px] bg-white">
             <SelectValue placeholder="Select a habit" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white border shadow-lg">
             <SelectItem value="all">All Habits</SelectItem>
             {habits.map(habit => (
               <SelectItem key={habit.id} value={habit.id}>

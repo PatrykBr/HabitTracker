@@ -1,3 +1,4 @@
+
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -123,8 +124,8 @@ export default function Statistics() {
       })();
 
       const trendScore = Math.round(
-        (Math.max(-100, Math.min(100, shortTermImprovement)) * 0.4) +
-        (Math.max(-100, Math.min(100, longTermImprovement)) * 0.3) +
+        (shortTermImprovement * 0.4) +
+        (longTermImprovement * 0.3) +
         (successRate * 0.2) +
         (streakConsistency * 0.1)
       );
@@ -146,7 +147,7 @@ export default function Statistics() {
         streakConsistency: Math.round(streakConsistency),
         riskLevel,
         hasImprovedPattern,
-        trendScore,
+        trendScore: Math.max(0, trendScore), // Ensure it's not negative but don't cap at 100
         resetDates,
         progressIndicators: {
           isOnLongestStreak: currentStreakDays === longestStreak,
