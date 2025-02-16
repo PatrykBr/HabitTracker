@@ -1,103 +1,75 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useHabits } from '@/hooks/use-habits';
-import { HabitCard } from '@/components/HabitCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Settings, BarChart } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, BarChart2, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useHabits } from "@/hooks/use-habits";
+import HabitCard from "@/components/HabitCard";
+import { Input } from "@/components/ui/input";
+import { Achievements } from "@/components/Achievements";
 
-const Index = () => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newHabitName, setNewHabitName] = useState('');
-  const { habits, addHabit, resetHabit, removeReset, deleteHabit, addCustomReset } = useHabits();
-  const { toast } = useToast();
+export default function Index() {
+  const [newHabitName, setNewHabitName] = useState("");
+  const { habits, addHabit, resetHabit, deleteHabit } = useHabits();
   const navigate = useNavigate();
 
-  const handleAddHabit = () => {
+  const handleAddHabit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (newHabitName.trim()) {
-      addHabit(newHabitName.trim());
-      setNewHabitName('');
-      setShowAddDialog(false);
-      toast({
-        title: "Habit created",
-        description: `${newHabitName} has been added to your habits.`,
-      });
+      await addHabit(newHabitName.trim());
+      setNewHabitName("");
     }
   };
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl font-bold">Habit Tracker</h1>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Habit
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate("/statistics")}
+            >
+              <BarChart2 className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => navigate('/statistics')}>
-              <BarChart className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => navigate('/settings')}>
-              <Settings className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate("/settings")}
+            >
+              <Settings className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <form onSubmit={handleAddHabit} className="flex gap-2">
+          <Input
+            type="text"
+            value={newHabitName}
+            onChange={(e) => setNewHabitName(e.target.value)}
+            placeholder="Enter a new habit..."
+            className="flex-1"
+          />
+          <Button type="submit">
+            <Plus className="h-5 w-5" />
+          </Button>
+        </form>
+
+        <Achievements />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {habits.map((habit) => (
             <HabitCard
               key={habit.id}
               habit={habit}
-              onReset={() => {
-                resetHabit(habit.id);
-                toast({
-                  title: "Progress reset",
-                  description: `${habit.name} progress has been reset.`,
-                });
-              }}
-              onDeleteReset={(index) => {
-                removeReset(habit.id, index);
-                toast({
-                  title: "Reset removed",
-                  description: "The reset entry has been removed from history.",
-                });
-              }}
-              onAddCustomReset={(resetTime) => {
-                addCustomReset({ habitId: habit.id, resetTime });
-                toast({
-                  title: "Custom reset added",
-                  description: `A custom reset time has been added to ${habit.name}.`,
-                });
-              }}
+              onReset={() => resetHabit(habit.id)}
+              onDelete={() => deleteHabit(habit.id)}
             />
           ))}
         </div>
-
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Habit</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder="Enter habit name"
-                value={newHabitName}
-                onChange={(e) => setNewHabitName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
-              />
-              <Button className="w-full" onClick={handleAddHabit}>
-                Add Habit
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
-};
-
-export default Index;
+}
