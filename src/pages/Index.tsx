@@ -27,25 +27,17 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-[#f1f0fb] via-white to-[#f1f0fb]">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm p-6 rounded-xl shadow-sm">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              Habit Tracker
-            </h1>
-            <p className="text-muted-foreground mt-1">Build better habits, one day at a time</p>
-          </div>
-          <Button 
-            onClick={() => setShowAddDialog(true)}
-            className="bg-primary hover:bg-primary/90 text-white shadow-md transition-all duration-300 hover:-translate-y-0.5"
-          >
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Habit Tracker</h1>
+          <Button onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Habit
           </Button>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {habits.map((habit) => (
             <HabitCard
               key={habit.id}
@@ -76,22 +68,18 @@ const Index = () => {
         </div>
 
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">Add New Habit</DialogTitle>
+              <DialogTitle>Add New Habit</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
               <Input
                 placeholder="Enter habit name"
                 value={newHabitName}
                 onChange={(e) => setNewHabitName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
-                className="border-2 focus-visible:ring-primary"
               />
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-300"
-                onClick={handleAddHabit}
-              >
+              <Button className="w-full" onClick={handleAddHabit}>
                 Add Habit
               </Button>
             </div>
