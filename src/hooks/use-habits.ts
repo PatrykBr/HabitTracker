@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -124,26 +123,54 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
-      console.log('Removing reset:', { habitId, resetTime: resetTime.toISOString() });
+      console.log('Starting reset removal:', { 
+        habitId, 
+        resetTime: resetTime.toISOString(),
+        resetTimeRaw: resetTime
+      });
       
-      const { error } = await supabase
+      // First, let's verify we can find the reset
+      const { data: existingReset, error: findError } = await supabase
+        .from('habit_resets')
+        .select('*')
+        .eq('habit_id', habitId)
+        .eq('reset_time', resetTime.toISOString());
+      
+      console.log('Existing reset:', { existingReset, findError });
+
+      if (findError) {
+        console.error('Error finding reset:', findError);
+        throw findError;
+      }
+
+      // Now attempt to delete
+      const { error: deleteError } = await supabase
         .from('habit_resets')
         .delete()
         .eq('habit_id', habitId)
         .eq('reset_time', resetTime.toISOString());
 
-      if (error) {
-        console.error('Error removing reset:', error);
-        throw error;
+      if (deleteError) {
+        console.error('Error deleting reset:', deleteError);
+        throw deleteError;
       }
 
+      console.log('Successfully deleted reset');
+
       // Update last_reset to the most recent remaining reset
-      const { data: resets } = await supabase
+      const { data: resets, error: fetchError } = await supabase
         .from('habit_resets')
         .select('reset_time')
         .eq('habit_id', habitId)
         .order('reset_time', { ascending: false })
         .limit(1);
+
+      if (fetchError) {
+        console.error('Error fetching latest reset:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Latest resets after deletion:', resets);
 
       if (resets && resets.length > 0) {
         const { error: updateError } = await supabase
@@ -151,11 +178,19 @@ export function useHabits() {
           .update({ last_reset: resets[0].reset_time })
           .eq('id', habitId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating habit last reset:', updateError);
+          throw updateError;
+        }
+        
+        console.log('Successfully updated habit last reset');
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
     },
   });
 
@@ -182,10 +217,17 @@ export function useHabits() {
     removeReset: (habitId: string, resetIndex: number) => {
       const habit = habits.find((h) => h.id === habitId);
       if (habit) {
+        console.log('Found habit:', habit);
+        console.log('Reset to remove:', {
+          index: resetIndex,
+          reset: habit.resets[resetIndex]
+        });
         removeResetMutation.mutate({
           habitId,
           resetTime: habit.resets[resetIndex],
         });
+      } else {
+        console.error('Habit not found:', habitId);
       }
     },
     deleteHabit: deleteHabitMutation.mutate,
