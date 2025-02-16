@@ -158,22 +158,22 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
                 initialFocus
-                className="!w-full"
+                className="!w-full !m-0"
                 classNames={{
                   months: "flex justify-center",
-                  month: "w-full space-y-4",
-                  caption: "flex justify-center pt-1 relative items-center text-sm sm:text-base font-medium",
-                  caption_label: "text-sm sm:text-base font-medium",
+                  month: "w-full",
+                  caption: "flex justify-center pt-1 relative items-center",
+                  caption_label: "text-sm font-medium",
                   nav: "space-x-1 flex items-center",
                   nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity",
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
-                  table: "w-full border-collapse space-y-1",
+                  table: "w-full border-collapse",
                   head_row: "flex",
-                  head_cell: "text-muted-foreground rounded-md w-9 sm:w-10 font-normal text-xs sm:text-sm m-0.5 sm:m-1",
-                  row: "flex w-full mt-2",
-                  cell: "text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 m-0.5 sm:m-1",
-                  day: "h-8 w-8 sm:h-10 sm:w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-secondary rounded-md transition-colors",
+                  head_cell: "text-muted-foreground rounded-md w-8 sm:w-9 font-normal text-[0.8rem] sm:text-sm",
+                  row: "flex w-full mt-1",
+                  cell: "text-center p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  day: "h-8 w-8 sm:h-9 sm:w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-secondary rounded-md transition-colors",
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
                   day_outside: "text-muted-foreground opacity-50",
