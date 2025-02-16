@@ -1,11 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useHabits } from '@/hooks/use-habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Settings2, Trash2, LogOut, Palette, ChevronLeft } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ACCENT_COLORS = [
   { name: 'Purple', value: '#9b87f5', cssProps: { '--accent': '251 80% 74%' } },
@@ -15,28 +25,68 @@ const ACCENT_COLORS = [
   { name: 'Pink', value: '#EC4899', cssProps: { '--accent': '331 86% 60%' } },
 ];
 
+interface DeleteConfirmationState {
+  isOpen: boolean;
+  habitId: string | null;
+  habitName: string;
+}
+
 export default function Settings() {
   const { habits, deleteHabit } = useHabits();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedColor, setSelectedColor] = useState('#9b87f5');
+  const [selectedColor, setSelectedColor] = useState(() => {
+    return localStorage.getItem('accentColor') || '#9b87f5';
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmationState>({
+    isOpen: false,
+    habitId: null,
+    habitName: '',
+  });
+
+  useEffect(() => {
+    // Apply saved color on component mount
+    const savedColor = localStorage.getItem('accentColor');
+    const savedColorProps = ACCENT_COLORS.find(color => color.value === savedColor)?.cssProps;
+    if (savedColor && savedColorProps) {
+      Object.entries(savedColorProps).forEach(([property, value]) => {
+        document.documentElement.style.setProperty(property, value);
+      });
+    }
+  }, []);
 
   const handleDeleteHabit = (id: string, name: string) => {
-    deleteHabit(id);
-    toast({
-      title: "Habit deleted",
-      description: `${name} has been removed from your habits.`,
+    setDeleteConfirmation({
+      isOpen: true,
+      habitId: id,
+      habitName: name,
     });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.habitId) {
+      deleteHabit(deleteConfirmation.habitId);
+      toast({
+        title: "Habit deleted",
+        description: `${deleteConfirmation.habitName} has been removed from your habits.`,
+      });
+      setDeleteConfirmation({
+        isOpen: false,
+        habitId: null,
+        habitName: '',
+      });
+    }
   };
 
   const handleColorChange = (color: string, cssProps: Record<string, string>) => {
     setSelectedColor(color);
+    localStorage.setItem('accentColor', color);
     Object.entries(cssProps).forEach(([property, value]) => {
       document.documentElement.style.setProperty(property, value);
     });
     toast({
       title: "Theme updated",
-      description: "The accent color has been updated.",
+      description: "The accent color has been updated and saved.",
     });
   };
 
@@ -122,6 +172,28 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog 
+        open={deleteConfirmation.isOpen} 
+        onOpenChange={(isOpen) => 
+          setDeleteConfirmation(prev => ({ ...prev, isOpen }))
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{deleteConfirmation.habitName}" and all its history.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
