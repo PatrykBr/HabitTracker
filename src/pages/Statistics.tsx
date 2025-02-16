@@ -1,3 +1,4 @@
+
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,85 +31,117 @@ export default function Statistics() {
 
   const calculateStats = () => {
     const now = new Date();
+    
+    // Helper function to get all months between two dates
+    const getMonthsBetween = (startDate: Date, endDate: Date) => {
+      const months: string[] = [];
+      const currentDate = new Date(startDate);
+      
+      while (currentDate <= endDate) {
+        months.push(currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      return months;
+    };
+
     return habits.map(habit => {
-      const totalResets = habit.resets.length;
       const resetDates = habit.resets.map(date => new Date(date));
       resetDates.sort((a, b) => a.getTime() - b.getTime());
-      
-      // Calculate streaks and times between resets
-      let totalTimeBetween = 0;
-      let streaks = [];
-      
-      if (resetDates.length > 0) {
-        // Add current streak
-        const currentStreakDays = Math.floor(
-          (now.getTime() - new Date(habit.lastReset).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        streaks.push(currentStreakDays);
+      const totalResets = resetDates.length;
 
-        // Calculate past streaks
-        for (let i = 1; i < resetDates.length; i++) {
-          const timeBetween = resetDates[i].getTime() - resetDates[i-1].getTime();
+      // Calculate current streak
+      const currentStreakDays = Math.floor(
+        (now.getTime() - new Date(habit.lastReset).getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Calculate past streaks
+      const streaks: number[] = [];
+      let totalTimeBetween = 0;
+
+      if (resetDates.length >= 2) {
+        for (let i = 0; i < resetDates.length - 1; i++) {
+          const timeBetween = resetDates[i + 1].getTime() - resetDates[i].getTime();
           const streakDays = Math.floor(timeBetween / (1000 * 60 * 60 * 24));
           totalTimeBetween += timeBetween;
           streaks.push(streakDays);
         }
       }
+      
+      // Add current streak to streaks array
+      streaks.push(currentStreakDays);
 
-      const currentStreak = streaks[0] || 0;
       const avgDaysBetweenResets = totalResets > 1 
         ? Math.round(totalTimeBetween / (totalResets - 1) / (1000 * 60 * 60 * 24)) 
-        : currentStreak;
+        : currentStreakDays;
 
-      // Calculate longest streak
+      // Calculate longest streak (including current)
       const longestStreak = Math.max(...streaks, 0);
 
-      // Calculate reset frequency by month
+      // Calculate reset frequency by month with proper chronological ordering
       const monthlyResets: { [key: string]: number } = {};
-      resetDates.forEach(date => {
-        const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        monthlyResets[monthYear] = (monthlyResets[monthYear] || 0) + 1;
-      });
+      
+      if (resetDates.length > 0) {
+        const firstDate = new Date(Math.min(...resetDates.map(d => d.getTime())));
+        const allMonths = getMonthsBetween(firstDate, now);
+        
+        // Initialize all months with zero
+        allMonths.forEach(month => {
+          monthlyResets[month] = 0;
+        });
+
+        // Count resets for each month
+        resetDates.forEach(date => {
+          const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          monthlyResets[monthYear] = (monthlyResets[monthYear] || 0) + 1;
+        });
+      }
 
       // Calculate improvement trends (comparing last 3 months)
-      const monthKeys = Object.keys(monthlyResets).sort();
+      const monthKeys = Object.keys(monthlyResets).sort((a, b) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
       const lastMonth = monthlyResets[monthKeys[monthKeys.length - 1]] || 0;
       const previousMonth = monthlyResets[monthKeys[monthKeys.length - 2]] || 0;
       const twoMonthsAgo = monthlyResets[monthKeys[monthKeys.length - 3]] || 0;
       
-      const shortTermImprovement = previousMonth 
-        ? ((previousMonth - lastMonth) / previousMonth) * 100 
-        : (lastMonth === 0 ? 100 : 0);
+      // Invert improvement calculation (fewer resets is better)
+      const shortTermImprovement = previousMonth !== 0
+        ? ((lastMonth - previousMonth) / previousMonth) * -100 // Invert the percentage
+        : (lastMonth === 0 ? 100 : -100);
       
-      const longTermImprovement = twoMonthsAgo 
-        ? ((twoMonthsAgo - lastMonth) / twoMonthsAgo) * 100 
-        : (lastMonth === 0 ? 100 : 0);
+      const longTermImprovement = twoMonthsAgo !== 0
+        ? ((lastMonth - twoMonthsAgo) / twoMonthsAgo) * -100 // Invert the percentage
+        : (lastMonth === 0 ? 100 : -100);
 
-      // Calculate success rate (percentage of days without resets)
+      // Calculate success rate
       const firstReset = resetDates[0];
       const totalDays = firstReset 
         ? Math.max(Math.floor((now.getTime() - firstReset.getTime()) / (1000 * 60 * 60 * 24)), 1)
-        : 1;
+        : currentStreakDays || 1;
       const successRate = Math.min(((totalDays - totalResets) / totalDays) * 100, 100);
 
       // Calculate streak consistency
       const avgStreak = streaks.length > 0 
         ? streaks.reduce((a, b) => a + b, 0) / streaks.length 
-        : 0;
+        : currentStreakDays;
       
       const streakVariance = streaks.length > 0
         ? streaks.reduce((a, b) => a + Math.pow(b - avgStreak, 2), 0) / streaks.length
         : 0;
       
+      // Adjust consistency calculation (lower variance means higher consistency)
       const streakConsistency = avgStreak > 0 
-        ? Math.min(100 - (Math.sqrt(streakVariance) / avgStreak * 100), 100) 
+        ? Math.max(0, Math.min(100, 100 - (Math.sqrt(streakVariance) / avgStreak * 50)))
         : 100;
 
       return {
         name: habit.name,
         totalResets,
         avgDaysBetweenResets,
-        currentStreak,
+        currentStreak: currentStreakDays,
         longestStreak,
         monthlyResets: Object.entries(monthlyResets).map(([month, count]) => ({
           month,
@@ -117,10 +150,10 @@ export default function Statistics() {
         shortTermImprovement,
         longTermImprovement,
         successRate: Math.round(Math.max(0, successRate)),
-        streakConsistency: Math.round(Math.max(0, streakConsistency)),
+        streakConsistency: Math.round(streakConsistency),
         trendScore: Math.round(
-          (shortTermImprovement * 0.4) +
-          (longTermImprovement * 0.3) +
+          (Math.max(-100, Math.min(100, shortTermImprovement)) * 0.4) +
+          (Math.max(-100, Math.min(100, longTermImprovement)) * 0.3) +
           (successRate * 0.2) +
           (streakConsistency * 0.1)
         ),
@@ -137,9 +170,9 @@ export default function Statistics() {
   // Find most consistent habit
   const mostConsistent = stats.reduce((prev, current) => 
     (current.streakConsistency > prev.streakConsistency) ? current : prev
-  , { name: '', streakConsistency: -1 });
+  , stats[0] || { name: '', streakConsistency: 0 });
 
-  // Calculate overall improvement
+  // Calculate overall improvement (fewer resets is better)
   const overallImprovement = stats.length > 0
     ? stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length
     : 0;
