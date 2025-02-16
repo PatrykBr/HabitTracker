@@ -129,52 +129,82 @@ export function useHabits() {
         resetTime: resetTime.toISOString()
       });
 
-      // 1. First, fetch ALL resets for this habit
-      const { data: allResets, error: fetchError } = await supabase
+      // 1. Get the exact timestamp from database first
+      const { data: exactResets, error: precisionError } = await supabase
         .from('habit_resets')
         .select('reset_time')
         .eq('habit_id', habitId)
+        .gte('reset_time', resetTime.toISOString().slice(0, -1))
+        .lt('reset_time', new Date(resetTime.getTime() + 1000).toISOString().slice(0, -1))
+        .single();
+
+      if (precisionError) {
+        console.error('Error finding exact reset:', precisionError);
+        throw precisionError;
+      }
+
+      if (!exactResets) {
+        throw new Error('Reset not found with exact timestamp');
+      }
+
+      const exactTimestamp = exactResets.reset_time;
+      console.log('Found exact timestamp:', exactTimestamp);
+
+      // 2. Check if this is the latest reset
+      const { data: laterResets, error: checkError } = await supabase
+        .from('habit_resets')
+        .select('reset_time')
+        .eq('habit_id', habitId)
+        .gt('reset_time', exactTimestamp)
         .order('reset_time', { ascending: false });
 
-      if (fetchError) {
-        console.error('Error fetching resets:', fetchError);
-        throw fetchError;
+      if (checkError) {
+        console.error('Error checking for later resets:', checkError);
+        throw checkError;
       }
 
-      if (!allResets || allResets.length === 0) {
-        throw new Error('No resets found for habit');
+      const isLatestReset = !laterResets || laterResets.length === 0;
+      console.log('Is latest reset:', isLatestReset);
+
+      // 3. If it's the latest, find the next latest reset
+      let nextLatestReset: string | null = null;
+      if (isLatestReset) {
+        const { data: previousReset, error: prevError } = await supabase
+          .from('habit_resets')
+          .select('reset_time')
+          .eq('habit_id', habitId)
+          .lt('reset_time', exactTimestamp)
+          .order('reset_time', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (prevError && prevError.code !== 'PGRST116') { // Ignore "no rows returned" error
+          console.error('Error finding previous reset:', prevError);
+          throw prevError;
+        }
+
+        nextLatestReset = previousReset?.reset_time || null;
+        console.log('Next latest reset:', nextLatestReset || 'none');
       }
 
-      // 2. Find the next latest reset (excluding the one we're deleting)
-      const targetTimestamp = resetTime.toISOString();
-      const nextLatestReset = allResets
-        .filter(reset => reset.reset_time !== targetTimestamp)
-        .at(0);
-
-      console.log('Current resets:', allResets.map(r => r.reset_time));
-      console.log('Target timestamp:', targetTimestamp);
-      console.log('Next latest reset:', nextLatestReset?.reset_time || 'none');
-
-      // 3. Delete the reset entry
+      // 4. Delete the reset
       const { error: deleteError } = await supabase
         .from('habit_resets')
         .delete()
         .eq('habit_id', habitId)
-        .eq('reset_time', targetTimestamp);
+        .eq('reset_time', exactTimestamp);
 
       if (deleteError) {
         console.error('Error deleting reset:', deleteError);
         throw deleteError;
       }
 
-      // 4. Update the habit's last_reset if needed
-      const isLatestReset = allResets[0].reset_time === targetTimestamp;
-      
+      // 5. Update last_reset if needed
       if (isLatestReset) {
         const { error: updateError } = await supabase
           .from('habits')
           .update({
-            last_reset: nextLatestReset?.reset_time || new Date(0).toISOString()
+            last_reset: nextLatestReset || new Date(0).toISOString()
           })
           .eq('id', habitId);
 
@@ -183,7 +213,7 @@ export function useHabits() {
           throw updateError;
         }
 
-        console.log('Updated last_reset to:', nextLatestReset?.reset_time || 'epoch');
+        console.log('Updated last_reset to:', nextLatestReset || 'epoch');
       } else {
         console.log('Not the latest reset - no need to update last_reset');
       }
