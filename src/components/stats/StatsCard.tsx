@@ -30,6 +30,10 @@ export function StatsCard({ title, icon, value, description, trend, className, e
     }
   };
 
+  const formattedValue = typeof value === 'number' 
+    ? `${Math.round(value)}${title === "Overall Progress" ? "%" : ""}`
+    : value;
+
   return (
     <Card className={cn(
       "bg-white/50 backdrop-blur-sm border border-gray-100", 
@@ -46,7 +50,7 @@ export function StatsCard({ title, icon, value, description, trend, className, e
       <CardContent>
         <div className="space-y-2">
           <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-            {value}
+            {formattedValue}
           </p>
           <p className="text-sm text-gray-500">
             {description}
