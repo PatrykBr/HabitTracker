@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -125,25 +126,35 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      // Instead of using string comparison, use date range query
+      const startTime = new Date(resetTime.getTime());
+      const endTime = new Date(resetTime.getTime() + 999); // Add 999ms to cover potential microsecond differences
+
       const { data: resets, error: fetchError } = await supabase
+        .from('habit_resets')
+        .select('reset_time')
+        .eq('habit_id', habitId)
+        .gte('reset_time', startTime.toISOString())
+        .lt('reset_time', endTime.toISOString())
+        .order('reset_time', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      if (!resets?.length) throw new Error('Reset not found in the specified time range');
+
+      // Get all resets to determine if this is the latest
+      const { data: allResets, error: allResetsError } = await supabase
         .from('habit_resets')
         .select('reset_time')
         .eq('habit_id', habitId)
         .order('reset_time', { ascending: false });
 
-      if (fetchError) throw fetchError;
-      if (!resets?.length) throw new Error('No resets found');
+      if (allResetsError) throw allResetsError;
+      if (!allResets?.length) throw new Error('No resets found');
 
-      const targetTimestamp = resetTime.toISOString().slice(0, -1);
-      const exactReset = resets.find(reset => 
-        reset.reset_time.startsWith(targetTimestamp)
-      );
-
-      if (!exactReset) throw new Error('Reset not found');
-
-      const isLatestReset = resets[0].reset_time === exactReset.reset_time;
-      const nextLatestReset = isLatestReset 
-        ? resets[1]?.reset_time 
+      const targetReset = resets[0]; // Use the first match in our time range
+      const isLatestReset = allResets[0].reset_time === targetReset.reset_time;
+      const nextLatestReset = isLatestReset && allResets.length > 1 
+        ? allResets[1].reset_time 
         : null;
 
       // Delete the reset
@@ -151,7 +162,7 @@ export function useHabits() {
         .from('habit_resets')
         .delete()
         .eq('habit_id', habitId)
-        .eq('reset_time', exactReset.reset_time);
+        .eq('reset_time', targetReset.reset_time);
 
       if (deleteError) throw deleteError;
 
