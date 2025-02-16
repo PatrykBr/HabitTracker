@@ -23,12 +23,12 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/50 to-white">
-      <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/50 to-white overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
               Habit Tracker
             </h1>
           </div>
@@ -53,34 +53,34 @@ export default function Index() {
         </div>
 
         {/* Add Habit Form */}
-        <Card className="p-4 shadow-sm border-0 bg-white/80 backdrop-blur-sm">
-          <form onSubmit={handleAddHabit} className="flex gap-3">
+        <Card className="p-3 sm:p-4 shadow-sm border-0 bg-white/80 backdrop-blur-sm">
+          <form onSubmit={handleAddHabit} className="flex gap-2 sm:gap-3">
             <Input
               type="text"
               value={newHabitName}
               onChange={(e) => setNewHabitName(e.target.value)}
               placeholder="What habit would you like to track?"
-              className="flex-1 bg-white/50 border-secondary focus-visible:ring-primary"
+              className="flex-1 bg-white/50 border-secondary focus-visible:ring-primary text-sm sm:text-base"
             />
             <Button 
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-white shrink-0"
             >
-              <Plus className="h-5 w-5 mr-1" />
-              Add
+              <Plus className="h-5 w-5 sm:mr-1" />
+              <span className="hidden sm:inline">Add</span>
             </Button>
           </form>
         </Card>
 
-        {/* Achievements Section with improved visibility */}
+        {/* Achievements Section */}
         <div className="rounded-lg overflow-hidden">
           <Achievements />
         </div>
 
-        {/* Habits Grid with responsive layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+        {/* Habits Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {habits.length === 0 ? (
-            <Card className="col-span-full p-8 text-center bg-white/80 backdrop-blur-sm border-dashed border-2 border-secondary">
+            <Card className="col-span-full p-6 sm:p-8 text-center bg-white/80 backdrop-blur-sm border-dashed border-2 border-secondary">
               <p className="text-muted-foreground">
                 Start by adding your first habit above! 🌟
               </p>

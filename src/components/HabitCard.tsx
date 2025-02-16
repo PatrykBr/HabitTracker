@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,15 +38,15 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
 
   return (
     <>
-      <Card className="group h-full p-5 backdrop-blur-sm bg-white/90 hover:bg-white/95 transition-all duration-300 animate-fade-in border-0 shadow-sm hover:shadow-md">
-        <div className="flex flex-col gap-4 h-full">
+      <Card className="group h-full p-3 sm:p-5 backdrop-blur-sm bg-white/90 hover:bg-white/95 transition-all duration-300 animate-fade-in border-0 shadow-sm hover:shadow-md">
+        <div className="flex flex-col gap-3 sm:gap-4 h-full">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">{habit.name}</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 line-clamp-2">{habit.name}</h3>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => setShowHistory(true)}
-              className="opacity-70 group-hover:opacity-100 transition-opacity"
+              className="opacity-70 group-hover:opacity-100 transition-opacity -mr-2"
             >
               <History className="h-4 w-4" />
             </Button>
@@ -71,7 +70,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Card>
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-32px)] sm:w-[600px] max-h-[80vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <div className="flex justify-between items-center mb-4">
               <DialogTitle>History for "{habit.name}"</DialogTitle>
@@ -115,7 +114,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   selected={resetDays}
                   footer={`${resetDays.length} resets total`}
                   classNames={{
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                     day_today: "bg-accent text-accent-foreground",
                   }}
                 />
@@ -145,7 +144,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Dialog>
 
       <Dialog open={showAddReset} onOpenChange={setShowAddReset}>
-        <DialogContent className="sm:max-w-[425px] w-[95vw]">
+        <DialogContent className="w-[calc(100vw-32px)] sm:w-[425px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>
