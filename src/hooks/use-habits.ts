@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Habit {
   id: string;
@@ -15,6 +15,7 @@ type HabitResetRow = Database['public']['Tables']['habit_resets']['Row'];
 
 export function useHabits() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: habits = [], isLoading } = useQuery({
     queryKey: ['habits'],
@@ -124,82 +125,37 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
-      console.log('Starting reset removal:', {
-        habitId,
-        resetTime: resetTime.toISOString()
-      });
-
-      // 1. Get the exact timestamp from database first
-      const { data: exactResets, error: precisionError } = await supabase
+      const { data: resets, error: fetchError } = await supabase
         .from('habit_resets')
         .select('reset_time')
         .eq('habit_id', habitId)
-        .gte('reset_time', resetTime.toISOString().slice(0, -1))
-        .lt('reset_time', new Date(resetTime.getTime() + 1000).toISOString().slice(0, -1))
-        .single();
-
-      if (precisionError) {
-        console.error('Error finding exact reset:', precisionError);
-        throw precisionError;
-      }
-
-      if (!exactResets) {
-        throw new Error('Reset not found with exact timestamp');
-      }
-
-      const exactTimestamp = exactResets.reset_time;
-      console.log('Found exact timestamp:', exactTimestamp);
-
-      // 2. Check if this is the latest reset
-      const { data: laterResets, error: checkError } = await supabase
-        .from('habit_resets')
-        .select('reset_time')
-        .eq('habit_id', habitId)
-        .gt('reset_time', exactTimestamp)
         .order('reset_time', { ascending: false });
 
-      if (checkError) {
-        console.error('Error checking for later resets:', checkError);
-        throw checkError;
-      }
+      if (fetchError) throw fetchError;
+      if (!resets?.length) throw new Error('No resets found');
 
-      const isLatestReset = !laterResets || laterResets.length === 0;
-      console.log('Is latest reset:', isLatestReset);
+      const targetTimestamp = resetTime.toISOString().slice(0, -1);
+      const exactReset = resets.find(reset => 
+        reset.reset_time.startsWith(targetTimestamp)
+      );
 
-      // 3. If it's the latest, find the next latest reset
-      let nextLatestReset: string | null = null;
-      if (isLatestReset) {
-        const { data: previousReset, error: prevError } = await supabase
-          .from('habit_resets')
-          .select('reset_time')
-          .eq('habit_id', habitId)
-          .lt('reset_time', exactTimestamp)
-          .order('reset_time', { ascending: false })
-          .limit(1)
-          .single();
+      if (!exactReset) throw new Error('Reset not found');
 
-        if (prevError && prevError.code !== 'PGRST116') { // Ignore "no rows returned" error
-          console.error('Error finding previous reset:', prevError);
-          throw prevError;
-        }
+      const isLatestReset = resets[0].reset_time === exactReset.reset_time;
+      const nextLatestReset = isLatestReset 
+        ? resets[1]?.reset_time 
+        : null;
 
-        nextLatestReset = previousReset?.reset_time || null;
-        console.log('Next latest reset:', nextLatestReset || 'none');
-      }
-
-      // 4. Delete the reset
+      // Delete the reset
       const { error: deleteError } = await supabase
         .from('habit_resets')
         .delete()
         .eq('habit_id', habitId)
-        .eq('reset_time', exactTimestamp);
+        .eq('reset_time', exactReset.reset_time);
 
-      if (deleteError) {
-        console.error('Error deleting reset:', deleteError);
-        throw deleteError;
-      }
+      if (deleteError) throw deleteError;
 
-      // 5. Update last_reset if needed
+      // Update last_reset if needed
       if (isLatestReset) {
         const { error: updateError } = await supabase
           .from('habits')
@@ -208,21 +164,23 @@ export function useHabits() {
           })
           .eq('id', habitId);
 
-        if (updateError) {
-          console.error('Error updating habit last reset:', updateError);
-          throw updateError;
-        }
-
-        console.log('Updated last_reset to:', nextLatestReset || 'epoch');
-      } else {
-        console.log('Not the latest reset - no need to update last_reset');
+        if (updateError) throw updateError;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      toast({
+        title: "Reset removed",
+        description: "The habit reset has been successfully removed.",
+      });
     },
-    onError: (error) => {
-      console.error('Mutation error:', error);
+    onError: (error: Error) => {
+      console.error('Reset removal error:', error);
+      toast({
+        title: "Error removing reset",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
