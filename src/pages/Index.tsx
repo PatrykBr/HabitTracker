@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useHabits } from '@/hooks/use-habits';
 import { HabitCard } from '@/components/HabitCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -13,6 +14,7 @@ const Index = () => {
   const [newHabitName, setNewHabitName] = useState('');
   const { habits, addHabit, resetHabit, removeReset, deleteHabit, addCustomReset } = useHabits();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleAddHabit = () => {
     if (newHabitName.trim()) {
@@ -31,10 +33,15 @@ const Index = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Habit Tracker</h1>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Habit
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Habit
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => navigate('/settings')}>
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -68,7 +75,7 @@ const Index = () => {
         </div>
 
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Habit</DialogTitle>
             </DialogHeader>
