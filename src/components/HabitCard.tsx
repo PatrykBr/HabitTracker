@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { formatTimeSince } from '@/utils/format-time';
-import { Clock, RotateCcw, History, Plus, CalendarDays, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, RotateCcw, History, Plus, CalendarDays, List } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { Habit } from '@/hooks/use-habits';
 import 'react-day-picker/dist/style.css';
-import { addDays, subDays, startOfDay, format } from 'date-fns';
+import { format } from 'date-fns';
 
 interface HabitCardProps {
   habit: Habit;
@@ -24,14 +24,6 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState(format(new Date(), 'HH:mm'));
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
-
-  const handleQuickReset = (daysAgo: number) => {
-    if (onAddCustomReset) {
-      const date = subDays(startOfDay(new Date()), daysAgo);
-      onAddCustomReset(date);
-      setShowAddReset(false);
-    }
-  };
 
   const handleAddCustomReset = () => {
     if (selectedDate && selectedTime && onAddCustomReset) {
@@ -142,65 +134,35 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       <Dialog open={showAddReset} onOpenChange={setShowAddReset}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add Custom Reset Time</DialogTitle>
+            <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            {/* Quick Reset Options */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Quick Add</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuickReset(0)}
-                  className="w-full"
-                >
-                  Today
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuickReset(1)}
-                  className="w-full"
-                >
-                  Yesterday
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuickReset(2)}
-                  className="w-full"
-                >
-                  2 Days Ago
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuickReset(3)}
-                  className="w-full"
-                >
-                  3 Days Ago
-                </Button>
+            <div className="space-y-4">
+              <div className="flex justify-center bg-secondary/30 rounded-lg p-4">
+                <DayPicker
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                />
               </div>
-            </div>
-
-            {/* Custom Date/Time Picker */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Custom Date & Time</h4>
-              <div className="flex flex-col space-y-4">
-                <div className="flex justify-center bg-secondary/30 rounded-lg p-4">
-                  <DayPicker
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    initialFocus
-                  />
-                </div>
+              <div className="space-y-2">
+                <label htmlFor="time" className="text-sm font-medium">
+                  Time
+                </label>
                 <Input
+                  id="time"
                   type="time"
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
                 />
-                <Button onClick={handleAddCustomReset}>
-                  Add Custom Reset
-                </Button>
               </div>
+              <Button 
+                className="w-full"
+                onClick={handleAddCustomReset}
+              >
+                Add Custom Reset
+              </Button>
             </div>
           </div>
         </DialogContent>
