@@ -15,6 +15,8 @@ export const getWeeklyDistribution = (resets: Date[]) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const distribution = days.map(day => ({ name: day, count: 0 }));
   
+  if (!resets || resets.length === 0) return [];
+
   resets.forEach(date => {
     const dayIndex = new Date(date).getDay();
     distribution[dayIndex].count++;
@@ -24,7 +26,7 @@ export const getWeeklyDistribution = (resets: Date[]) => {
 };
 
 export const getStreakDistribution = (selectedHabit: any, stat: any) => {
-  if (!stat || !selectedHabit) return [];
+  if (!stat) return [];
   
   const ranges = [
     { name: '1-7 days', min: 1, max: 7, count: 0 },
@@ -33,17 +35,31 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
     { name: '31+ days', min: 31, max: Infinity, count: 0 }
   ];
 
-  const sortedResets = [...selectedHabit.resets].sort((a, b) => a.getTime() - b.getTime());
-  const streaks: number[] = [];
+  let streaks: number[] = [];
   
-  for (let i = 0; i < sortedResets.length - 1; i++) {
-    const streakDays = Math.floor(
-      (sortedResets[i + 1].getTime() - sortedResets[i].getTime()) / (1000 * 60 * 60 * 24)
-    );
-    streaks.push(streakDays);
+  if (selectedHabit) {
+    // Single habit case
+    const sortedResets = [...selectedHabit.resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    for (let i = 0; i < sortedResets.length - 1; i++) {
+      const streakDays = Math.floor(
+        (new Date(sortedResets[i + 1]).getTime() - new Date(sortedResets[i]).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      streaks.push(streakDays);
+    }
+    streaks.push(stat.currentStreak);
+  } else {
+    // "All" habits case - combine streaks from all habits
+    const allHabits = stat.name === 'All Habits' ? stat : [stat];
+    allHabits.forEach(habit => {
+      const habitStreaks = habit.resets.map((reset: Date, index: number, arr: Date[]) => {
+        if (index === arr.length - 1) return habit.currentStreak;
+        return Math.floor(
+          (new Date(arr[index + 1]).getTime() - new Date(reset).getTime()) / (1000 * 60 * 60 * 24)
+        );
+      });
+      streaks = [...streaks, ...habitStreaks];
+    });
   }
-
-  streaks.push(stat.currentStreak);
 
   streaks.forEach(streakDays => {
     const range = ranges.find(r => streakDays >= r.min && streakDays <= r.max);
