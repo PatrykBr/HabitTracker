@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, BarChart2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHabits } from "@/hooks/use-habits";
-import HabitCard from "@/components/HabitCard";
+import { HabitCard } from "@/components/HabitCard";
 import { Input } from "@/components/ui/input";
 import { Achievements } from "@/components/Achievements";
 
