@@ -255,7 +255,7 @@ export default function Statistics() {
     }));
   };
 
-  const getStreakDistribution = (stat: typeof selectedStat) => {
+  const getStreakDistribution = (stat: typeof selectedStats) => {
     if (!stat || !selectedHabit) return [];
     
     const ranges = [
@@ -287,7 +287,7 @@ export default function Statistics() {
     return ranges.filter(range => range.count > 0);
   };
 
-  const getTrendIndicator = (stat: typeof selectedStat) => {
+  const getTrendIndicator = (stat: typeof selectedStats) => {
     if (!stat) return null;
     const improvement = stat.shortTermImprovement;
     if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Significantly Fewer Resets", color: "text-green-600" };
@@ -296,7 +296,7 @@ export default function Statistics() {
     return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "High Reset Frequency", color: "text-red-600" };
   };
 
-  const getSuccessRate = (stat: typeof selectedStat) => {
+  const getSuccessRate = (stat: typeof selectedStats) => {
     if (!stat) return { rate: 0, quality: "" };
     const rate = stat.successRate;
     if (rate >= 90) return { rate, quality: "Exceptional Control" };
