@@ -1,4 +1,3 @@
-
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,12 +10,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   BarChart as RechartsBarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   LineChart,
   Line,
@@ -337,7 +342,16 @@ export default function Statistics() {
                         <div className="flex items-center gap-2">
                           {stat.name}
                           {stat.hasImprovedPattern && (
-                            <Flame className="h-4 w-4 text-orange-500" title="Improving pattern detected!" />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Flame className="h-4 w-4 text-orange-500" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Improving pattern detected!</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </td>
@@ -345,7 +359,16 @@ export default function Statistics() {
                         <div className="flex items-center gap-2">
                           {stat.currentStreak} days
                           {stat.progressIndicators.isOnLongestStreak && (
-                            <Trophy className="h-4 w-4 text-yellow-500" title="Personal best!" />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Trophy className="h-4 w-4 text-yellow-500" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Personal best!</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </td>
@@ -354,7 +377,16 @@ export default function Statistics() {
                         <div className="flex items-center gap-2">
                           {stat.streakConsistency}%
                           {stat.progressIndicators.isConsistent && (
-                            <Timer className="h-4 w-4 text-blue-500" title="Highly consistent!" />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Timer className="h-4 w-4 text-blue-500" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Highly consistent!</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </td>
