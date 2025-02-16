@@ -9,7 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      habit_resets: {
+        Row: {
+          created_at: string
+          habit_id: string | null
+          id: string
+          reset_time: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id?: string | null
+          id?: string
+          reset_time?: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string | null
+          id?: string
+          reset_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_resets_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string
+          id: string
+          last_reset: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reset?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reset?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
