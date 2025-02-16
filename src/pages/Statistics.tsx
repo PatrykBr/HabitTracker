@@ -118,10 +118,10 @@ export default function Statistics() {
   const bestStreak = Math.max(...stats.map(s => s.currentStreak));
   const bestStreakHabit = stats.find(s => s.currentStreak === bestStreak);
 
-  // Find most consistent habit
+  // Find most consistent habit - Fix: Add name to the initial value
   const mostConsistent = stats.reduce((prev, current) => 
     (current.streakConsistency > prev.streakConsistency) ? current : prev
-  , { streakConsistency: -1 });
+  , { name: '', streakConsistency: -1 });
 
   // Calculate overall improvement
   const overallImprovement = stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length;
