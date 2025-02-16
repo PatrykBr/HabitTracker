@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,11 +71,11 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Card>
 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="w-[calc(100vw-32px)] sm:w-[600px] max-h-[80vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <div className="flex justify-between items-center mb-4">
+        <DialogContent className="w-[calc(100vw-32px)] sm:w-[600px] max-h-[calc(100vh-64px)] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="p-4 border-b">
+            <div className="flex flex-col gap-3">
               <DialogTitle>History for "{habit.name}"</DialogTitle>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -93,20 +94,20 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   <List className="h-4 w-4 mr-2" />
                   List
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() => setShowAddReset(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Reset
+                </Button>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <Button
-              variant="outline"
-              className="w-full hover:bg-secondary/50"
-              onClick={() => setShowAddReset(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Custom Reset
-            </Button>
-
+          <div className="flex-1 overflow-y-auto p-4">
             {viewMode === 'calendar' ? (
               <div className="flex justify-center p-4 bg-secondary/30 rounded-lg">
                 <DayPicker
@@ -116,22 +117,24 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   classNames={{
                     day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                     day_today: "bg-accent text-accent-foreground",
+                    head_cell: "text-xs sm:text-sm",
+                    caption: "text-sm sm:text-base",
                   }}
                 />
               </div>
             ) : (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              <div className="space-y-2">
                 {habit.resets.map((reset, index) => (
                   <div 
                     key={index} 
                     className="flex justify-between items-center p-3 rounded bg-secondary/50 hover:bg-secondary transition-colors"
                   >
-                    <span className="text-sm">{new Date(reset).toLocaleString()}</span>
+                    <span className="text-xs sm:text-sm">{new Date(reset).toLocaleString()}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onDeleteReset(index)}
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -144,39 +147,41 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Dialog>
 
       <Dialog open={showAddReset} onOpenChange={setShowAddReset}>
-        <DialogContent className="w-[calc(100vw-32px)] sm:w-[425px] p-4 sm:p-6">
+        <DialogContent className="w-[calc(100vw-32px)] sm:w-[425px] max-h-[calc(100vh-64px)] overflow-y-auto p-4">
           <DialogHeader>
             <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex justify-center bg-secondary/30 rounded-lg p-4">
-                <DayPicker
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  initialFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="time" className="text-sm font-medium">
-                  Time
-                </label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-white/50"
-                />
-              </div>
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90 text-white"
-                onClick={handleAddCustomReset}
-              >
-                Add Custom Reset
-              </Button>
+          <div className="space-y-4">
+            <div className="flex justify-center bg-secondary/30 rounded-lg p-4">
+              <DayPicker
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                classNames={{
+                  head_cell: "text-xs sm:text-sm",
+                  caption: "text-sm sm:text-base",
+                }}
+              />
             </div>
+            <div className="space-y-2">
+              <label htmlFor="time" className="text-sm font-medium">
+                Time
+              </label>
+              <Input
+                id="time"
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="bg-white/50"
+              />
+            </div>
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90 text-white"
+              onClick={handleAddCustomReset}
+            >
+              Add Custom Reset
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
