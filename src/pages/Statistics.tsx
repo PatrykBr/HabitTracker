@@ -76,9 +76,9 @@ export default function Statistics() {
 
   if (habits.length === 0) {
     return (
-      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-secondary to-white">
-        <div className="max-w-7xl mx-auto">
-          <Card className="shadow-lg">
+      <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6">
+          <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20">
             <CardContent className="p-8">
               <p className="text-center text-gray-500">No habits found. Add some habits to see statistics.</p>
             </CardContent>
@@ -89,8 +89,16 @@ export default function Statistics() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/50 to-white">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" 
+             style={{ transform: 'translate(20%, -20%)' }} />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"
+             style={{ transform: 'translate(-20%, 20%)' }} />
+      </div>
+
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         <StatsHeader
           habits={habits}
           selectedHabitId={selectedHabitId}

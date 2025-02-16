@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
+import { create } from "zustand";
 
 export interface Habit {
   id: string;
@@ -13,6 +13,13 @@ export interface Habit {
 
 type HabitRow = Database['public']['Tables']['habits']['Row'];
 type HabitResetRow = Database['public']['Tables']['habit_resets']['Row'];
+
+export interface HabitType {
+  id: string;
+  name: string;
+  resets: string[];
+  createdAt: string;
+}
 
 export function useHabits() {
   const queryClient = useQueryClient();

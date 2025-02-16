@@ -36,8 +36,9 @@ export function StatsCard({ title, icon, value, description, trend, className, e
 
   return (
     <Card className={cn(
-      "bg-white/50 backdrop-blur-sm border border-gray-100", 
-      "transition-all duration-200",
+      "bg-white/90 backdrop-blur-sm border border-purple-100", 
+      "shadow-lg shadow-purple-100/20 hover:shadow-purple-100/30",
+      "transition-all duration-300",
       className
     )}>
       <CardHeader className="pb-2">
@@ -49,10 +50,10 @@ export function StatsCard({ title, icon, value, description, trend, className, e
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-primary to-blue-600 bg-clip-text text-transparent">
             {formattedValue}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-purple-400">
             {description}
           </p>
           {trend && (
