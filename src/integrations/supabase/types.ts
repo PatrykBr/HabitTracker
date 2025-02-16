@@ -11,17 +11,20 @@ export type Database = {
     Tables: {
       habit_resets: {
         Row: {
-          habit_id: string
+          created_at: string
+          habit_id: string | null
           id: string
           reset_time: string
         }
         Insert: {
-          habit_id: string
+          created_at?: string
+          habit_id?: string | null
           id?: string
           reset_time?: string
         }
         Update: {
-          habit_id?: string
+          created_at?: string
+          habit_id?: string | null
           id?: string
           reset_time?: string
         }
