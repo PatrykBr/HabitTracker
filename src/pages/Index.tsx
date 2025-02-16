@@ -1,16 +1,22 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, BarChart2, Settings } from "lucide-react";
+import { Plus, BarChart2, Settings, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHabits } from "@/hooks/use-habits";
 import { HabitCard } from "@/components/HabitCard";
 import { Input } from "@/components/ui/input";
 import { Achievements } from "@/components/Achievements";
 import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export default function Index() {
   const [newHabitName, setNewHabitName] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const { habits, addHabit, resetHabit, deleteHabit } = useHabits();
   const navigate = useNavigate();
 
@@ -72,11 +78,6 @@ export default function Index() {
           </form>
         </Card>
 
-        {/* Achievements Section */}
-        <div className="rounded-lg overflow-hidden">
-          <Achievements />
-        </div>
-
         {/* Habits Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {habits.length === 0 ? (
@@ -98,6 +99,28 @@ export default function Index() {
             ))
           )}
         </div>
+
+        {/* Collapsible Achievements Section */}
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className="rounded-lg overflow-hidden bg-white/80 backdrop-blur-sm border shadow-sm"
+        >
+          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              <span className="font-semibold">View Achievements</span>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {isOpen ? "Hide" : "Show"}
+            </span>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="p-4 pt-0">
+              <Achievements />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );
