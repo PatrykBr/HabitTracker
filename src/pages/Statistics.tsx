@@ -2,7 +2,7 @@ import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, BarChart, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, BarChart as BarChartIcon, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  BarChart as RechartsBarChart,
+  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -267,7 +267,7 @@ export default function Statistics() {
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BarChart className="h-6 w-6" />
+            <BarChartIcon className="h-6 w-6" />
             <h1 className="text-2xl font-bold">Habit Analysis</h1>
           </div>
           <div className="flex items-center gap-4">
@@ -377,12 +377,12 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {successRateData.length > 0 ? (
+                    {successRateData.length > 0 && (
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={successRateData}>
+                        <LineChart data={successRateData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
-                          <YAxis />
+                          <YAxis domain={[0, 100]} />
                           <RechartsTooltip />
                           <Line 
                             type="monotone" 
@@ -393,7 +393,8 @@ export default function Statistics() {
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                    ) : (
+                    )}
+                    {successRateData.length === 0 && (
                       <div className="h-full flex items-center justify-center text-gray-500">
                         No data available
                       </div>
@@ -410,21 +411,22 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {weeklyData.length > 0 ? (
+                    {weeklyData.length > 0 && (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={weeklyData}>
+                        <BarChart data={weeklyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
-                          <YAxis />
+                          <YAxis allowDecimals={false} />
                           <RechartsTooltip />
                           <Bar dataKey="count" fill="#8884d8">
-                            {weeklyData.map((entry, index) => (
+                            {weeklyData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
-                    ) : (
+                    )}
+                    {weeklyData.length === 0 && (
                       <div className="h-full flex items-center justify-center text-gray-500">
                         No data available
                       </div>
@@ -441,9 +443,9 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {streakDistributionData.length > 0 ? (
+                    {streakDistributionData.length > 0 && (
                       <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
+                        <PieChart margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <Pie
                             data={streakDistributionData}
                             cx="50%"
@@ -454,14 +456,15 @@ export default function Statistics() {
                             fill="#8884d8"
                             dataKey="count"
                           >
-                            {streakDistributionData.map((entry, index) => (
+                            {streakDistributionData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
                           <RechartsTooltip />
                         </PieChart>
                       </ResponsiveContainer>
-                    ) : (
+                    )}
+                    {streakDistributionData.length === 0 && (
                       <div className="h-full flex items-center justify-center text-gray-500">
                         No data available
                       </div>
