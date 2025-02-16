@@ -1,5 +1,6 @@
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, BarChart, Award, ArrowUp, ArrowDown, Calendar, Trophy, Timer, Target, Sparkles, Flame, TrendingUp, AlertTriangle } from 'lucide-react';
 import {
@@ -9,6 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -27,12 +35,16 @@ import {
   Line,
   Legend,
   AreaChart,
-  Area
+  Area,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 
 export default function Statistics() {
   const { habits } = useHabits();
   const navigate = useNavigate();
+  const [selectedHabitId, setSelectedHabitId] = useState<string>(habits[0]?.id || '');
 
   const calculateStats = () => {
     const now = new Date();
@@ -188,235 +200,298 @@ export default function Statistics() {
   };
 
   const stats = calculateStats();
+  const selectedStat = stats.find(s => s.name === habits.find(h => h.id === selectedHabitId)?.name);
+  
+  const getWeeklyDistribution = (resets: Date[]) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const distribution = days.map(day => ({ name: day, count: 0 }));
+    
+    resets.forEach(date => {
+      const dayIndex = new Date(date).getDay();
+      distribution[dayIndex].count++;
+    });
+    
+    return distribution;
+  };
 
-  // Enhanced insights
-  const bestStreak = Math.max(...stats.map(s => s.currentStreak), 0);
-  const bestStreakHabit = stats.find(s => s.currentStreak === bestStreak);
+  const getSuccessRateOverTime = (monthlyResets: { month: string, count: number }[]) => {
+    return monthlyResets.map(month => ({
+      ...month,
+      successRate: Math.max(0, 100 - (month.count * 20)) // Simple conversion of resets to success rate
+    }));
+  };
 
-  const mostConsistent = stats.reduce((prev, current) => 
-    (current.streakConsistency > prev.streakConsistency) ? current : prev
-  , stats[0] || { name: '', streakConsistency: 0 });
+  const getStreakDistribution = (stat: typeof selectedStat) => {
+    if (!stat) return [];
+    
+    const ranges = [
+      { name: '1-7 days', min: 1, max: 7, count: 0 },
+      { name: '8-14 days', min: 8, max: 14, count: 0 },
+      { name: '15-30 days', min: 15, max: 30, count: 0 },
+      { name: '31+ days', min: 31, max: Infinity, count: 0 }
+    ];
 
-  const overallImprovement = stats.length > 0
-    ? stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length
-    : 0;
+    const streakDay = stat.currentStreak;
+    ranges.forEach(range => {
+      if (streakDay >= range.min && streakDay <= range.max) {
+        range.count++;
+      }
+    });
+
+    return ranges;
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BarChart className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Statistics & Insights</h1>
+            <h1 className="text-2xl font-bold">Habit Analysis</h1>
           </div>
-          <Button
-            variant="ghost"
-            className="gap-2"
-            onClick={() => navigate('/')}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Habits
-          </Button>
+          <div className="flex items-center gap-4">
+            <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select a habit" />
+              </SelectTrigger>
+              <SelectContent>
+                {habits.map(habit => (
+                  <SelectItem key={habit.id} value={habit.id}>
+                    {habit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="ghost"
+              className="gap-2"
+              onClick={() => navigate('/')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
         </div>
 
-        {/* Top Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={`bg-gradient-to-br ${bestStreak > 30 ? 'from-green-50' : 'from-blue-50'} to-white`}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className={`h-5 w-5 ${bestStreak > 30 ? 'text-green-600' : 'text-blue-600'}`} />
-                Best Current Streak
-              </CardTitle>
-              <CardDescription>
-                {bestStreakHabit?.name || 'No habits yet'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className={`text-4xl font-bold ${bestStreak > 30 ? 'text-green-600' : 'text-blue-600'}`}>
-                {bestStreak} days
-                {bestStreakHabit?.progressIndicators.isOnLongestStreak && 
-                  <span className="text-sm ml-2">(Personal Best!)</span>
-                }
-              </p>
-            </CardContent>
-          </Card>
+        {selectedStat ? (
+          <>
+            {/* Top Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-blue-50 to-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-blue-600" />
+                    Current Streak
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {selectedStat.currentStreak} days
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedStat.progressIndicators.isOnLongestStreak && "Personal Best!"}
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                Most Consistent
-              </CardTitle>
-              <CardDescription>
-                {mostConsistent.name || 'No habits yet'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-purple-600">
-                {mostConsistent.streakConsistency}% 
-                <span className="text-sm ml-2">stable</span>
-              </p>
-            </CardContent>
-          </Card>
+              <Card className="bg-gradient-to-br from-green-50 to-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-green-600" />
+                    Success Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-600">
+                    {selectedStat.successRate}%
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Overall completion rate
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card className={`bg-gradient-to-br ${overallImprovement > 0 ? 'from-green-50' : 'from-red-50'} to-white`}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {overallImprovement > 0 ? (
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+              <Card className="bg-gradient-to-br from-purple-50 to-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Timer className="h-5 w-5 text-purple-600" />
+                    Consistency
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {selectedStat.streakConsistency}%
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Streak stability score
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-orange-600" />
+                    Trend
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-orange-600">
+                    {Math.abs(Math.round(selectedStat.shortTermImprovement))}%
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedStat.shortTermImprovement > 0 ? 'Improvement' : 'Decline'} vs last month
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Progress Over Time */}
+              <Card className="col-span-2">
+                <CardHeader>
+                  <CardTitle>Progress Over Time</CardTitle>
+                  <CardDescription>Monthly success rate trend</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={getSuccessRateOverTime(selectedStat.monthlyResets)}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <RechartsTooltip />
+                        <Line 
+                          type="monotone" 
+                          dataKey="successRate" 
+                          stroke="#8884d8" 
+                          name="Success Rate"
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Weekly Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Weekly Pattern</CardTitle>
+                  <CardDescription>Reset distribution by day of week</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getWeeklyDistribution(habits.find(h => h.id === selectedHabitId)?.resets || [])}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <RechartsTooltip />
+                        <Bar dataKey="count" fill="#8884d8">
+                          {getWeeklyDistribution(habits.find(h => h.id === selectedHabitId)?.resets || []).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Streak Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Streak Distribution</CardTitle>
+                  <CardDescription>Duration of streaks</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getStreakDistribution(selectedStat)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="count"
+                        >
+                          {getStreakDistribution(selectedStat).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Risk Assessment */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Assessment & Recommendations</CardTitle>
+                <CardDescription>Actionable insights based on your data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className={`p-4 rounded-lg ${
+                  selectedStat.riskLevel === 'low' ? 'bg-green-50' :
+                  selectedStat.riskLevel === 'medium' ? 'bg-yellow-50' :
+                  'bg-red-50'
+                }`}>
+                  <h3 className="font-semibold mb-2">Current Risk Level: {selectedStat.riskLevel.toUpperCase()}</h3>
+                  <p className="text-sm">
+                    {selectedStat.riskLevel === 'low' 
+                      ? "You're doing great! Keep maintaining your current habits."
+                      : selectedStat.riskLevel === 'medium'
+                      ? "Stay vigilant - you're in a sensitive period. Focus on maintaining consistency."
+                      : "High risk of breaking your streak. Consider implementing additional accountability measures."}
+                  </p>
+                </div>
+
+                {selectedStat.hasImprovedPattern && (
+                  <div className="p-4 rounded-lg bg-blue-50">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      Positive Pattern Detected
+                    </h3>
+                    <p className="text-sm">
+                      You're showing consistent improvement in your habit maintenance!
+                    </p>
+                  </div>
                 )}
-                Overall Trend
-              </CardTitle>
-              <CardDescription>Last 3 months analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className={`text-4xl font-bold ${overallImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {Math.abs(Math.round(overallImprovement))}%
-                {overallImprovement > 0 ? ' better' : ' more resets'}
-              </p>
+
+                <div className="p-4 rounded-lg bg-purple-50">
+                  <h3 className="font-semibold mb-2">Recommendations</h3>
+                  <ul className="text-sm space-y-2">
+                    {selectedStat.currentStreak < selectedStat.avgDaysBetweenResets && (
+                      <li>• Focus on surpassing your average streak duration of {selectedStat.avgDaysBetweenResets} days</li>
+                    )}
+                    {selectedStat.streakConsistency < 75 && (
+                      <li>• Work on improving your consistency score by maintaining regular streaks</li>
+                    )}
+                    {selectedStat.shortTermImprovement < 0 && (
+                      <li>• Your recent performance has declined - consider reviewing your triggers and obstacles</li>
+                    )}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-center text-gray-500">Select a habit to view detailed statistics</p>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Progress Over Time */}
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle>Progress Over Time</CardTitle>
-            <CardDescription>Monthly reset patterns and trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="month" 
-                    type="category"
-                    allowDuplicatedCategory={false}
-                  />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  {stats.map((habit) => (
-                    <Area
-                      key={habit.name}
-                      type="monotone"
-                      data={habit.monthlyResets}
-                      name={habit.name}
-                      dataKey="count"
-                      fill={`#${Math.floor(Math.random()*16777215).toString(16)}40`}
-                      stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`}
-                    />
-                  ))}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Detailed Stats Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Comprehensive Analysis</CardTitle>
-            <CardDescription>Detailed metrics for each habit</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs uppercase bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3">Habit</th>
-                    <th className="px-6 py-3">Current Streak</th>
-                    <th className="px-6 py-3">Success Rate</th>
-                    <th className="px-6 py-3">Consistency</th>
-                    <th className="px-6 py-3">Risk Level</th>
-                    <th className="px-6 py-3">Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.map((stat) => (
-                    <tr key={stat.name} className="bg-white border-b">
-                      <td className="px-6 py-4 font-medium">
-                        <div className="flex items-center gap-2">
-                          {stat.name}
-                          {stat.hasImprovedPattern && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Flame className="h-4 w-4 text-orange-500" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Improving pattern detected!</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {stat.currentStreak} days
-                          {stat.progressIndicators.isOnLongestStreak && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Trophy className="h-4 w-4 text-yellow-500" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Personal best!</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">{stat.successRate}%</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {stat.streakConsistency}%
-                          {stat.progressIndicators.isConsistent && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Timer className="h-4 w-4 text-blue-500" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Highly consistent!</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
-                          ${stat.riskLevel === 'low' ? 'bg-green-100 text-green-800' : 
-                            stat.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                            'bg-red-100 text-red-800'}`}>
-                          {stat.riskLevel.charAt(0).toUpperCase() + stat.riskLevel.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`${stat.shortTermImprovement > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {stat.shortTermImprovement > 0 ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )}
-                          </span>
-                          {Math.abs(Math.round(stat.shortTermImprovement))}%
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        )}
       </div>
     </div>
   );
