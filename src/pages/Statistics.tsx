@@ -1,4 +1,3 @@
-
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -232,6 +231,7 @@ export default function Statistics() {
         currentStreak: Math.max(...stats.map(s => s.currentStreak)),
         longestStreak: Math.max(...stats.map(s => s.longestStreak)),
         medianStreak: Math.round(stats.reduce((sum, s) => sum + s.medianStreak, 0) / stats.length),
+        resets: stats.flatMap(s => s.resets),
         monthlyResets: stats.reduce((acc, stat) => {
           stat.monthlyResets.forEach(monthly => {
             const existing = acc.find(m => m.month === monthly.month);

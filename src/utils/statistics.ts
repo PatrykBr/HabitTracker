@@ -48,10 +48,10 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
     }
     streaks.push(stat.currentStreak);
   } else {
-    // "All" habits case - combine streaks from all individual habits
-    if (Array.isArray(stat.resets)) {
-      // Handle the combined resets directly
-      const sortedResets = [...stat.resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    // "All" habits case
+    const resets = stat.resets || [];
+    if (resets.length > 0) {
+      const sortedResets = [...resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
       for (let i = 0; i < sortedResets.length - 1; i++) {
         const streakDays = Math.floor(
           (new Date(sortedResets[i + 1]).getTime() - new Date(sortedResets[i]).getTime()) / (1000 * 60 * 60 * 24)
