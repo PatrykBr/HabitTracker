@@ -17,13 +17,13 @@ export function StatsChart({
   data, 
   type, 
   dataKey, 
-  colors = ['#1f2937', '#4b5563', '#6b7280', '#9ca3af'] 
+  colors = ['#0EA5E9', '#0284C7', '#0369A1', '#075985'] 
 }: StatsChartProps) {
   return (
-    <Card className="w-full overflow-hidden bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
-      <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
-        <CardTitle className="text-lg text-gray-700">{title}</CardTitle>
-        <CardDescription className="text-sm text-gray-500">{description}</CardDescription>
+    <Card className="w-full overflow-hidden bg-white/95 backdrop-blur-sm border-sky-200 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="p-4 sm:p-6 border-b border-sky-100">
+        <CardTitle className="text-lg text-sky-900">{title}</CardTitle>
+        <CardDescription className="text-sm text-sky-600">{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
         <div className="h-[300px] w-full">
@@ -31,7 +31,7 @@ export function StatsChart({
             <ResponsiveContainer width="100%" height="100%">
               {type === 'bar' ? (
                 <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
                   <XAxis 
                     dataKey="name" 
                     tick={{ fontSize: 12 }}
@@ -45,9 +45,9 @@ export function StatsChart({
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-gray-200">
-                            <p className="font-semibold text-gray-700">{label}</p>
-                            <p className="text-gray-600">
+                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-sky-200">
+                            <p className="font-semibold text-sky-900">{label}</p>
+                            <p className="text-sky-700">
                               {payload[0].value} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
@@ -58,7 +58,7 @@ export function StatsChart({
                   />
                   <Bar 
                     dataKey={dataKey} 
-                    fill="#4b5563"
+                    fill="#0EA5E9"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -71,7 +71,7 @@ export function StatsChart({
                     labelLine={false}
                     label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     outerRadius={80}
-                    fill="#4b5563"
+                    fill="#0EA5E9"
                     dataKey={dataKey}
                   >
                     {data.map((_, index) => (
@@ -87,9 +87,9 @@ export function StatsChart({
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-gray-200">
-                            <p className="font-semibold text-gray-700">{data.name}</p>
-                            <p className="text-gray-600">
+                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-sky-200">
+                            <p className="font-semibold text-sky-900">{data.name}</p>
+                            <p className="text-sky-700">
                               {data[dataKey]} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
@@ -102,7 +102,7 @@ export function StatsChart({
               )}
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="h-full flex items-center justify-center text-sky-600">
               No data available yet
             </div>
           )}

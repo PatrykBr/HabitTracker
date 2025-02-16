@@ -36,13 +36,13 @@ export function StatsCard({ title, icon, value, description, trend, className, e
 
   return (
     <Card className={cn(
-      "bg-white/95 backdrop-blur-sm border-gray-200", 
+      "bg-white/95 backdrop-blur-sm border-sky-200", 
       "shadow-lg hover:shadow-xl",
       "transition-all duration-300",
       className
     )}>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-700">
+        <CardTitle className="flex items-center gap-2 text-base font-medium text-sky-900">
           {icon}
           {title}
           {emoji && <span className="text-base">{emoji}</span>}
@@ -50,10 +50,10 @@ export function StatsCard({ title, icon, value, description, trend, className, e
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <p className="text-3xl font-bold bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 bg-clip-text text-transparent">
+          <p className="text-3xl font-bold bg-gradient-to-r from-sky-700 via-sky-600 to-cyan-600 bg-clip-text text-transparent">
             {formattedValue}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-sky-600">
             {description}
           </p>
           {trend && (
