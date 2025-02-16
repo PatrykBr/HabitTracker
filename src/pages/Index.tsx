@@ -17,7 +17,7 @@ import {
 export default function Index() {
   const [newHabitName, setNewHabitName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const { habits, addHabit, resetHabit, deleteHabit } = useHabits();
+  const { habits, addHabit, resetHabit, addCustomReset, removeReset, deleteHabit } = useHabits();
   const navigate = useNavigate();
 
   const handleAddHabit = async (e: React.FormEvent) => {
@@ -92,9 +92,8 @@ export default function Index() {
                 key={habit.id}
                 habit={habit}
                 onReset={() => resetHabit(habit.id)}
-                onDeleteReset={(index) => {
-                  console.log('Delete reset at index:', index);
-                }}
+                onDeleteReset={(index) => removeReset(habit.id, index)}
+                onAddCustomReset={(resetTime) => addCustomReset({ habitId: habit.id, resetTime })}
               />
             ))
           )}
