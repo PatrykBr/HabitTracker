@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -152,7 +151,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
             <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>
           <div className="p-4 space-y-4">
-            <div className="bg-secondary/30 rounded-lg p-2 sm:p-4">
+            <div className="bg-secondary/30 rounded-lg p-2 sm:p-4 flex justify-center">
               <DayPicker
                 mode="single"
                 selected={selectedDate}
@@ -169,9 +168,9 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
                   table: "w-full border-collapse",
-                  head_row: "flex",
+                  head_row: "flex justify-center",
                   head_cell: "text-muted-foreground rounded-md w-8 sm:w-9 font-normal text-[0.8rem] sm:text-sm",
-                  row: "flex w-full mt-1",
+                  row: "flex w-full mt-1 justify-center",
                   cell: "text-center p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                   day: "h-8 w-8 sm:h-9 sm:w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-secondary rounded-md transition-colors",
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
