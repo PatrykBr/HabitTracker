@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 const Index = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
-  const { habits, addHabit, resetHabit, removeReset, deleteHabit } = useHabits();
+  const { habits, addHabit, resetHabit, removeReset, deleteHabit, addCustomReset } = useHabits();
   const { toast } = useToast();
 
   const handleAddHabit = () => {
@@ -54,6 +54,13 @@ const Index = () => {
                 toast({
                   title: "Reset removed",
                   description: "The reset entry has been removed from history.",
+                });
+              }}
+              onAddCustomReset={(resetTime) => {
+                addCustomReset({ habitId: habit.id, resetTime });
+                toast({
+                  title: "Custom reset added",
+                  description: `A custom reset time has been added to ${habit.name}.`,
                 });
               }}
             />

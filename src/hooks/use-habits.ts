@@ -91,6 +91,37 @@ export function useHabits() {
     },
   });
 
+  const addCustomResetMutation = useMutation({
+    mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      const { error: insertError } = await supabase
+        .from('habit_resets')
+        .insert({ 
+          habit_id: habitId,
+          reset_time: resetTime.toISOString()
+        });
+
+      if (insertError) throw insertError;
+
+      // Update last_reset if this is the most recent reset
+      const { data: resets } = await supabase
+        .from('habit_resets')
+        .select('reset_time')
+        .eq('habit_id', habitId)
+        .order('reset_time', { ascending: false })
+        .limit(1);
+
+      if (resets && resets.length > 0) {
+        await supabase
+          .from('habits')
+          .update({ last_reset: resets[0].reset_time })
+          .eq('id', habitId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+    },
+  });
+
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
       const { error } = await supabase
@@ -140,6 +171,7 @@ export function useHabits() {
     isLoading,
     addHabit: addHabitMutation.mutate,
     resetHabit: resetHabitMutation.mutate,
+    addCustomReset: addCustomResetMutation.mutate,
     removeReset: (habitId: string, resetIndex: number) => {
       const habit = habits.find((h) => h.id === habitId);
       if (habit) {
