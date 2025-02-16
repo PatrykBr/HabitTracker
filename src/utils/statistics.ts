@@ -48,17 +48,18 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
     }
     streaks.push(stat.currentStreak);
   } else {
-    // "All" habits case - combine streaks from all habits
-    const allHabits = stat.name === 'All Habits' ? stat : [stat];
-    allHabits.forEach(habit => {
-      const habitStreaks = habit.resets.map((reset: Date, index: number, arr: Date[]) => {
-        if (index === arr.length - 1) return habit.currentStreak;
-        return Math.floor(
-          (new Date(arr[index + 1]).getTime() - new Date(reset).getTime()) / (1000 * 60 * 60 * 24)
+    // "All" habits case - combine streaks from all individual habits
+    if (Array.isArray(stat.resets)) {
+      // Handle the combined resets directly
+      const sortedResets = [...stat.resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+      for (let i = 0; i < sortedResets.length - 1; i++) {
+        const streakDays = Math.floor(
+          (new Date(sortedResets[i + 1]).getTime() - new Date(sortedResets[i]).getTime()) / (1000 * 60 * 60 * 24)
         );
-      });
-      streaks = [...streaks, ...habitStreaks];
-    });
+        streaks.push(streakDays);
+      }
+      streaks.push(stat.currentStreak);
+    }
   }
 
   streaks.forEach(streakDays => {
