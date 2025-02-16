@@ -13,25 +13,32 @@ interface StatsChartProps {
 
 export function StatsChart({ title, description, data, type, dataKey, colors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'] }: StatsChartProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="w-full overflow-hidden">
+      <CardHeader className="p-4 sm:p-6">
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
+      <CardContent className="p-4 sm:p-6">
+        <div className="h-[300px] w-full">
           {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               {type === 'bar' ? (
-                <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis allowDecimals={false} />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis allowDecimals={false} width={30} />
                   <RechartsTooltip
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white p-3 border rounded-lg shadow-lg">
+                          <div className="bg-white p-2 border rounded-lg shadow-lg text-xs sm:text-sm">
                             <p className="font-semibold">{label}</p>
                             <p className="text-blue-600">
                               {payload[0].value} {dataKey}
@@ -65,7 +72,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className="bg-white p-3 border rounded-lg shadow-lg">
+                          <div className="bg-white p-2 border rounded-lg shadow-lg text-xs sm:text-sm">
                             <p className="font-semibold">{data.name}</p>
                             <p className="text-blue-600">
                               {data[dataKey]} {dataKey !== 'count' ? dataKey : ''}

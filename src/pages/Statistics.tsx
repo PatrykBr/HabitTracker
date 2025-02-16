@@ -1,3 +1,4 @@
+
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -260,7 +261,7 @@ export default function Statistics() {
 
   if (habits.length === 0) {
     return (
-      <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
+      <div className="min-h-screen p-4 bg-gradient-to-br from-secondary to-white overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
           <Card>
             <CardContent className="p-6">
@@ -276,8 +277,8 @@ export default function Statistics() {
   const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-secondary to-white overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <StatsHeader
           habits={habits}
           selectedHabitId={selectedHabitId}
@@ -288,7 +289,7 @@ export default function Statistics() {
 
         {selectedStats && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <TooltipProvider>
                 <StatsCard
                   title="Current Streak"
@@ -335,7 +336,7 @@ export default function Statistics() {
               </TooltipProvider>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <StatsChart
                 title="Monthly Resets"
                 description="Number of resets per month. Lower numbers indicate better control."

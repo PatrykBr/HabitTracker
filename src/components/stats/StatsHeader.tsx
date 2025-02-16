@@ -13,12 +13,12 @@ interface StatsHeaderProps {
 
 export function StatsHeader({ habits, selectedHabitId, onHabitChange, onExport, onBack }: StatsHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         <BarChart className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Progress Analysis</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Progress Analysis</h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         <Button
           variant="outline"
           size="sm"
@@ -26,10 +26,10 @@ export function StatsHeader({ habits, selectedHabitId, onHabitChange, onExport, 
           onClick={onExport}
         >
           <Download className="h-4 w-4" />
-          Export Data
+          <span className="hidden sm:inline">Export Data</span>
         </Button>
         <Select value={selectedHabitId} onValueChange={onHabitChange}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[140px] sm:w-[200px]">
             <SelectValue placeholder="Select a habit" />
           </SelectTrigger>
           <SelectContent>
@@ -43,11 +43,12 @@ export function StatsHeader({ habits, selectedHabitId, onHabitChange, onExport, 
         </Select>
         <Button
           variant="ghost"
+          size="sm"
           className="gap-2"
           onClick={onBack}
         >
           <ChevronLeft className="h-4 w-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </Button>
       </div>
     </div>
