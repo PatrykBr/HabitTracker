@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { formatTimeSince } from '@/utils/format-time';
-import { Clock, RotateCcw, History, Plus, CalendarDays, List } from 'lucide-react';
+import { Clock, RotateCcw, History, Plus, CalendarDays, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { Habit } from '@/hooks/use-habits';
 import 'react-day-picker/dist/style.css';
+import { addDays, subDays, startOfDay, format } from 'date-fns';
 
 interface HabitCardProps {
   habit: Habit;
@@ -20,18 +21,29 @@ interface HabitCardProps {
 export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: HabitCardProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showAddReset, setShowAddReset] = useState(false);
-  const [customResetTime, setCustomResetTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState(format(new Date(), 'HH:mm'));
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
 
-  const handleAddCustomReset = () => {
-    if (customResetTime && onAddCustomReset) {
-      onAddCustomReset(new Date(customResetTime));
-      setCustomResetTime('');
+  const handleQuickReset = (daysAgo: number) => {
+    if (onAddCustomReset) {
+      const date = subDays(startOfDay(new Date()), daysAgo);
+      onAddCustomReset(date);
       setShowAddReset(false);
     }
   };
 
-  // Convert reset dates to Day objects for the calendar
+  const handleAddCustomReset = () => {
+    if (selectedDate && selectedTime && onAddCustomReset) {
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const resetDate = new Date(selectedDate);
+      resetDate.setHours(hours, minutes);
+      onAddCustomReset(resetDate);
+      setShowAddReset(false);
+    }
+  };
+
+  // Reset days for the calendar
   const resetDays = habit.resets.map(reset => new Date(reset));
 
   return (
@@ -53,7 +65,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
             onClick={onReset}
           >
             <RotateCcw className="h-4 w-4" />
-            Reset Progress
+            Reset Now
           </Button>
         </div>
       </Card>
@@ -128,23 +140,68 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
       </Dialog>
 
       <Dialog open={showAddReset} onOpenChange={setShowAddReset}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Add Custom Reset Time</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="datetime-local"
-              value={customResetTime}
-              onChange={(e) => setCustomResetTime(e.target.value)}
-            />
-            <Button
-              className="w-full"
-              onClick={handleAddCustomReset}
-              disabled={!customResetTime}
-            >
-              Add Reset
-            </Button>
+          <div className="space-y-6">
+            {/* Quick Reset Options */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Quick Add</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuickReset(0)}
+                  className="w-full"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuickReset(1)}
+                  className="w-full"
+                >
+                  Yesterday
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuickReset(2)}
+                  className="w-full"
+                >
+                  2 Days Ago
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuickReset(3)}
+                  className="w-full"
+                >
+                  3 Days Ago
+                </Button>
+              </div>
+            </div>
+
+            {/* Custom Date/Time Picker */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Custom Date & Time</h4>
+              <div className="flex flex-col space-y-4">
+                <div className="flex justify-center bg-secondary/30 rounded-lg p-4">
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    initialFocus
+                  />
+                </div>
+                <Input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                />
+                <Button onClick={handleAddCustomReset}>
+                  Add Custom Reset
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
