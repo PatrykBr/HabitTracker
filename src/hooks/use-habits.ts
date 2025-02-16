@@ -124,15 +124,20 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      console.log('Removing reset:', { habitId, resetTime: resetTime.toISOString() });
+      
       const { error } = await supabase
         .from('habit_resets')
         .delete()
         .eq('habit_id', habitId)
         .eq('reset_time', resetTime.toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing reset:', error);
+        throw error;
+      }
 
-      // Update last_reset to the most recent reset
+      // Update last_reset to the most recent remaining reset
       const { data: resets } = await supabase
         .from('habit_resets')
         .select('reset_time')
@@ -141,10 +146,12 @@ export function useHabits() {
         .limit(1);
 
       if (resets && resets.length > 0) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('habits')
           .update({ last_reset: resets[0].reset_time })
           .eq('id', habitId);
+
+        if (updateError) throw updateError;
       }
     },
     onSuccess: () => {
