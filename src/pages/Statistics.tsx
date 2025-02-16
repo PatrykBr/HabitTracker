@@ -1,4 +1,3 @@
-
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -243,7 +242,16 @@ export default function Statistics() {
     );
   }
 
-  const weeklyData = selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
+  const weeklyData = selectedHabitId === 'all'
+    ? habits.reduce((acc, habit) => {
+        const habitWeekly = getWeeklyDistribution(habit.resets);
+        return habitWeekly.map((day, index) => ({
+          name: day.name,
+          count: (acc[index]?.count || 0) + day.count
+        }));
+      }, [] as { name: string; count: number }[])
+    : selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
+
   const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
 
   return (
