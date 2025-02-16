@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -141,15 +142,21 @@ export function useHabits() {
         throw fetchError;
       }
 
+      // Convert timestamps to consistent format for comparison
+      const normalizedResetTime = new Date(resetTime).getTime();
+      const isLatestReset = allResets?.length > 0 && 
+        Math.abs(new Date(allResets[0].reset_time).getTime() - normalizedResetTime) < 1000; // Allow 1 second difference
+
       // Find the next latest reset time (excluding the one we're about to delete)
       const nextLatestReset = allResets
-        ?.filter(reset => reset.reset_time !== resetTime.toISOString())
+        ?.filter(reset => Math.abs(new Date(reset.reset_time).getTime() - normalizedResetTime) >= 1000)
         .sort((a, b) => new Date(b.reset_time).getTime() - new Date(a.reset_time).getTime())[0];
 
       console.log('Next latest reset:', nextLatestReset);
+      console.log('Is latest reset:', isLatestReset);
 
       // Update the habit's last_reset first if we're deleting the latest reset
-      if (allResets?.[0]?.reset_time === resetTime.toISOString()) {
+      if (isLatestReset) {
         const { error: updateError } = await supabase
           .from('habits')
           .update({ 
