@@ -1,4 +1,3 @@
-
 import { useHabits } from '@/hooks/use-habits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,30 +35,33 @@ export default function Statistics() {
       const resetDates = habit.resets.map(date => new Date(date));
       resetDates.sort((a, b) => a.getTime() - b.getTime());
       
-      // Calculate average time between resets
+      // Calculate streaks and times between resets
       let totalTimeBetween = 0;
       let streaks = [];
-      for (let i = 1; i < resetDates.length; i++) {
-        const timeBetween = resetDates[i].getTime() - resetDates[i-1].getTime();
-        totalTimeBetween += timeBetween;
-        streaks.push(Math.floor(timeBetween / (1000 * 60 * 60 * 24)));
+      
+      if (resetDates.length > 0) {
+        // Add current streak
+        const currentStreakDays = Math.floor(
+          (now.getTime() - new Date(habit.lastReset).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        streaks.push(currentStreakDays);
+
+        // Calculate past streaks
+        for (let i = 1; i < resetDates.length; i++) {
+          const timeBetween = resetDates[i].getTime() - resetDates[i-1].getTime();
+          const streakDays = Math.floor(timeBetween / (1000 * 60 * 60 * 24));
+          totalTimeBetween += timeBetween;
+          streaks.push(streakDays);
+        }
       }
+
+      const currentStreak = streaks[0] || 0;
       const avgDaysBetweenResets = totalResets > 1 
         ? Math.round(totalTimeBetween / (totalResets - 1) / (1000 * 60 * 60 * 24)) 
-        : 0;
-
-      // Calculate current streak
-      const lastReset = new Date(habit.lastReset);
-      const currentStreak = Math.floor((now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24));
+        : currentStreak;
 
       // Calculate longest streak
-      let longestStreak = currentStreak;
-      for (let i = 0; i < resetDates.length - 1; i++) {
-        const streak = Math.floor(
-          (resetDates[i + 1].getTime() - resetDates[i].getTime()) / (1000 * 60 * 60 * 24)
-        );
-        longestStreak = Math.max(longestStreak, streak);
-      }
+      const longestStreak = Math.max(...streaks, 0);
 
       // Calculate reset frequency by month
       const monthlyResets: { [key: string]: number } = {};
@@ -68,24 +70,39 @@ export default function Statistics() {
         monthlyResets[monthYear] = (monthlyResets[monthYear] || 0) + 1;
       });
 
-      // Calculate improvement trend (comparing last 3 months)
+      // Calculate improvement trends (comparing last 3 months)
       const monthKeys = Object.keys(monthlyResets).sort();
       const lastMonth = monthlyResets[monthKeys[monthKeys.length - 1]] || 0;
       const previousMonth = monthlyResets[monthKeys[monthKeys.length - 2]] || 0;
       const twoMonthsAgo = monthlyResets[monthKeys[monthKeys.length - 3]] || 0;
       
-      const shortTermImprovement = previousMonth ? (previousMonth - lastMonth) / previousMonth * 100 : 0;
-      const longTermImprovement = twoMonthsAgo ? (twoMonthsAgo - lastMonth) / twoMonthsAgo * 100 : 0;
+      const shortTermImprovement = previousMonth 
+        ? ((previousMonth - lastMonth) / previousMonth) * 100 
+        : (lastMonth === 0 ? 100 : 0);
+      
+      const longTermImprovement = twoMonthsAgo 
+        ? ((twoMonthsAgo - lastMonth) / twoMonthsAgo) * 100 
+        : (lastMonth === 0 ? 100 : 0);
 
       // Calculate success rate (percentage of days without resets)
       const firstReset = resetDates[0];
-      const totalDays = Math.floor((now.getTime() - firstReset.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-      const successRate = ((totalDays - totalResets) / totalDays) * 100;
+      const totalDays = firstReset 
+        ? Math.max(Math.floor((now.getTime() - firstReset.getTime()) / (1000 * 60 * 60 * 24)), 1)
+        : 1;
+      const successRate = Math.min(((totalDays - totalResets) / totalDays) * 100, 100);
 
-      // Calculate streak consistency (standard deviation of streak lengths)
-      const avgStreak = streaks.reduce((a, b) => a + b, 0) / (streaks.length || 1);
-      const streakVariance = streaks.reduce((a, b) => a + Math.pow(b - avgStreak, 2), 0) / (streaks.length || 1);
-      const streakConsistency = 100 - (Math.sqrt(streakVariance) / avgStreak * 100 || 0);
+      // Calculate streak consistency
+      const avgStreak = streaks.length > 0 
+        ? streaks.reduce((a, b) => a + b, 0) / streaks.length 
+        : 0;
+      
+      const streakVariance = streaks.length > 0
+        ? streaks.reduce((a, b) => a + Math.pow(b - avgStreak, 2), 0) / streaks.length
+        : 0;
+      
+      const streakConsistency = avgStreak > 0 
+        ? Math.min(100 - (Math.sqrt(streakVariance) / avgStreak * 100), 100) 
+        : 100;
 
       return {
         name: habit.name,
@@ -99,9 +116,8 @@ export default function Statistics() {
         })),
         shortTermImprovement,
         longTermImprovement,
-        successRate: Math.round(successRate),
-        streakConsistency: Math.round(streakConsistency),
-        // Calculate trend score (weighted average of various metrics)
+        successRate: Math.round(Math.max(0, successRate)),
+        streakConsistency: Math.round(Math.max(0, streakConsistency)),
         trendScore: Math.round(
           (shortTermImprovement * 0.4) +
           (longTermImprovement * 0.3) +
@@ -115,16 +131,18 @@ export default function Statistics() {
   const stats = calculateStats();
 
   // Find habit with best current streak
-  const bestStreak = Math.max(...stats.map(s => s.currentStreak));
+  const bestStreak = Math.max(...stats.map(s => s.currentStreak), 0);
   const bestStreakHabit = stats.find(s => s.currentStreak === bestStreak);
 
-  // Find most consistent habit - Fix: Add name to the initial value
+  // Find most consistent habit
   const mostConsistent = stats.reduce((prev, current) => 
     (current.streakConsistency > prev.streakConsistency) ? current : prev
   , { name: '', streakConsistency: -1 });
 
   // Calculate overall improvement
-  const overallImprovement = stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length;
+  const overallImprovement = stats.length > 0
+    ? stats.reduce((sum, stat) => sum + stat.shortTermImprovement, 0) / stats.length
+    : 0;
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
