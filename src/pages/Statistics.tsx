@@ -245,19 +245,19 @@ export default function Statistics() {
   const getTrendIndicator = (stat: typeof selectedStat) => {
     if (!stat) return null;
     const improvement = stat.shortTermImprovement;
-    if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Strong Improvement", color: "text-green-600" };
-    if (improvement > 0) return { icon: <ArrowUp className="h-4 w-4 text-emerald-600" />, text: "Improving", color: "text-emerald-600" };
-    if (improvement > -20) return { icon: <ArrowDown className="h-4 w-4 text-amber-600" />, text: "Slight Decline", color: "text-amber-600" };
-    return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "Needs Attention", color: "text-red-600" };
+    if (improvement > 20) return { icon: <TrendingUp className="h-4 w-4 text-green-600" />, text: "Significantly Fewer Resets", color: "text-green-600" };
+    if (improvement > 0) return { icon: <ArrowUp className="h-4 w-4 text-emerald-600" />, text: "Decreasing Resets", color: "text-emerald-600" };
+    if (improvement > -20) return { icon: <ArrowDown className="h-4 w-4 text-amber-600" />, text: "Slight Increase in Resets", color: "text-amber-600" };
+    return { icon: <AlertTriangle className="h-4 w-4 text-red-600" />, text: "High Reset Frequency", color: "text-red-600" };
   };
 
   const getSuccessRate = (stat: typeof selectedStat) => {
     if (!stat) return { rate: 0, quality: "" };
     const rate = stat.successRate;
-    if (rate >= 90) return { rate, quality: "Exceptional" };
-    if (rate >= 75) return { rate, quality: "Strong" };
-    if (rate >= 50) return { rate, quality: "Good" };
-    return { rate, quality: "Needs Improvement" };
+    if (rate >= 90) return { rate, quality: "Exceptional Control" };
+    if (rate >= 75) return { rate, quality: "Strong Resistance" };
+    if (rate >= 50) return { rate, quality: "Good Progress" };
+    return { rate, quality: "Building Resistance" };
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -320,7 +320,7 @@ export default function Statistics() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-blue-600" />
-                    Current Streak
+                    Resistance Streak
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -330,13 +330,13 @@ export default function Statistics() {
                     </p>
                     <p className="text-sm text-gray-600">
                       {selectedStat.progressIndicators.isOnLongestStreak 
-                        ? "🎉 Personal Best!" 
-                        : `Best: ${selectedStat.longestStreak} days`}
+                        ? "🎉 Longest Period of Control!" 
+                        : `Best: ${selectedStat.longestStreak} days without reset`}
                     </p>
                     <p className="text-xs text-gray-500">
                       {selectedStat.progressIndicators.isAboveAverage 
-                        ? "Above your average performance" 
-                        : "Keep pushing to exceed your average"}
+                        ? "Exceeding your typical resistance period" 
+                        : "Working towards your best streak"}
                     </p>
                   </div>
                 </CardContent>
@@ -346,7 +346,7 @@ export default function Statistics() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-green-600" />
-                    Success Rate
+                    Control Rate
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -359,7 +359,7 @@ export default function Statistics() {
                     </p>
                     <div className="flex items-center gap-1">
                       {getTrendIndicator(selectedStat)?.icon}
-                      <p className="text-xs text-gray-500">
+                      <p className={`text-xs ${getTrendIndicator(selectedStat)?.color}`}>
                         {getTrendIndicator(selectedStat)?.text}
                       </p>
                     </div>
@@ -371,7 +371,7 @@ export default function Statistics() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Timer className="h-5 w-5 text-purple-600" />
-                    Consistency
+                    Resilience
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -381,13 +381,13 @@ export default function Statistics() {
                     </p>
                     <p className="text-sm text-gray-600">
                       {selectedStat.streakConsistency >= 75 
-                        ? "Very Consistent" 
+                        ? "Strong Willpower" 
                         : selectedStat.streakConsistency >= 50 
-      ? "Moderately Consistent" 
-      : "Needs More Consistency"}
+      ? "Building Strength" 
+      : "Developing Resilience"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Based on streak stability over time
+                      Based on your ability to maintain control
                     </p>
                   </div>
                 </CardContent>
@@ -397,7 +397,7 @@ export default function Statistics() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-orange-600" />
-                    Overall Score
+                    Overall Control
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -407,13 +407,13 @@ export default function Statistics() {
                     </p>
                     <p className="text-sm text-gray-600">
                       {selectedStat.trendScore >= 75 
-                        ? "Excellent Progress" 
+                        ? "Exceptional Mastery" 
                         : selectedStat.trendScore >= 50 
-      ? "Good Progress" 
-      : "Room for Improvement"}
+      ? "Growing Stronger" 
+      : "Building Control"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Combined performance metrics
+                      Combined control metrics
                     </p>
                   </div>
                 </CardContent>
@@ -426,10 +426,10 @@ export default function Statistics() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Progress Over Time
+                    Control Strength Over Time
                   </CardTitle>
                   <CardDescription>
-                    Monthly success rate trend with detailed analysis
+                    Monthly progress in maintaining control
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -443,11 +443,12 @@ export default function Statistics() {
                           <RechartsTooltip
                             content={({ active, payload, label }) => {
                               if (active && payload && payload.length) {
+                                const value = payload[0].value;
                                 return (
                                   <div className="bg-white p-3 border rounded-lg shadow-lg">
                                     <p className="font-semibold">{label}</p>
                                     <p className="text-green-600">
-                                      Success Rate: {payload[0].value.toFixed(1)}%
+                                      Control Rate: {typeof value === 'number' ? value.toFixed(1) : value}%
                                     </p>
                                   </div>
                                 );
@@ -548,10 +549,10 @@ export default function Statistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
-                  Insights & Recommendations
+                  Insights & Support
                 </CardTitle>
                 <CardDescription>
-                  Actionable insights based on your performance data
+                  Personalized guidance to strengthen your control
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -566,10 +567,10 @@ export default function Statistics() {
                   </h3>
                   <p className="text-sm">
                     {selectedStat.riskLevel === 'low' 
-                      ? "You're maintaining excellent control over this habit. Keep up the great work!" 
+                      ? "You're showing strong control over this habit. Your resistance is impressive!" 
                       : selectedStat.riskLevel === 'medium'
-                        ? "You're in a sensitive period. Stay focused on your goals and maintain awareness."
-                        : "This is a critical period. Consider implementing additional support strategies."}
+                        ? "Your control is being tested. Stay strong and remember your progress."
+                        : "This is a challenging period. Consider implementing additional support strategies."}
                   </p>
                 </div>
 
@@ -577,33 +578,33 @@ export default function Statistics() {
                   <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
                     <h3 className="font-semibold mb-2 flex items-center gap-2">
                       <Award className="h-4 w-4 text-blue-600" />
-                      Positive Pattern Detected
+                      Increased Control Detected
                     </h3>
                     <p className="text-sm">
-                      You're showing consistent improvement! Your recent performance indicates a strong positive trend.
+                      You're showing stronger resistance! Your recent pattern shows improved control.
                     </p>
                   </div>
                 )}
 
                 <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
-                  <h3 className="font-semibold mb-2">Key Recommendations</h3>
+                  <h3 className="font-semibold mb-2">Strengthening Strategies</h3>
                   <ul className="text-sm space-y-2">
                     {selectedStat.currentStreak < selectedStat.avgDaysBetweenResets && (
                       <li className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-purple-600" />
-                        Focus on surpassing your average streak duration of {selectedStat.avgDaysBetweenResets} days
+                        Aim to extend your current streak beyond {selectedStat.avgDaysBetweenResets} days
                       </li>
                     )}
                     {selectedStat.streakConsistency < 75 && (
                       <li className="flex items-center gap-2">
                         <Timer className="h-4 w-4 text-purple-600" />
-                        Work on improving your consistency score through regular practice
+                        Focus on building consistent resistance through daily mindfulness
                       </li>
                     )}
                     {selectedStat.shortTermImprovement < 0 && (
                       <li className="flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-purple-600" />
-                        Review your recent challenges and adjust your strategy
+                        Identify recent triggers and strengthen your coping strategies
                       </li>
                     )}
                   </ul>
