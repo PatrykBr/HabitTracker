@@ -6,7 +6,7 @@ import { HabitCard } from '@/components/HabitCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -37,6 +37,9 @@ const Index = () => {
             <Button onClick={() => setShowAddDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Habit
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => navigate('/statistics')}>
+              <BarChart className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="icon" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4" />

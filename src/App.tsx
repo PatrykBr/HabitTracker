@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import Index from "./pages/Index";
 import Settings from "./pages/Settings";
+import Statistics from "./pages/Statistics";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,16 @@ const App = () => {
               element={
                 isAuthenticated ? (
                   <Settings />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+            <Route
+              path="/statistics"
+              element={
+                isAuthenticated ? (
+                  <Statistics />
                 ) : (
                   <Navigate to="/auth" replace />
                 )
