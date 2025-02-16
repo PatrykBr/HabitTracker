@@ -44,7 +44,7 @@ import {
 export default function Statistics() {
   const { habits } = useHabits();
   const navigate = useNavigate();
-  const [selectedHabitId, setSelectedHabitId] = useState<string>(habits[0]?.id || '');
+  const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
 
   const calculateStats = () => {
     const now = new Date();
@@ -200,9 +200,42 @@ export default function Statistics() {
   };
 
   const stats = calculateStats();
-  const selectedHabit = habits.find(h => h.id === selectedHabitId);
-  const selectedStat = stats.find(s => s.name === selectedHabit?.name);
-  
+  const selectedHabit = selectedHabitId === 'all' ? null : habits.find(h => h.id === selectedHabitId);
+  const selectedStats = selectedHabitId === 'all' 
+    ? stats.reduce((acc, stat) => ({
+        name: 'All Habits',
+        totalResets: (acc?.totalResets || 0) + stat.totalResets,
+        avgDaysBetweenResets: Math.round(stats.reduce((sum, s) => sum + s.avgDaysBetweenResets, 0) / stats.length),
+        currentStreak: Math.max(...stats.map(s => s.currentStreak)),
+        longestStreak: Math.max(...stats.map(s => s.longestStreak)),
+        medianStreak: Math.round(stats.reduce((sum, s) => sum + s.medianStreak, 0) / stats.length),
+        monthlyResets: stats.reduce((acc, stat) => {
+          stat.monthlyResets.forEach(monthly => {
+            const existing = acc.find(m => m.month === monthly.month);
+            if (existing) {
+              existing.count += monthly.count;
+            } else {
+              acc.push({ ...monthly });
+            }
+          });
+          return acc;
+        }, [] as { month: string, count: number }[]),
+        shortTermImprovement: Math.round(stats.reduce((sum, s) => sum + s.shortTermImprovement, 0) / stats.length),
+        longTermImprovement: Math.round(stats.reduce((sum, s) => sum + s.longTermImprovement, 0) / stats.length),
+        successRate: Math.round(stats.reduce((sum, s) => sum + s.successRate, 0) / stats.length),
+        streakConsistency: Math.round(stats.reduce((sum, s) => sum + s.streakConsistency, 0) / stats.length),
+        riskLevel: 'medium',
+        hasImprovedPattern: stats.some(s => s.hasImprovedPattern),
+        trendScore: Math.round(stats.reduce((sum, s) => sum + s.trendScore, 0) / stats.length),
+        progressIndicators: {
+          isOnLongestStreak: false,
+          isAboveAverage: false,
+          isImproving: stats.some(s => s.progressIndicators.isImproving),
+          isConsistent: stats.some(s => s.progressIndicators.isConsistent)
+        }
+      }), stats[0])
+    : stats.find(s => s.name === selectedHabit?.name);
+
   const getWeeklyDistribution = (resets: Date[]) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const distribution = days.map(day => ({ name: day, count: 0 }));
@@ -289,8 +322,8 @@ export default function Statistics() {
   }
 
   const weeklyData = selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
-  const successRateData = selectedStat ? getSuccessRateOverTime(selectedStat.monthlyResets) : [];
-  const streakDistributionData = selectedStat ? getStreakDistribution(selectedStat) : [];
+  const successRateData = selectedStats ? getSuccessRateOverTime(selectedStats.monthlyResets) : [];
+  const streakDistributionData = selectedStats ? getStreakDistribution(selectedStats) : [];
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-gradient-to-br from-secondary to-white">
@@ -306,6 +339,7 @@ export default function Statistics() {
                 <SelectValue placeholder="Select a habit" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Habits</SelectItem>
                 {habits.map(habit => (
                   <SelectItem key={habit.id} value={habit.id}>
                     {habit.name}
@@ -324,7 +358,7 @@ export default function Statistics() {
           </div>
         </div>
 
-        {selectedStat ? (
+        {selectedStats ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <TooltipProvider>
@@ -340,12 +374,12 @@ export default function Statistics() {
                       <CardContent>
                         <div className="space-y-2">
                           <p className="text-3xl font-bold text-blue-600">
-                            {selectedStat.currentStreak} days
+                            {selectedStats.currentStreak} days
                           </p>
                           <p className="text-sm text-gray-600">
-                            {selectedStat.progressIndicators.isOnLongestStreak 
+                            {selectedStats.progressIndicators.isOnLongestStreak 
                               ? "🎉 Personal Best!" 
-                              : `Record: ${selectedStat.longestStreak} days`}
+                              : `Record: ${selectedStats.longestStreak} days`}
                           </p>
                         </div>
                       </CardContent>
@@ -368,15 +402,15 @@ export default function Statistics() {
                       <CardContent>
                         <div className="space-y-2">
                           <p className="text-3xl font-bold text-green-600">
-                            {getSuccessRate(selectedStat).rate}%
+                            {getSuccessRate(selectedStats).rate}%
                           </p>
                           <p className="text-sm text-gray-600">
-                            {getSuccessRate(selectedStat).quality}
+                            {getSuccessRate(selectedStats).quality}
                           </p>
                           <div className="flex items-center gap-1">
-                            {getTrendIndicator(selectedStat)?.icon}
-                            <p className={`text-xs ${getTrendIndicator(selectedStat)?.color}`}>
-                              {getTrendIndicator(selectedStat)?.text}
+                            {getTrendIndicator(selectedStats)?.icon}
+                            <p className={`text-xs ${getTrendIndicator(selectedStats)?.color}`}>
+                              {getTrendIndicator(selectedStats)?.text}
                             </p>
                           </div>
                         </div>
@@ -400,12 +434,12 @@ export default function Statistics() {
                       <CardContent>
                         <div className="space-y-2">
                           <p className="text-3xl font-bold text-purple-600">
-                            {selectedStat.streakConsistency}%
+                            {selectedStats.streakConsistency}%
                           </p>
                           <p className="text-sm text-gray-600">
-                            {selectedStat.streakConsistency >= 75 
+                            {selectedStats.streakConsistency >= 75 
                               ? "Very Consistent" 
-                              : selectedStat.streakConsistency >= 50 
+                              : selectedStats.streakConsistency >= 50 
                                 ? "Moderately Consistent" 
                                 : "Building Consistency"}
                           </p>
@@ -430,12 +464,12 @@ export default function Statistics() {
                       <CardContent>
                         <div className="space-y-2">
                           <p className="text-3xl font-bold text-orange-600">
-                            {Math.max(0, Math.min(100, selectedStat.trendScore))}
+                            {Math.max(0, Math.min(100, selectedStats.trendScore))}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {selectedStat.trendScore >= 75 
+                            {selectedStats.trendScore >= 75 
                               ? "Excellent Progress" 
-                              : selectedStat.trendScore >= 50 
+                              : selectedStats.trendScore >= 50 
                                 ? "Good Progress" 
                                 : "Getting Started"}
                           </p>
@@ -455,29 +489,31 @@ export default function Statistics() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Monthly Progress
+                    Monthly Resets
                   </CardTitle>
                   <CardDescription>
-                    Your success rate tracked month by month. Higher values indicate better control.
+                    Number of resets per month. Lower numbers indicate better control.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
-                    {successRateData.length > 0 ? (
+                    {selectedStats.monthlyResets.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={successRateData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                        <BarChart 
+                          data={selectedStats.monthlyResets} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
-                          <YAxis domain={[0, 100]} />
+                          <YAxis allowDecimals={false} />
                           <RechartsTooltip
                             content={({ active, payload, label }) => {
                               if (active && payload && payload.length) {
-                                const value = payload[0].value;
                                 return (
                                   <div className="bg-white p-3 border rounded-lg shadow-lg">
                                     <p className="font-semibold">{label}</p>
-                                    <p className="text-green-600">
-                                      Success Rate: {typeof value === 'number' ? value.toFixed(1) : value}%
+                                    <p className="text-blue-600">
+                                      {payload[0].value} resets
                                     </p>
                                   </div>
                                 );
@@ -485,15 +521,11 @@ export default function Statistics() {
                               return null;
                             }}
                           />
-                          <Line
-                            type="monotone"
-                            dataKey="successRate"
-                            stroke="#8884d8"
-                            strokeWidth={2}
-                            dot={{ strokeWidth: 2 }}
-                            activeDot={{ r: 8 }}
+                          <Bar 
+                            dataKey="count" 
+                            fill="#0EA5E9"
                           />
-                        </LineChart>
+                        </BarChart>
                       </ResponsiveContainer>
                     ) : (
                       <div className="h-full flex items-center justify-center text-gray-500">
@@ -622,8 +654,8 @@ export default function Statistics() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className={`p-4 rounded-lg ${
-                  selectedStat.riskLevel === 'low' ? 'bg-green-50 border border-green-200' :
-                  selectedStat.riskLevel === 'medium' ? 'bg-yellow-50 border border-yellow-200' :
+                  selectedStats.riskLevel === 'low' ? 'bg-green-50 border border-green-200' :
+                  selectedStats.riskLevel === 'medium' ? 'bg-yellow-50 border border-yellow-200' :
                   'bg-red-50 border border-red-200'
                 }`}>
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
@@ -631,9 +663,9 @@ export default function Statistics() {
                     Current Status
                   </h3>
                   <p className="text-sm">
-                    {selectedStat.riskLevel === 'low' 
+                    {selectedStats.riskLevel === 'low' 
                       ? "You're doing great! Your current streak shows strong control." 
-                      : selectedStat.riskLevel === 'medium'
+                      : selectedStats.riskLevel === 'medium'
                         ? "Stay focused - you're in a moderate risk period. Use your proven strategies."
                         : "This is a higher risk period. Consider what strategies worked well during your longer streaks."}
                   </p>
@@ -648,10 +680,10 @@ export default function Statistics() {
                         {" tends to be your most challenging day."}
                       </p>
                     )}
-                    {selectedStat.streakConsistency > 75 && (
+                    {selectedStats.streakConsistency > 75 && (
                       <p>Your consistency is excellent - keep maintaining your current approach!</p>
                     )}
-                    {selectedStat.currentStreak > selectedStat.avgDaysBetweenResets && (
+                    {selectedStats.currentStreak > selectedStats.avgDaysBetweenResets && (
                       <p>You're currently exceeding your average streak length - great work!</p>
                     )}
                   </div>

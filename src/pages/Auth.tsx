@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -55,6 +57,37 @@ export default function Auth() {
           <h1 className="text-2xl font-bold">Welcome to Habit Tracker</h1>
           <p className="text-muted-foreground">Sign in or create an account to continue</p>
         </div>
+
+        <div className="flex justify-center p-1 bg-secondary rounded-lg mb-6">
+          <div className="relative w-full grid grid-cols-2">
+            <motion.div
+              className="absolute h-full bg-primary rounded"
+              initial={false}
+              animate={{
+                x: isLogin ? '0%' : '100%',
+              }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              style={{ width: '50%' }}
+            />
+            <button
+              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                isLogin ? 'text-primary-foreground' : 'text-foreground'
+              }`}
+              onClick={() => setIsLogin(true)}
+            >
+              Sign In
+            </button>
+            <button
+              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                !isLogin ? 'text-primary-foreground' : 'text-foreground'
+              }`}
+              onClick={() => setIsLogin(false)}
+            >
+              Create Account
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-4">
           <Input
             type="email"
@@ -70,21 +103,13 @@ export default function Auth() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={() => handleAuth('login')}
-              disabled={loading}
-            >
-              Sign In
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleAuth('signup')}
-              disabled={loading}
-            >
-              Create Account
-            </Button>
-          </div>
+          <Button
+            className="w-full"
+            onClick={() => handleAuth(isLogin ? 'login' : 'signup')}
+            disabled={loading}
+          >
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </Button>
         </div>
       </Card>
     </div>
