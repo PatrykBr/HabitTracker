@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTrendIndicator } from "@/utils/statistics";
 import { ArrowDown, TrendingDown, AlertTriangle, TrendingUp } from "lucide-react";
@@ -30,9 +29,13 @@ export function StatsCard({ title, icon, value, description, trend, className, e
   };
 
   return (
-    <Card className={className}>
+    <Card className={cn(
+      "bg-white/50 backdrop-blur-sm border border-gray-100", 
+      "transition-all duration-200",
+      className
+    )}>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-600">
           {icon}
           {title}
           {emoji && <span className="text-base">{emoji}</span>}
@@ -40,14 +43,14 @@ export function StatsCard({ title, icon, value, description, trend, className, e
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <p className="text-3xl font-bold text-blue-600">
+          <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
             {value}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-500">
             {description}
           </p>
           {trend && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 mt-2">
               {getTrendIcon(trend.icon)}
               <p className={`text-xs ${trend.color}`}>
                 {trend.text} {trend.emoji}

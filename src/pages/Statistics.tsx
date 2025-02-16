@@ -261,10 +261,10 @@ export default function Statistics() {
 
   if (habits.length === 0) {
     return (
-      <div className="min-h-screen p-4 bg-gradient-to-br from-secondary to-white overflow-x-hidden">
-        <div className="max-w-6xl mx-auto">
-          <Card>
-            <CardContent className="p-6">
+      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-secondary to-white">
+        <div className="max-w-7xl mx-auto">
+          <Card className="shadow-lg">
+            <CardContent className="p-8">
               <p className="text-center text-gray-500">No habits found. Add some habits to see statistics.</p>
             </CardContent>
           </Card>
@@ -277,8 +277,8 @@ export default function Statistics() {
   const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary to-white overflow-x-hidden">
-      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/50 to-white">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         <StatsHeader
           habits={habits}
           selectedHabitId={selectedHabitId}
@@ -288,8 +288,8 @@ export default function Statistics() {
         />
 
         {selectedStats && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="space-y-6 sm:space-y-8 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <TooltipProvider>
                 <StatsCard
                   title="Current Streak"
@@ -298,7 +298,7 @@ export default function Statistics() {
                   description={selectedStats.progressIndicators.isOnLongestStreak 
                     ? "🎉 Personal Best!" 
                     : `Record: ${selectedStats.longestStreak} days`}
-                  className="bg-gradient-to-br from-blue-50 to-white"
+                  className="hover:shadow-lg transition-shadow duration-200"
                 />
 
                 <StatsCard
@@ -307,7 +307,7 @@ export default function Statistics() {
                   value={`${getSuccessRate(selectedStats).rate}%`}
                   description={getSuccessRate(selectedStats).quality}
                   trend={getTrendIndicator(selectedStats)}
-                  className="bg-gradient-to-br from-green-50 to-white"
+                  className="hover:shadow-lg transition-shadow duration-200"
                 />
 
                 <StatsCard
@@ -319,7 +319,7 @@ export default function Statistics() {
                     : selectedStats.streakConsistency >= 50 
                       ? "Moderately Consistent" 
                       : "Building Consistency"}
-                  className="bg-gradient-to-br from-purple-50 to-white"
+                  className="hover:shadow-lg transition-shadow duration-200"
                 />
 
                 <StatsCard
@@ -331,12 +331,12 @@ export default function Statistics() {
                     : selectedStats.trendScore >= 50 
                       ? "Good Progress" 
                       : "Getting Started"}
-                  className="bg-gradient-to-br from-orange-50 to-white"
+                  className="hover:shadow-lg transition-shadow duration-200"
                 />
               </TooltipProvider>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <StatsChart
                 title="Monthly Resets"
                 description="Number of resets per month. Lower numbers indicate better control."
@@ -361,7 +361,7 @@ export default function Statistics() {
               type="pie"
               dataKey="count"
             />
-          </>
+          </div>
         )}
       </div>
     </div>

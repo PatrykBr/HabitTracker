@@ -13,10 +13,10 @@ interface StatsChartProps {
 
 export function StatsChart({ title, description, data, type, dataKey, colors = ['#0EA5E9', '#22C55E', '#F59E0B', '#EF4444'] }: StatsChartProps) {
   return (
-    <Card className="w-full overflow-hidden">
-      <CardHeader className="p-4 sm:p-6">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="w-full overflow-hidden bg-white/50 backdrop-blur-sm border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+      <CardHeader className="p-4 sm:p-6 border-b border-gray-100">
+        <CardTitle className="text-lg text-gray-700">{title}</CardTitle>
+        <CardDescription className="text-sm text-gray-500">{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
         <div className="h-[300px] w-full">
@@ -49,7 +49,11 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                       return null;
                     }}
                   />
-                  <Bar dataKey={dataKey} fill="#0EA5E9" />
+                  <Bar 
+                    dataKey={dataKey} 
+                    fill="#0EA5E9"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               ) : (
                 <PieChart>
@@ -64,7 +68,11 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                     dataKey={dataKey}
                   >
                     {data.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={colors[index % colors.length]}
+                        className="transition-all duration-200 hover:opacity-80"
+                      />
                     ))}
                   </Pie>
                   <RechartsTooltip
