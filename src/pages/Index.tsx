@@ -65,7 +65,11 @@ export default function Index() {
               key={habit.id}
               habit={habit}
               onReset={() => resetHabit(habit.id)}
-              onDelete={() => deleteHabit(habit.id)}
+              onDeleteReset={(index) => {
+                // This should call the appropriate function to delete a specific reset
+                // You might need to implement this in your useHabits hook
+                console.log('Delete reset at index:', index);
+              }}
             />
           ))}
         </div>
