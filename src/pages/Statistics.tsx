@@ -223,7 +223,7 @@ export default function Statistics() {
   };
 
   const getStreakDistribution = (stat: typeof selectedStat) => {
-    if (!stat) return [];
+    if (!stat || !selectedHabit) return [];
     
     const ranges = [
       { name: '1-7 days', min: 1, max: 7, count: 0 },
@@ -232,14 +232,26 @@ export default function Statistics() {
       { name: '31+ days', min: 31, max: Infinity, count: 0 }
     ];
 
-    const streakDay = stat.currentStreak;
-    ranges.forEach(range => {
-      if (streakDay >= range.min && streakDay <= range.max) {
+    const sortedResets = [...selectedHabit.resets].sort((a, b) => a.getTime() - b.getTime());
+
+    const streaks: number[] = [];
+    for (let i = 0; i < sortedResets.length - 1; i++) {
+      const streakDays = Math.floor(
+        (sortedResets[i + 1].getTime() - sortedResets[i].getTime()) / (1000 * 60 * 60 * 24)
+      );
+      streaks.push(streakDays);
+    }
+
+    streaks.push(stat.currentStreak);
+
+    streaks.forEach(streakDays => {
+      const range = ranges.find(r => streakDays >= r.min && streakDays <= r.max);
+      if (range) {
         range.count++;
       }
     });
 
-    return ranges;
+    return ranges.filter(range => range.count > 0);
   };
 
   const getTrendIndicator = (stat: typeof selectedStat) => {
