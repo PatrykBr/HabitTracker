@@ -51,7 +51,6 @@ export default function Statistics() {
       }
       streaks.push(currentStreakDays);
 
-      // Enhanced streak analysis
       const avgDaysBetweenResets = totalResets > 1 
         ? Math.round(totalTimeBetween / (totalResets - 1) / (1000 * 60 * 60 * 24)) 
         : currentStreakDays;
@@ -61,13 +60,12 @@ export default function Statistics() {
         ? streaks.sort((a, b) => a - b)[Math.floor(streaks.length / 2)]
         : currentStreakDays;
 
-      // Pattern detection
       const hasImprovedPattern = daysBetweenResets.length >= 3 && 
         daysBetweenResets.slice(-3).every((days, i, arr) => 
           i === 0 || days >= arr[i - 1]
         );
 
-      // Monthly analysis with gap filling
+      // Monthly analysis
       const monthlyResets: { [key: string]: number } = {};
       if (resetDates.length > 0) {
         const firstDate = new Date(Math.min(...resetDates.map(d => d.getTime())));
@@ -81,7 +79,6 @@ export default function Statistics() {
         });
       }
 
-      // Trend analysis
       const monthKeys = Object.keys(monthlyResets).sort((a, b) => {
         const dateA = new Date(a);
         const dateB = new Date(b);
@@ -92,7 +89,6 @@ export default function Statistics() {
       const previousMonth = monthlyResets[monthKeys[monthKeys.length - 2]] || 0;
       const twoMonthsAgo = monthlyResets[monthKeys[monthKeys.length - 3]] || 0;
 
-      // Improvement calculations (inverted - fewer resets is better)
       const shortTermImprovement = previousMonth !== 0
         ? ((lastMonth - previousMonth) / previousMonth) * -100
         : (lastMonth === 0 ? 100 : -100);
@@ -101,7 +97,6 @@ export default function Statistics() {
         ? ((lastMonth - twoMonthsAgo) / twoMonthsAgo) * -100
         : (lastMonth === 0 ? 100 : -100);
 
-      // Enhanced success metrics
       const firstReset = resetDates[0];
       const totalDays = firstReset 
         ? Math.max(Math.floor((now.getTime() - firstReset.getTime()) / (1000 * 60 * 60 * 24)), 1)
@@ -109,7 +104,6 @@ export default function Statistics() {
       
       const successRate = Math.min(((totalDays - totalResets) / totalDays) * 100, 100);
       
-      // Consistency analysis
       const avgStreak = streaks.length > 0 
         ? streaks.reduce((a, b) => a + b, 0) / streaks.length 
         : currentStreakDays;
@@ -122,14 +116,12 @@ export default function Statistics() {
         ? Math.max(0, Math.min(100, 100 - (Math.sqrt(streakVariance) / avgStreak * 50)))
         : 100;
 
-      // Risk assessment
       const riskLevel = (() => {
         if (currentStreakDays < avgDaysBetweenResets / 2) return 'high';
         if (currentStreakDays < avgDaysBetweenResets) return 'medium';
         return 'low';
       })();
 
-      // Overall score components
       const trendScore = Math.round(
         (Math.max(-100, Math.min(100, shortTermImprovement)) * 0.4) +
         (Math.max(-100, Math.min(100, longTermImprovement)) * 0.3) +
@@ -155,6 +147,7 @@ export default function Statistics() {
         riskLevel,
         hasImprovedPattern,
         trendScore,
+        resetDates,
         progressIndicators: {
           isOnLongestStreak: currentStreakDays === longestStreak,
           isAboveAverage: currentStreakDays > avgDaysBetweenResets,
@@ -163,62 +156,6 @@ export default function Statistics() {
         }
       };
     });
-  };
-
-  const exportData = () => {
-    try {
-      const stats = calculateStats();
-      const selectedStats = selectedHabitId === 'all' ? stats : stats.filter(s => s.name === habits.find(h => h.id === selectedHabitId)?.name);
-      
-      // Prepare CSV data
-      const csvRows = [
-        // Headers
-        [
-          'Habit Name',
-          'Total Resets',
-          'Average Days Between Resets',
-          'Current Streak',
-          'Longest Streak',
-          'Success Rate (%)',
-          'Consistency Score',
-          'Trend Score'
-        ].join(','),
-        // Data rows
-        ...selectedStats.map(stat => [
-          `"${stat.name}"`,
-          stat.totalResets,
-          stat.avgDaysBetweenResets,
-          stat.currentStreak,
-          stat.longestStreak,
-          stat.successRate,
-          stat.streakConsistency,
-          stat.trendScore
-        ].join(','))
-      ];
-
-      // Create and download CSV file
-      const csvContent = csvRows.join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `habit-data-${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Export Successful",
-        description: "Your habit data has been downloaded as a CSV file.",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "There was an error exporting your data. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   const stats = calculateStats();
@@ -231,7 +168,7 @@ export default function Statistics() {
         currentStreak: Math.max(...stats.map(s => s.currentStreak)),
         longestStreak: Math.max(...stats.map(s => s.longestStreak)),
         medianStreak: Math.round(stats.reduce((sum, s) => sum + s.medianStreak, 0) / stats.length),
-        resets: stats.flatMap(s => s.resets),
+        resetDates: stats.flatMap(s => s.resetDates),
         monthlyResets: stats.reduce((acc, stat) => {
           stat.monthlyResets.forEach(monthly => {
             const existing = acc.find(m => m.month === monthly.month);

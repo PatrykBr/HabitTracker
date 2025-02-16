@@ -1,4 +1,3 @@
-
 import { TrendingDown, ArrowDown, AlertTriangle, TrendingUp } from "lucide-react";
 
 export const getMonthsBetween = (startDate: Date, endDate: Date) => {
@@ -37,9 +36,10 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
 
   let streaks: number[] = [];
   
-  if (selectedHabit) {
-    // Single habit case
-    const sortedResets = [...selectedHabit.resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  const dates = selectedHabit ? selectedHabit.resets : stat.resetDates;
+  
+  if (dates && dates.length > 0) {
+    const sortedResets = [...dates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     for (let i = 0; i < sortedResets.length - 1; i++) {
       const streakDays = Math.floor(
         (new Date(sortedResets[i + 1]).getTime() - new Date(sortedResets[i]).getTime()) / (1000 * 60 * 60 * 24)
@@ -47,19 +47,6 @@ export const getStreakDistribution = (selectedHabit: any, stat: any) => {
       streaks.push(streakDays);
     }
     streaks.push(stat.currentStreak);
-  } else {
-    // "All" habits case
-    const resets = stat.resets || [];
-    if (resets.length > 0) {
-      const sortedResets = [...resets].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-      for (let i = 0; i < sortedResets.length - 1; i++) {
-        const streakDays = Math.floor(
-          (new Date(sortedResets[i + 1]).getTime() - new Date(sortedResets[i]).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        streaks.push(streakDays);
-      }
-      streaks.push(stat.currentStreak);
-    }
   }
 
   streaks.forEach(streakDays => {
