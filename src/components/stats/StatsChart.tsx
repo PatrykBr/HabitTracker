@@ -11,12 +11,19 @@ interface StatsChartProps {
   colors?: string[];
 }
 
-export function StatsChart({ title, description, data, type, dataKey, colors = ['#9b87f5', '#7E69AB', '#8E9196', '#F1F0FB'] }: StatsChartProps) {
+export function StatsChart({ 
+  title, 
+  description, 
+  data, 
+  type, 
+  dataKey, 
+  colors = ['#1f2937', '#4b5563', '#6b7280', '#9ca3af'] 
+}: StatsChartProps) {
   return (
-    <Card className="w-full overflow-hidden bg-white/90 backdrop-blur-sm border border-purple-100 shadow-lg shadow-purple-100/20 hover:shadow-purple-100/30 transition-all duration-300">
-      <CardHeader className="p-4 sm:p-6 border-b border-purple-100">
+    <Card className="w-full overflow-hidden bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
         <CardTitle className="text-lg text-gray-700">{title}</CardTitle>
-        <CardDescription className="text-sm text-purple-400">{description}</CardDescription>
+        <CardDescription className="text-sm text-gray-500">{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
         <div className="h-[300px] w-full">
@@ -38,9 +45,9 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white/90 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-purple-100">
-                            <p className="font-semibold">{label}</p>
-                            <p className="text-primary">
+                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-gray-200">
+                            <p className="font-semibold text-gray-700">{label}</p>
+                            <p className="text-gray-600">
                               {payload[0].value} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
@@ -51,7 +58,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                   />
                   <Bar 
                     dataKey={dataKey} 
-                    fill="#9b87f5"
+                    fill="#4b5563"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -64,7 +71,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                     labelLine={false}
                     label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="#4b5563"
                     dataKey={dataKey}
                   >
                     {data.map((_, index) => (
@@ -80,9 +87,9 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className="bg-white/90 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-purple-100">
-                            <p className="font-semibold">{data.name}</p>
-                            <p className="text-primary">
+                          <div className="bg-white/95 backdrop-blur-sm p-2 border rounded-lg shadow-lg text-xs sm:text-sm border-gray-200">
+                            <p className="font-semibold text-gray-700">{data.name}</p>
+                            <p className="text-gray-600">
                               {data[dataKey]} {dataKey !== 'count' ? dataKey : 'resets'}
                             </p>
                           </div>
@@ -95,7 +102,7 @@ export function StatsChart({ title, description, data, type, dataKey, colors = [
               )}
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-purple-400">
+            <div className="h-full flex items-center justify-center text-gray-500">
               No data available yet
             </div>
           )}

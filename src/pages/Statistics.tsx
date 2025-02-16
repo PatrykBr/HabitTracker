@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useHabits } from '@/hooks/use-habits';
+import { useHabits, HabitType } from '@/hooks/use-habits';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsHeader } from '@/components/stats/StatsHeader';
@@ -76,11 +76,11 @@ export default function Statistics() {
 
   if (habits.length === 0) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
+      <div className="min-h-screen bg-[linear-gradient(to_right,#e6e9f0_0%,#eef1f5_100%)] overflow-hidden">
         <div className="max-w-7xl mx-auto p-4 sm:p-6">
-          <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20">
+          <Card className="bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg">
             <CardContent className="p-8">
-              <p className="text-center text-gray-500">No habits found. Add some habits to see statistics.</p>
+              <p className="text-center text-gray-600">No habits found. Add some habits to see statistics.</p>
             </CardContent>
           </Card>
         </div>
@@ -89,12 +89,12 @@ export default function Statistics() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
+    <div className="min-h-screen bg-[linear-gradient(to_right,#e6e9f0_0%,#eef1f5_100%)] overflow-hidden">
       {/* Decorative Elements */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" 
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse" 
              style={{ transform: 'translate(20%, -20%)' }} />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gray-200 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse delay-700"
              style={{ transform: 'translate(-20%, 20%)' }} />
       </div>
 

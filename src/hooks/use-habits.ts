@@ -17,7 +17,8 @@ type HabitResetRow = Database['public']['Tables']['habit_resets']['Row'];
 export interface HabitType {
   id: string;
   name: string;
-  resets: string[];
+  lastReset: Date;
+  resets: Date[];
   createdAt: string;
 }
 
