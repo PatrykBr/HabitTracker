@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useHabits } from '@/hooks/use-habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings2, Trash2, LogOut, ChevronLeft } from 'lucide-react';
+import { Settings2, Trash2, LogOut, ChevronLeft, Sparkles } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,19 +63,27 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-secondary/50 via-white to-secondary/30">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" 
+             style={{ transform: 'translate(20%, -20%)' }} />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"
+             style={{ transform: 'translate(-20%, 20%)' }} />
+      </div>
+
+      <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-2">
             <Settings2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Settings</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-primary to-blue-600">Settings</h1>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/')}
-            className="gap-2 hover:bg-secondary/80 transition-colors duration-200"
+            className="gap-2 hover:bg-purple-50/50 transition-colors duration-200"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
@@ -83,10 +91,10 @@ export default function Settings() {
         </div>
 
         {/* Manage Habits Section */}
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+        <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20 transition-all duration-300 animate-fade-in">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <Trash2 className="h-5 w-5 text-primary" />
+              <Sparkles className="h-5 w-5 text-primary" />
               Manage Habits
             </CardTitle>
           </CardHeader>
@@ -99,7 +107,7 @@ export default function Settings() {
               habits.map((habit) => (
                 <div
                   key={habit.id}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 hover:border-primary/20 hover:bg-secondary/20 transition-all duration-200"
+                  className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-purple-100 hover:border-primary/20 hover:bg-purple-50/50 transition-all duration-200"
                 >
                   <span className="text-sm sm:text-base text-gray-700">{habit.name}</span>
                   <Button
@@ -118,7 +126,7 @@ export default function Settings() {
         </Card>
 
         {/* Account Section */}
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+        <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20 transition-all duration-300 animate-fade-in">
           <CardContent className="p-4">
             <Button
               variant="destructive"
