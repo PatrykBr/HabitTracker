@@ -3,11 +3,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://yxflhonoewhclkcrucko.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Zmxob25vZXdoY2xrY3J1Y2tvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk3MzM0MDEsImV4cCI6MjA1NTMwOTQwMX0.ESWW4eLGSYCrXzOoQt79haPXr2WT7M6fKYAIfm3cSlg";
+const SUPABASE_URL: string = "https://yxflhonoewhclkcrucko.supabase.co";
+const SUPABASE_ANON_KEY: string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Zmxob25vZXdoY2xrY3J1Y2tvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk3MzM0MDEsImV4cCI6MjA1NTMwOTQwMX0.ESWW4eLGSYCrXzOoQt79haPXr2WT7M6fKYAIfm3cSlg";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
+
+if (!SUPABASE_URL) throw new Error('Supabase URL is not defined');
+if (!SUPABASE_ANON_KEY) throw new Error('Supabase Anon Key is not defined');
 
 export const supabase = createClient<Database>(
   SUPABASE_URL,
