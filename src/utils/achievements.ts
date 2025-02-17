@@ -40,8 +40,29 @@ export const ACHIEVEMENTS: Achievement[] = [
   }
 ];
 
+// Store achievement unlock times in localStorage
+const STORAGE_KEY = 'achievement_unlocks';
+
+interface AchievementUnlocks {
+  [achievementId: string]: string; // ISO date string
+}
+
+function getStoredUnlocks(): AchievementUnlocks {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : {};
+}
+
+function storeUnlock(achievementId: string, date: Date) {
+  const unlocks = getStoredUnlocks();
+  if (!unlocks[achievementId]) {
+    unlocks[achievementId] = date.toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(unlocks));
+  }
+}
+
 export function checkAchievements(habits: Habit[]): Achievement[] {
   const unlockedAchievements: Achievement[] = [];
+  const storedUnlocks = getStoredUnlocks();
   
   // Check streak-based achievements
   const maxStreak = Math.max(...habits.map(h => Math.max(
@@ -52,17 +73,21 @@ export function checkAchievements(habits: Habit[]): Achievement[] {
   )));
 
   if (maxStreak >= 7) {
-    unlockedAchievements.push({
-      ...ACHIEVEMENTS.find(a => a.id === 'first_week')!,
-      unlockedAt: new Date()
-    });
+    const achievement = { ...ACHIEVEMENTS.find(a => a.id === 'first_week')! };
+    if (!storedUnlocks[achievement.id]) {
+      storeUnlock(achievement.id, new Date());
+    }
+    achievement.unlockedAt = storedUnlocks[achievement.id] ? new Date(storedUnlocks[achievement.id]) : undefined;
+    unlockedAchievements.push(achievement);
   }
 
   if (maxStreak >= 30) {
-    unlockedAchievements.push({
-      ...ACHIEVEMENTS.find(a => a.id === 'first_month')!,
-      unlockedAt: new Date()
-    });
+    const achievement = { ...ACHIEVEMENTS.find(a => a.id === 'first_month')! };
+    if (!storedUnlocks[achievement.id]) {
+      storeUnlock(achievement.id, new Date());
+    }
+    achievement.unlockedAt = storedUnlocks[achievement.id] ? new Date(storedUnlocks[achievement.id]) : undefined;
+    unlockedAchievements.push(achievement);
   }
 
   // Check total days achievement
@@ -74,10 +99,12 @@ export function checkAchievements(habits: Habit[]): Achievement[] {
   }, 0);
 
   if (totalDays >= 100) {
-    unlockedAchievements.push({
-      ...ACHIEVEMENTS.find(a => a.id === 'habit_hero')!,
-      unlockedAt: new Date()
-    });
+    const achievement = { ...ACHIEVEMENTS.find(a => a.id === 'habit_hero')! };
+    if (!storedUnlocks[achievement.id]) {
+      storeUnlock(achievement.id, new Date());
+    }
+    achievement.unlockedAt = storedUnlocks[achievement.id] ? new Date(storedUnlocks[achievement.id]) : undefined;
+    unlockedAchievements.push(achievement);
   }
 
   // Check consistency achievement
@@ -90,10 +117,12 @@ export function checkAchievements(habits: Habit[]): Achievement[] {
   }, 0) / habits.length;
 
   if (avgConsistency >= 90) {
-    unlockedAchievements.push({
-      ...ACHIEVEMENTS.find(a => a.id === 'consistency_king')!,
-      unlockedAt: new Date()
-    });
+    const achievement = { ...ACHIEVEMENTS.find(a => a.id === 'consistency_king')! };
+    if (!storedUnlocks[achievement.id]) {
+      storeUnlock(achievement.id, new Date());
+    }
+    achievement.unlockedAt = storedUnlocks[achievement.id] ? new Date(storedUnlocks[achievement.id]) : undefined;
+    unlockedAchievements.push(achievement);
   }
 
   return unlockedAchievements;
