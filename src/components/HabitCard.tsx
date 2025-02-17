@@ -1,14 +1,22 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { formatTimeSince } from '@/utils/format-time';
-import { Clock, RotateCcw, History, Plus, CalendarDays, List, Trash2 } from 'lucide-react';
+import { Clock, RotateCcw, History, Plus, CalendarDays, List, Trash2, ChevronDown } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { Habit } from '@/hooks/use-habits';
 import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface HabitCardProps {
   habit: Habit;
@@ -23,6 +31,26 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState(format(new Date(), 'HH:mm'));
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [month, setMonth] = useState<Date>(new Date());
+
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const handleYearSelect = (year: string) => {
+    const newDate = new Date(month);
+    newDate.setFullYear(parseInt(year));
+    setMonth(newDate);
+  };
+
+  const handleMonthSelect = (monthName: string) => {
+    const monthIndex = months.indexOf(monthName);
+    const newDate = new Date(month);
+    newDate.setMonth(monthIndex);
+    setMonth(newDate);
+  };
 
   const handleAddCustomReset = () => {
     if (selectedDate && selectedTime && onAddCustomReset) {
@@ -113,6 +141,8 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   mode="multiple"
                   selected={resetDays}
                   footer={`${resetDays.length} resets total`}
+                  month={month}
+                  onMonthChange={setMonth}
                   classNames={{
                     day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                     day_today: "bg-accent text-accent-foreground",
@@ -151,11 +181,41 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
             <DialogTitle>Add Custom Reset</DialogTitle>
           </DialogHeader>
           <div className="p-4 space-y-4">
+            <div className="flex gap-2 mb-4">
+              <Select onValueChange={handleMonthSelect} defaultValue={months[month.getMonth()]}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select onValueChange={handleYearSelect} defaultValue={month.getFullYear().toString()}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="bg-secondary/30 rounded-lg p-2 sm:p-4 flex justify-center">
               <DayPicker
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
+                month={month}
+                onMonthChange={setMonth}
                 initialFocus
                 className="!w-full !m-0"
                 classNames={{
@@ -180,7 +240,6 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
                   day_hidden: "invisible",
                 }}
-                showOutsideDays={true}
               />
             </div>
             <div className="space-y-2">
