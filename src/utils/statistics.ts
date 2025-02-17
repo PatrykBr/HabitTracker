@@ -184,3 +184,27 @@ export const getMotivationalMessage = (stats: any) => {
   }
   return "🌱 Every day is a new opportunity for growth!";
 };
+
+export const getCommonResetTimes = (resets: Date[]) => {
+  if (!resets || resets.length === 0) return [];
+
+  const timeMap = new Map<string, number>();
+  
+  resets.forEach(reset => {
+    const date = new Date(reset);
+    // Group by hour
+    const timeKey = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric',
+      hour12: true 
+    });
+    timeMap.set(timeKey, (timeMap.get(timeKey) || 0) + 1);
+  });
+
+  // Convert to array and sort by count
+  const sortedTimes = Array.from(timeMap.entries())
+    .map(([time, count]) => ({ time, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5); // Get top 5 times
+
+  return sortedTimes;
+};

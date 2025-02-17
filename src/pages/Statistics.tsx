@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHabits } from '@/hooks/use-habits';
@@ -7,8 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatsHeader } from '@/components/stats/StatsHeader';
 import { StatsOverview } from '@/components/stats/StatsOverview';
 import { StatsCharts } from '@/components/stats/StatsCharts';
+import { TimeDistribution } from '@/components/stats/TimeDistribution';
 import { calculateStats, calculateCombinedStats } from '@/utils/statsCalculator';
-import { getWeeklyDistribution, getStreakDistribution } from '@/utils/statistics';
+import { getWeeklyDistribution, getStreakDistribution, getCommonResetTimes } from '@/utils/statistics';
 
 export default function Statistics() {
   const { habits } = useHabits();
@@ -21,6 +21,16 @@ export default function Statistics() {
   const selectedStats = selectedHabitId === 'all' 
     ? calculateCombinedStats(stats)
     : stats.find(s => s.name === selectedHabit?.name);
+
+  const weeklyData = selectedHabitId === 'all'
+    ? getWeeklyDistributionForAll()
+    : selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
+
+  const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
+  
+  const commonTimes = selectedHabit 
+    ? getCommonResetTimes(selectedHabit.resets)
+    : getCommonResetTimes(habits.flatMap(h => h.resets));
 
   const getWeeklyDistributionForAll = () => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -35,12 +45,6 @@ export default function Statistics() {
     
     return combinedData;
   };
-
-  const weeklyData = selectedHabitId === 'all'
-    ? getWeeklyDistributionForAll()
-    : selectedHabit ? getWeeklyDistribution(selectedHabit.resets) : [];
-
-  const streakDistributionData = selectedStats ? getStreakDistribution(selectedHabit, selectedStats) : [];
 
   const exportData = () => {
     if (!selectedStats) return;
@@ -110,12 +114,20 @@ export default function Statistics() {
         {selectedStats && (
           <div className="space-y-6 sm:space-y-8 animate-fade-in">
             <StatsOverview stats={selectedStats} />
-            <StatsCharts
-              selectedStats={selectedStats}
-              selectedHabit={selectedHabit}
-              weeklyData={weeklyData}
-              streakDistributionData={streakDistributionData}
-            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="lg:col-span-2">
+                <StatsCharts
+                  selectedStats={selectedStats}
+                  selectedHabit={selectedHabit}
+                  weeklyData={weeklyData}
+                  streakDistributionData={streakDistributionData}
+                />
+              </div>
+              <div className="space-y-4 sm:space-y-6">
+                <TimeDistribution times={commonTimes} />
+              </div>
+            </div>
           </div>
         )}
       </div>
