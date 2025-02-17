@@ -186,7 +186,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border shadow-md">
                   {months.map((month) => (
                     <SelectItem key={month} value={month}>
                       {month}
@@ -199,7 +199,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                 <SelectTrigger className="w-[100px]">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border shadow-md">
                   {years.map((year) => (
                     <SelectItem key={year} value={year.toString()}>
                       {year}
