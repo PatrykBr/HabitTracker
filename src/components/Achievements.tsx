@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useHabits } from '@/hooks/use-habits';
 import { ACHIEVEMENTS, checkAchievements } from '@/utils/achievements';
 import { useToast } from '@/hooks/use-toast';
@@ -7,15 +7,20 @@ import { useToast } from '@/hooks/use-toast';
 export function Achievements() {
   const { habits } = useHabits();
   const { toast } = useToast();
+  const processedAchievements = useRef<Set<string>>(new Set());
   
   useEffect(() => {
     if (habits.length > 0) {
       const unlockedAchievements = checkAchievements(habits);
       
-      // Show toast for newly unlocked achievements
+      // Show toast only for newly unlocked achievements that haven't been processed
       unlockedAchievements.forEach(achievement => {
-        if (achievement.unlockedAt && 
-            achievement.unlockedAt.getTime() > Date.now() - 5000) { // Only show for achievements unlocked in the last 5 seconds
+        if (
+          achievement.unlockedAt && 
+          achievement.unlockedAt.getTime() > Date.now() - 5000 && // Only show for achievements unlocked in the last 5 seconds
+          !processedAchievements.current.has(achievement.id)
+        ) {
+          processedAchievements.current.add(achievement.id);
           toast({
             title: "Achievement Unlocked! 🎉",
             description: `${achievement.name}: ${achievement.description}`,
