@@ -8,16 +8,16 @@ export function Achievements() {
   const { habits } = useHabits();
   const { toast } = useToast();
   const processedAchievements = useRef<Set<string>>(new Set());
+  const initialCheckTime = useRef(Date.now());
   
   useEffect(() => {
     if (habits.length > 0) {
       const unlockedAchievements = checkAchievements(habits);
       
-      // Show toast only for newly unlocked achievements that haven't been processed
       unlockedAchievements.forEach(achievement => {
         if (
           achievement.unlockedAt && 
-          achievement.unlockedAt.getTime() > Date.now() - 5000 && // Only show for achievements unlocked in the last 5 seconds
+          achievement.unlockedAt.getTime() > initialCheckTime.current && 
           !processedAchievements.current.has(achievement.id)
         ) {
           processedAchievements.current.add(achievement.id);
