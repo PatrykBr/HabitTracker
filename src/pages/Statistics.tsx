@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHabits } from '@/hooks/use-habits';
@@ -16,6 +17,20 @@ export default function Statistics() {
   const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
   const { toast } = useToast();
 
+  const getWeeklyDistributionForAll = () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const combinedData = days.map(day => ({ name: day, count: 0 }));
+    
+    habits.forEach(habit => {
+      const habitWeekly = getWeeklyDistribution(habit.resets);
+      habitWeekly.forEach((day, index) => {
+        combinedData[index].count += day.count;
+      });
+    });
+    
+    return combinedData;
+  };
+
   const stats = calculateStats(habits);
   const selectedHabit = selectedHabitId === 'all' ? null : habits.find(h => h.id === selectedHabitId);
   const selectedStats = selectedHabitId === 'all' 
@@ -31,20 +46,6 @@ export default function Statistics() {
   const commonTimes = selectedHabit 
     ? getCommonResetTimes(selectedHabit.resets)
     : getCommonResetTimes(habits.flatMap(h => h.resets));
-
-  const getWeeklyDistributionForAll = () => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const combinedData = days.map(day => ({ name: day, count: 0 }));
-    
-    habits.forEach(habit => {
-      const habitWeekly = getWeeklyDistribution(habit.resets);
-      habitWeekly.forEach((day, index) => {
-        combinedData[index].count += day.count;
-      });
-    });
-    
-    return combinedData;
-  };
 
   const exportData = () => {
     if (!selectedStats) return;
