@@ -16,7 +16,7 @@ export function StatsCharts({
   streakDistributionData 
 }: StatsChartsProps) {
   return (
-    <>
+    <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <StatsChart
           title="Monthly Resets"
@@ -35,13 +35,26 @@ export function StatsCharts({
         />
       </div>
 
-      <StatsChart
-        title="Streak Distribution"
-        description="Analysis of how long your streaks typically last"
-        data={streakDistributionData}
-        type="pie"
-        dataKey="count"
-      />
-    </>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <StatsChart
+          title="Streak Distribution"
+          description="Analysis of how long your streaks typically last"
+          data={streakDistributionData}
+          type="pie"
+          dataKey="count"
+        />
+
+        <div className="flex items-center">
+          <div className="w-full">
+            <h3 className="text-base font-medium text-sky-900 mb-4">
+              Common Reset Times
+            </h3>
+            <p className="text-sm text-sky-700/80 mb-4">
+              Understanding when resets occur helps prepare for challenging times.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHabits } from '@/hooks/use-habits';
@@ -111,35 +110,31 @@ export default function Statistics() {
             <StatsOverview stats={selectedStats} />
 
             {/* Main Charts and Analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Charts - spans 2 columns on desktop */}
-              <Card className="bg-white/95 border-sky-100 shadow-sm lg:col-span-2">
-                <CardContent className="p-6">
+            <Card className="bg-white/95 border-sky-100 shadow-sm">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 gap-8">
                   <StatsCharts
                     selectedStats={selectedStats}
                     selectedHabit={selectedHabit}
                     weeklyData={weeklyData}
                     streakDistributionData={streakDistributionData}
                   />
-                </CardContent>
-              </Card>
+                  <TimeDistribution times={commonTimes} />
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Side section - takes 1 column */}
-              <div className="space-y-6">
-                <TimeDistribution times={commonTimes} />
-
-                <Card className="bg-white/95 border-sky-100 shadow-sm">
-                  <CardContent className="p-6">
-                    <h3 className="text-base font-medium text-sky-900 mb-2">
-                      Insights
-                    </h3>
-                    <p className="text-sm text-sky-700/80">
-                      Track your progress patterns and focus on building consistent habits.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            {/* Insights Card */}
+            <Card className="bg-white/95 border-sky-100 shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="text-base font-medium text-sky-900 mb-2">
+                  Insights
+                </h3>
+                <p className="text-sm text-sky-700/80">
+                  Track your progress patterns and focus on building consistent habits.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
