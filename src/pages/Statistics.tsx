@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHabits } from '@/hooks/use-habits';
@@ -81,7 +82,7 @@ export default function Statistics() {
   if (habits.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-50 to-cyan-100">
-        <div className="container max-w-4xl mx-auto p-6">
+        <div className="container max-w-6xl mx-auto p-6">
           <Card className="bg-white/95 border-sky-100 shadow-sm">
             <CardContent className="p-6">
               <p className="text-center text-sky-700">No habits found. Add some habits to see statistics.</p>
@@ -94,7 +95,8 @@ export default function Statistics() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-cyan-100">
-      <div className="container max-w-4xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+      <div className="container max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+        {/* Header Section */}
         <StatsHeader
           habits={habits}
           selectedHabitId={selectedHabitId}
@@ -105,10 +107,13 @@ export default function Statistics() {
 
         {selectedStats && (
           <div className="space-y-6">
+            {/* Overview Cards */}
             <StatsOverview stats={selectedStats} />
 
-            <div className="grid grid-cols-1 gap-6">
-              <Card className="bg-white/95 border-sky-100 shadow-sm">
+            {/* Main Charts and Analysis */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Charts - spans 2 columns on desktop */}
+              <Card className="bg-white/95 border-sky-100 shadow-sm lg:col-span-2">
                 <CardContent className="p-6">
                   <StatsCharts
                     selectedStats={selectedStats}
@@ -119,18 +124,21 @@ export default function Statistics() {
                 </CardContent>
               </Card>
 
-              <TimeDistribution times={commonTimes} />
+              {/* Side section - takes 1 column */}
+              <div className="space-y-6">
+                <TimeDistribution times={commonTimes} />
 
-              <Card className="bg-white/95 border-sky-100 shadow-sm">
-                <CardContent className="p-6">
-                  <h3 className="text-base font-medium text-sky-900 mb-2">
-                    Insights
-                  </h3>
-                  <p className="text-sm text-sky-700/80">
-                    Track your progress patterns and focus on building consistent habits.
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="bg-white/95 border-sky-100 shadow-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-base font-medium text-sky-900 mb-2">
+                      Insights
+                    </h3>
+                    <p className="text-sm text-sky-700/80">
+                      Track your progress patterns and focus on building consistent habits.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         )}
