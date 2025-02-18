@@ -81,9 +81,9 @@ export default function Statistics() {
   if (habits.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-50 to-cyan-100">
-        <div className="max-w-5xl mx-auto p-6">
-          <Card className="bg-white/95 backdrop-blur-sm border-sky-200 shadow-lg">
-            <CardContent className="p-8">
+        <div className="container max-w-4xl mx-auto p-6">
+          <Card className="bg-white/95 border-sky-100 shadow-sm">
+            <CardContent className="p-6">
               <p className="text-center text-sky-700">No habits found. Add some habits to see statistics.</p>
             </CardContent>
           </Card>
@@ -94,59 +94,46 @@ export default function Statistics() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-cyan-100">
-      <div className="fixed inset-0 pointer-events-none opacity-40">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-sky-100 rounded-full mix-blend-multiply filter blur-3xl" 
-             style={{ transform: 'translate(20%, -20%)' }} />
-      </div>
+      <div className="container max-w-4xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+        <StatsHeader
+          habits={habits}
+          selectedHabitId={selectedHabitId}
+          onHabitChange={setSelectedHabitId}
+          onExport={exportData}
+          onBack={() => navigate('/')}
+        />
 
-      <div className="relative min-h-screen">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-          <div className="mb-12">
-            <StatsHeader
-              habits={habits}
-              selectedHabitId={selectedHabitId}
-              onHabitChange={setSelectedHabitId}
-              onExport={exportData}
-              onBack={() => navigate('/')}
-            />
-          </div>
+        {selectedStats && (
+          <div className="space-y-6">
+            <StatsOverview stats={selectedStats} />
 
-          {selectedStats && (
-            <div className="space-y-12">
-              <section>
-                <StatsOverview stats={selectedStats} />
-              </section>
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="bg-white/95 border-sky-100 shadow-sm">
+                <CardContent className="p-6">
+                  <StatsCharts
+                    selectedStats={selectedStats}
+                    selectedHabit={selectedHabit}
+                    weeklyData={weeklyData}
+                    streakDistributionData={streakDistributionData}
+                  />
+                </CardContent>
+              </Card>
 
-              <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <Card className="bg-white/95 backdrop-blur-sm border-sky-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <StatsCharts
-                      selectedStats={selectedStats}
-                      selectedHabit={selectedHabit}
-                      weeklyData={weeklyData}
-                      streakDistributionData={streakDistributionData}
-                    />
-                  </CardContent>
-                </Card>
+              <TimeDistribution times={commonTimes} />
 
-                <div className="space-y-8">
-                  <TimeDistribution times={commonTimes} />
-                  
-                  <Card className="bg-white/95 backdrop-blur-sm border-sky-200 shadow-sm">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-medium text-sky-900 mb-2">
-                        Insights
-                      </h3>
-                      <p className="text-sm text-sky-700/80">
-                        Track your progress patterns and focus on building consistent habits.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </section>
+              <Card className="bg-white/95 border-sky-100 shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="text-base font-medium text-sky-900 mb-2">
+                    Insights
+                  </h3>
+                  <p className="text-sm text-sky-700/80">
+                    Track your progress patterns and focus on building consistent habits.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
