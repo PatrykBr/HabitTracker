@@ -2,18 +2,21 @@
 import { StatsChart } from "@/components/stats/StatsChart";
 import { StatType } from "@/utils/statsCalculator";
 import { HabitType } from "@/hooks/use-habits";
+import { TimeDistribution } from "@/components/stats/TimeDistribution";
 
 interface StatsChartsProps {
   selectedStats: StatType;
   selectedHabit: HabitType | null;
   weeklyData: { name: string; count: number; }[];
   streakDistributionData: { name: string; count: number; }[];
+  commonTimes: { time: string; count: number }[];
 }
 
 export function StatsCharts({ 
   selectedStats, 
   weeklyData,
-  streakDistributionData 
+  streakDistributionData,
+  commonTimes
 }: StatsChartsProps) {
   return (
     <div className="space-y-6">
@@ -44,16 +47,7 @@ export function StatsCharts({
           dataKey="count"
         />
 
-        <div className="flex items-center">
-          <div className="w-full">
-            <h3 className="text-base font-medium text-sky-900 mb-4">
-              Common Reset Times
-            </h3>
-            <p className="text-sm text-sky-700/80 mb-4">
-              Understanding when resets occur helps prepare for challenging times.
-            </p>
-          </div>
-        </div>
+        <TimeDistribution times={commonTimes} />
       </div>
     </div>
   );

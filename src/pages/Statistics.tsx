@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatsHeader } from '@/components/stats/StatsHeader';
 import { StatsOverview } from '@/components/stats/StatsOverview';
 import { StatsCharts } from '@/components/stats/StatsCharts';
-import { TimeDistribution } from '@/components/stats/TimeDistribution';
 import { calculateStats, calculateCombinedStats } from '@/utils/statsCalculator';
 import { getWeeklyDistribution, getStreakDistribution, getCommonResetTimes } from '@/utils/statistics';
 
@@ -112,15 +111,13 @@ export default function Statistics() {
             {/* Main Charts and Analysis */}
             <Card className="bg-white/95 border-sky-100 shadow-sm">
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 gap-8">
-                  <StatsCharts
-                    selectedStats={selectedStats}
-                    selectedHabit={selectedHabit}
-                    weeklyData={weeklyData}
-                    streakDistributionData={streakDistributionData}
-                  />
-                  <TimeDistribution times={commonTimes} />
-                </div>
+                <StatsCharts
+                  selectedStats={selectedStats}
+                  selectedHabit={selectedHabit}
+                  weeklyData={weeklyData}
+                  streakDistributionData={streakDistributionData}
+                  commonTimes={commonTimes}
+                />
               </CardContent>
             </Card>
 
