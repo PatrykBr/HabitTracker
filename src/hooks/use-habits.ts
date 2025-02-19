@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -44,13 +45,23 @@ export function useHabits() {
 
       if (error) throw error;
 
-      return (habits as (HabitRow & { habit_resets: HabitResetRow[] })[]).map((habit) => ({
-        id: habit.id,
-        name: habit.name,
-        lastReset: new Date(habit.last_reset),
-        resets: habit.habit_resets.map((reset) => new Date(reset.reset_time)),
-        createdAt: habit.created_at
-      }));
+      console.log('Raw habits data from DB:', habits);
+
+      return (habits as (HabitRow & { habit_resets: HabitResetRow[] })[]).map((habit) => {
+        console.log('Processing habit:', habit.name);
+        console.log('Reset times before conversion:', habit.habit_resets.map(r => r.reset_time));
+        
+        const processedHabit = {
+          id: habit.id,
+          name: habit.name,
+          lastReset: new Date(habit.last_reset),
+          resets: habit.habit_resets.map((reset) => new Date(reset.reset_time)),
+          createdAt: habit.created_at
+        };
+        
+        console.log('Processed reset times:', processedHabit.resets.map(r => r.toISOString()));
+        return processedHabit;
+      });
     },
   });
 
@@ -85,16 +96,22 @@ export function useHabits() {
 
   const resetHabitMutation = useMutation({
     mutationFn: async (id: string) => {
+      const resetTime = new Date().toISOString();
+      console.log('Sending reset time to DB:', resetTime);
+
       const { error: updateError } = await supabase
         .from('habits')
-        .update({ last_reset: new Date().toISOString() })
+        .update({ last_reset: resetTime })
         .eq('id', id);
 
       if (updateError) throw updateError;
 
       const { error: insertError } = await supabase
         .from('habit_resets')
-        .insert({ habit_id: id });
+        .insert({ 
+          habit_id: id,
+          reset_time: resetTime
+        });
 
       if (insertError) throw insertError;
     },
@@ -105,11 +122,18 @@ export function useHabits() {
 
   const addCustomResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      const isoResetTime = resetTime.toISOString();
+      console.log('Adding custom reset:', {
+        localDate: resetTime.toString(),
+        isoString: isoResetTime,
+        timestamp: resetTime.getTime()
+      });
+
       const { error: insertError } = await supabase
         .from('habit_resets')
         .insert({ 
           habit_id: habitId,
-          reset_time: resetTime.toISOString()
+          reset_time: isoResetTime
         });
 
       if (insertError) throw insertError;
@@ -136,6 +160,12 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      console.log('Removing reset:', {
+        localDate: resetTime.toString(),
+        isoString: resetTime.toISOString(),
+        timestamp: resetTime.getTime()
+      });
+
       // Instead of using string comparison, use date range query
       const startTime = new Date(resetTime.getTime());
       const endTime = new Date(resetTime.getTime() + 999); // Add 999ms to cover potential microsecond differences
