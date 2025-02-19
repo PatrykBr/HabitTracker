@@ -5,18 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { formatTimeSince } from '@/utils/format-time';
-import { Clock, RotateCcw, History, Plus, CalendarDays, List, Trash2, ChevronDown } from 'lucide-react';
+import { Clock, RotateCcw, History, Plus, CalendarDays, List, Trash2 } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { Habit } from '@/hooks/use-habits';
 import 'react-day-picker/dist/style.css';
-import { format } from 'date-fns';
+import { format, startOfDay, set } from 'date-fns';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 interface HabitCardProps {
   habit: Habit;
@@ -28,10 +28,10 @@ interface HabitCardProps {
 export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: HabitCardProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showAddReset, setShowAddReset] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [selectedTime, setSelectedTime] = useState(format(new Date(), 'HH:mm'));
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-  const [month, setMonth] = useState<Date>(new Date());
+  const [month, setMonth] = useState<Date>(startOfDay(new Date()));
 
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
   const months = [
@@ -42,27 +42,32 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
   const handleYearSelect = (year: string) => {
     const newDate = new Date(month);
     newDate.setFullYear(parseInt(year));
-    setMonth(newDate);
+    setMonth(startOfDay(newDate));
   };
 
   const handleMonthSelect = (monthName: string) => {
     const monthIndex = months.indexOf(monthName);
     const newDate = new Date(month);
     newDate.setMonth(monthIndex);
-    setMonth(newDate);
+    setMonth(startOfDay(newDate));
   };
 
   const handleAddCustomReset = () => {
     if (selectedDate && selectedTime && onAddCustomReset) {
       const [hours, minutes] = selectedTime.split(':').map(Number);
-      const resetDate = new Date(selectedDate);
-      resetDate.setHours(hours, minutes);
+      const resetDate = set(selectedDate, {
+        hours,
+        minutes,
+        seconds: 0,
+        milliseconds: 0
+      });
       onAddCustomReset(resetDate);
       setShowAddReset(false);
     }
   };
 
-  const resetDays = habit.resets.map(reset => new Date(reset));
+  // Ensure all reset dates are properly handled for display
+  const resetDays = habit.resets.map(reset => startOfDay(new Date(reset)));
 
   return (
     <>
@@ -213,7 +218,7 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
               <DayPicker
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
+                onSelect={(date) => date && setSelectedDate(startOfDay(date))}
                 month={month}
                 onMonthChange={setMonth}
                 initialFocus
