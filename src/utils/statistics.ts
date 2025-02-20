@@ -1,4 +1,5 @@
 import { TrendingDown, ArrowDown, AlertTriangle, TrendingUp } from "lucide-react";
+import { startOfDay } from "date-fns";
 
 export const getMonthsBetween = (startDate: Date, endDate: Date) => {
   const months: string[] = [];
@@ -17,7 +18,8 @@ export const getWeeklyDistribution = (resets: Date[]) => {
   if (!resets || resets.length === 0) return [];
 
   resets.forEach(date => {
-    const dayIndex = new Date(date).getDay();
+    const alignedDate = startOfDay(new Date(date));
+    const dayIndex = alignedDate.getDay();
     distribution[dayIndex].count++;
   });
   
