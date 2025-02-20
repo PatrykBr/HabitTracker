@@ -1,8 +1,9 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
-import { create } from "zustand";
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export interface HabitType {
   id: string;
@@ -21,6 +22,8 @@ export interface Habit {
   lastReset: Date;
   resets: Date[];
 }
+
+const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function useHabits() {
   const queryClient = useQueryClient();
@@ -44,13 +47,29 @@ export function useHabits() {
 
       if (error) throw error;
 
-      return (habits as (HabitRow & { habit_resets: HabitResetRow[] })[]).map((habit) => ({
-        id: habit.id,
-        name: habit.name,
-        lastReset: new Date(habit.last_reset),
-        resets: habit.habit_resets.map((reset) => new Date(reset.reset_time)),
-        createdAt: habit.created_at
-      }));
+      console.log('Raw habits data from DB:', habits);
+
+      return (habits as (HabitRow & { habit_resets: HabitResetRow[] })[]).map((habit) => {
+        console.log('Processing habit:', habit.name);
+        console.log('Reset times before conversion:', habit.habit_resets.map(r => r.reset_time));
+        
+        // Convert UTC dates to local timezone
+        const lastReset = toZonedTime(new Date(habit.last_reset), userTimeZone);
+        const resets = habit.habit_resets.map((reset) => 
+          toZonedTime(new Date(reset.reset_time), userTimeZone)
+        );
+        
+        const processedHabit = {
+          id: habit.id,
+          name: habit.name,
+          lastReset,
+          resets,
+          createdAt: habit.created_at
+        };
+        
+        console.log('Processed reset times:', processedHabit.resets.map(r => r.toISOString()));
+        return processedHabit;
+      });
     },
   });
 
@@ -85,16 +104,30 @@ export function useHabits() {
 
   const resetHabitMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Convert local time to UTC for storage
+      const localDate = new Date();
+      const utcDate = fromZonedTime(localDate, userTimeZone);
+      const resetTime = utcDate.toISOString();
+      
+      console.log('Sending reset time to DB:', {
+        localDate: localDate.toISOString(),
+        utcDate: resetTime,
+        timeZone: userTimeZone
+      });
+
       const { error: updateError } = await supabase
         .from('habits')
-        .update({ last_reset: new Date().toISOString() })
+        .update({ last_reset: resetTime })
         .eq('id', id);
 
       if (updateError) throw updateError;
 
       const { error: insertError } = await supabase
         .from('habit_resets')
-        .insert({ habit_id: id });
+        .insert({ 
+          habit_id: id,
+          reset_time: resetTime
+        });
 
       if (insertError) throw insertError;
     },
@@ -105,11 +138,21 @@ export function useHabits() {
 
   const addCustomResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
+      // Convert the local date to UTC for storage
+      const utcDate = fromZonedTime(resetTime, userTimeZone);
+      const isoResetTime = utcDate.toISOString();
+      
+      console.log('Adding custom reset:', {
+        localDate: resetTime.toISOString(),
+        utcDate: isoResetTime,
+        timeZone: userTimeZone
+      });
+
       const { error: insertError } = await supabase
         .from('habit_resets')
         .insert({ 
           habit_id: habitId,
-          reset_time: resetTime.toISOString()
+          reset_time: isoResetTime
         });
 
       if (insertError) throw insertError;
@@ -136,9 +179,18 @@ export function useHabits() {
 
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
-      // Instead of using string comparison, use date range query
-      const startTime = new Date(resetTime.getTime());
-      const endTime = new Date(resetTime.getTime() + 999); // Add 999ms to cover potential microsecond differences
+      // Convert local date to UTC for comparison
+      const utcDate = fromZonedTime(resetTime, userTimeZone);
+      
+      console.log('Removing reset:', {
+        localDate: resetTime.toISOString(),
+        utcDate: utcDate.toISOString(),
+        timeZone: userTimeZone
+      });
+
+      // Create a range in UTC
+      const startTime = new Date(utcDate.getTime() - 1000); // 1 second before
+      const endTime = new Date(utcDate.getTime() + 1000);   // 1 second after
 
       const { data: resets, error: fetchError } = await supabase
         .from('habit_resets')
@@ -161,7 +213,7 @@ export function useHabits() {
       if (allResetsError) throw allResetsError;
       if (!allResets?.length) throw new Error('No resets found');
 
-      const targetReset = resets[0]; // Use the first match in our time range
+      const targetReset = resets[0];
       const isLatestReset = allResets[0].reset_time === targetReset.reset_time;
       const nextLatestReset = isLatestReset && allResets.length > 1 
         ? allResets[1].reset_time 

@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, BarChart2, Settings, Trophy, Sparkles } from "lucide-react";
+import { Plus, BarChart2, Settings, Trophy, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHabits } from "@/hooks/use-habits";
 import { HabitCard } from "@/components/HabitCard";
@@ -13,38 +13,46 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Index() {
   const [newHabitName, setNewHabitName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { habits, addHabit, resetHabit, addCustomReset, removeReset, deleteHabit } = useHabits();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleAddHabit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newHabitName.trim()) {
-      await addHabit(newHabitName.trim());
-      setNewHabitName("");
+      setIsLoading(true);
+      try {
+        await addHabit(newHabitName.trim());
+        setNewHabitName("");
+        toast({
+          title: "Habit added",
+          description: "Your new habit has been created successfully.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add habit. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
-      {/* Decorative Elements - Moved outside the content container */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" 
-             style={{ transform: 'translate(20%, -20%)' }} />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"
-             style={{ transform: 'translate(-20%, 20%)' }} />
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+    <div className="page-container">
+      <div className="content-container">
         {/* Header Section */}
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
-          <div className="flex items-center gap-3">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-primary to-blue-600 tracking-tight">
-              Habit Tracker
-            </h1>
+        <div className="page-header">
+          <div className="title-container">
+            <h1 className="page-title">Habit Tracker</h1>
             <Sparkles className="h-6 w-6 text-primary animate-pulse" />
           </div>
           <div className="flex items-center gap-3">
@@ -52,47 +60,53 @@ export default function Index() {
               variant="outline"
               size="icon"
               onClick={() => navigate("/statistics")}
-              className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm"
+              className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm group"
             >
-              <BarChart2 className="h-5 w-5 text-primary" />
+              <BarChart2 className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => navigate("/settings")}
-              className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm"
+              className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm group"
             >
-              <Settings className="h-5 w-5 text-primary" />
+              <Settings className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
             </Button>
           </div>
         </div>
 
         {/* Add Habit Form */}
-        <Card className="relative p-6 bg-white/90 backdrop-blur-sm border border-purple-100 shadow-lg shadow-purple-100/20 hover:shadow-purple-100/30 transition-all duration-300 animate-fade-in rounded-xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-50/50 to-blue-50/50 opacity-80" />
-          <form onSubmit={handleAddHabit} className="relative flex gap-3">
+        <Card className="card-glass">
+          <form onSubmit={handleAddHabit} className="flex gap-3 p-6">
             <Input
               type="text"
               value={newHabitName}
               onChange={(e) => setNewHabitName(e.target.value)}
               placeholder="Enter a new habit to track..."
               className="flex-1 bg-white/80 border-purple-100 focus-visible:ring-primary/50 placeholder:text-purple-300 backdrop-blur-sm"
+              disabled={isLoading}
             />
             <Button 
               type="submit"
-              className="bg-gradient-to-r from-primary via-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              disabled={!newHabitName.trim()}
+              className="bg-gradient-to-r from-primary via-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 text-white shadow-md hover:shadow-lg transition-all duration-300 group"
+              disabled={!newHabitName.trim() || isLoading}
             >
-              <Plus className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Add Habit</span>
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <Plus className="h-5 w-5 sm:mr-2 group-hover:rotate-90 transition-transform" />
+                  <span className="hidden sm:inline">Add Habit</span>
+                </>
+              )}
             </Button>
           </form>
         </Card>
 
         {/* Habits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {habits.length === 0 ? (
-            <Card className="col-span-full p-12 bg-white/90 backdrop-blur-sm border-2 border-dashed border-purple-200 rounded-xl">
+            <Card className="col-span-full p-12 card-glass">
               <div className="text-center space-y-4">
                 <div className="inline-block p-4 bg-purple-50 rounded-full">
                   <Plus className="h-8 w-8 text-primary animate-pulse" />
@@ -120,12 +134,12 @@ export default function Index() {
         <Collapsible
           open={isOpen}
           onOpenChange={setIsOpen}
-          className="rounded-xl overflow-hidden bg-white/90 backdrop-blur-sm border border-purple-100 shadow-lg shadow-purple-100/20 transition-all duration-300 animate-fade-in"
+          className="card-glass animate-fade-in"
         >
           <CollapsibleTrigger className="flex w-full items-center justify-between p-6 hover:bg-purple-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Trophy className="h-6 w-6 text-primary" />
+                <Trophy className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
               </div>
               <span className="text-lg font-semibold text-gray-700">Achievements</span>
             </div>

@@ -47,7 +47,7 @@ export default function Settings() {
       deleteHabit(deleteConfirmation.habitId);
       toast({
         title: "Habit deleted",
-        description: `${deleteConfirmation.habitName} has been removed from your habits.`,
+        description: `${deleteConfirmation.habitName} has been removed.`,
       });
       setDeleteConfirmation({
         isOpen: false,
@@ -63,27 +63,19 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" 
-             style={{ transform: 'translate(20%, -20%)' }} />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-700"
-             style={{ transform: 'translate(-20%, 20%)' }} />
-      </div>
-
-      <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="page-container">
+      <div className="content-container">
         {/* Header */}
-        <div className="flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-primary to-blue-600">Settings</h1>
+        <div className="page-header">
+          <div className="title-container">
+            <h1 className="page-title">Settings</h1>
+            <Settings2 className="h-6 w-6 text-primary animate-pulse" />
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => navigate('/')}
-            className="gap-2 hover:bg-purple-50/50 transition-colors duration-200"
+            className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm group gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
@@ -91,7 +83,7 @@ export default function Settings() {
         </div>
 
         {/* Manage Habits Section */}
-        <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20 transition-all duration-300 animate-fade-in">
+        <Card className="card-glass">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-700">
               <Sparkles className="h-5 w-5 text-primary" />
@@ -126,7 +118,7 @@ export default function Settings() {
         </Card>
 
         {/* Account Section */}
-        <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-lg shadow-purple-100/20 transition-all duration-300 animate-fade-in">
+        <Card className="card-glass">
           <CardContent className="p-4">
             <Button
               variant="destructive"
@@ -146,7 +138,7 @@ export default function Settings() {
           setDeleteConfirmation(prev => ({ ...prev, isOpen }))
         }
       >
-        <AlertDialogContent className="bg-white/95 backdrop-blur-sm">
+        <AlertDialogContent className="card-glass">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
