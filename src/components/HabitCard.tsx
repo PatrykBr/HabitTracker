@@ -221,8 +221,12 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                 onSelect={(date) => date && setSelectedDate(startOfDay(date))}
                 month={month}
                 onMonthChange={setMonth}
-                initialFocus
-                className="!w-full !m-0"
+                fromDate={new Date(0)}
+                toDate={new Date()}
+                fixedWeeks
+                weekStartsOn={0}
+                showOutsideDays
+                captionLayout="buttons"
                 classNames={{
                   months: "flex justify-center",
                   month: "w-full",
@@ -236,13 +240,13 @@ export function HabitCard({ habit, onReset, onDeleteReset, onAddCustomReset }: H
                   head_row: "flex justify-center",
                   head_cell: "text-muted-foreground rounded-md w-8 sm:w-9 font-normal text-[0.8rem] sm:text-sm",
                   row: "flex w-full mt-1 justify-center",
-                  cell: "text-center p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                  day: "h-8 w-8 sm:h-9 sm:w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-secondary rounded-md transition-colors",
+                  cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+                  day: "h-8 w-8 sm:h-9 sm:w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary",
+                  day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
-                  day_outside: "text-muted-foreground opacity-50",
+                  day_outside: "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
                   day_disabled: "text-muted-foreground opacity-50",
-                  day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
                   day_hidden: "invisible",
                 }}
               />
