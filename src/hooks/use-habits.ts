@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export interface HabitType {
   id: string;
@@ -54,9 +54,9 @@ export function useHabits() {
         console.log('Reset times before conversion:', habit.habit_resets.map(r => r.reset_time));
         
         // Convert UTC dates to local timezone
-        const lastReset = utcToZonedTime(new Date(habit.last_reset), userTimeZone);
+        const lastReset = toZonedTime(new Date(habit.last_reset), userTimeZone);
         const resets = habit.habit_resets.map((reset) => 
-          utcToZonedTime(new Date(reset.reset_time), userTimeZone)
+          toZonedTime(new Date(reset.reset_time), userTimeZone)
         );
         
         const processedHabit = {
@@ -106,7 +106,7 @@ export function useHabits() {
     mutationFn: async (id: string) => {
       // Convert local time to UTC for storage
       const localDate = new Date();
-      const utcDate = zonedTimeToUtc(localDate, userTimeZone);
+      const utcDate = fromZonedTime(localDate, userTimeZone);
       const resetTime = utcDate.toISOString();
       
       console.log('Sending reset time to DB:', {
@@ -139,7 +139,7 @@ export function useHabits() {
   const addCustomResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
       // Convert the local date to UTC for storage
-      const utcDate = zonedTimeToUtc(resetTime, userTimeZone);
+      const utcDate = fromZonedTime(resetTime, userTimeZone);
       const isoResetTime = utcDate.toISOString();
       
       console.log('Adding custom reset:', {
@@ -180,7 +180,7 @@ export function useHabits() {
   const removeResetMutation = useMutation({
     mutationFn: async ({ habitId, resetTime }: { habitId: string; resetTime: Date }) => {
       // Convert local date to UTC for comparison
-      const utcDate = zonedTimeToUtc(resetTime, userTimeZone);
+      const utcDate = fromZonedTime(resetTime, userTimeZone);
       
       console.log('Removing reset:', {
         localDate: resetTime.toISOString(),
