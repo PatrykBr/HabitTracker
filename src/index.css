@@ -5,34 +5,34 @@
 
 @layer base {
   :root {
-    --background: 220 40% 98%;
+    --background: 220 25% 98%;
     --foreground: 225 25% 20%;
-
+    
     --card: 0 0% 100%;
     --card-foreground: 225 25% 20%;
-
+    
     --popover: 0 0% 100%;
     --popover-foreground: 225 25% 20%;
-
+    
     --primary: 220 85% 40%;
     --primary-foreground: 0 0% 100%;
-
+    
     --secondary: 220 35% 95%;
     --secondary-foreground: 220 70% 22%;
-
+    
     --muted: 220 35% 96%;
     --muted-foreground: 220 25% 35%;
-
+    
     --accent: 220 70% 35%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 220 40% 98%;
-
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 25% 98%;
+    
     --border: 220 25% 92%;
     --input: 220 25% 92%;
     --ring: 220 85% 40%;
-
+    
     --radius: 0.5rem;
   }
 }
@@ -41,8 +41,34 @@
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply min-h-screen bg-[linear-gradient(109.6deg,rgba(223,234,247,1)_11.2%,rgba(244,248,252,1)_91.1%)] overflow-hidden;
+  }
+
+  .content-container {
+    @apply max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-8;
+  }
+
+  .page-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in;
+  }
+
+  .title-container {
+    @apply flex items-center gap-3;
+  }
+
+  .page-title {
+    @apply text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-primary to-blue-600 tracking-tight;
+  }
+
+  .card-glass {
+    @apply bg-white/90 backdrop-blur-sm border border-purple-100 shadow-lg shadow-purple-100/20 hover:shadow-purple-100/30 transition-all duration-300;
   }
 }
