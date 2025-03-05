@@ -1,20 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>habit-chronicle</title>
-    <meta name="description" content="Track and manage your daily habits" />
-    <meta name="author" content="Lovable" />
-    <meta property="og:image" content="/og-image.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0EA5E9" />
-    <link rel="apple-touch-icon" href="/icon-192x192.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="description" content="Track your habits and build consistency with this beautiful habit tracker app" />
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <script>
+      // This script runs immediately to prevent flash of wrong theme
+      (function() {
+        const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
+          (localStorage.getItem('darkMode') === null && 
+           window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+        if (isDarkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
@@ -28,7 +35,7 @@
               console.log('ServiceWorker registration successful');
             })
             .catch(err => {
-              console.log('ServiceWorker registration failed: ', err);
+              console.error('ServiceWorker registration failed: ', err);
             });
         });
       }

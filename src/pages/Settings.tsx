@@ -1,11 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useHabits } from '@/hooks/use-habits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings2, Trash2, LogOut, ChevronLeft, Sparkles } from 'lucide-react';
+import { Settings2, Trash2, LogOut, ChevronLeft, Sparkles, Moon, Sun } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface DeleteConfirmationState {
   isOpen: boolean;
@@ -33,6 +34,34 @@ export default function Settings() {
     habitId: null,
     habitName: '',
   });
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check if user has a preference stored
+    const savedPreference = localStorage.getItem("darkMode");
+    return savedPreference === "true" || 
+      (savedPreference === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  });
+
+  const [showQuotes, setShowQuotes] = useState(() => {
+    // Check if user has a preference stored for quotes
+    const savedPreference = localStorage.getItem("showQuotes");
+    // Default to true if no preference is set
+    return savedPreference === null ? true : savedPreference === "true";
+  });
+
+  // Apply dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", darkMode.toString());
+  }, [darkMode]);
+
+  // Save quotes preference
+  useEffect(() => {
+    localStorage.setItem("showQuotes", showQuotes.toString());
+  }, [showQuotes]);
 
   const handleDeleteHabit = (id: string, name: string) => {
     setDeleteConfirmation({
@@ -63,50 +92,93 @@ export default function Settings() {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container dark:bg-gray-900 transition-colors duration-300">
       <div className="content-container">
         {/* Header */}
         <div className="page-header">
           <div className="title-container">
-            <h1 className="page-title">Settings</h1>
-            <Settings2 className="h-6 w-6 text-primary animate-pulse" />
+            <h1 className="page-title dark:text-white">Settings</h1>
+            <Settings2 className="h-6 w-6 text-primary dark:text-purple-400 animate-pulse" />
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/')}
-            className="bg-white/80 hover:bg-purple-50 transition-all duration-300 border-purple-100 backdrop-blur-sm group gap-2"
+            className="bg-white/80 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 transition-all duration-300 border-purple-100 dark:border-gray-700 backdrop-blur-sm group gap-2 dark:text-gray-300"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
           </Button>
         </div>
 
-        {/* Manage Habits Section */}
-        <Card className="card-glass">
+        {/* Appearance Section */}
+        <Card className="card-glass dark:bg-gray-800/90 dark:border-gray-700">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-700 dark:text-gray-200">
+              {darkMode ? (
+                <Moon className="h-5 w-5 text-purple-400" />
+              ) : (
+                <Sun className="h-5 w-5 text-primary" />
+              )}
+              Appearance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base dark:text-gray-300">Dark Mode</Label>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
+                  Switch between light and dark themes
+                </p>
+              </div>
+              <Switch
+                checked={darkMode}
+                onCheckedChange={setDarkMode}
+                className="data-[state=checked]:bg-purple-600"
+              />
+            </div>
+
+            <div className="flex items-center justify-between mt-4 pt-4 border-t dark:border-gray-700">
+              <div className="space-y-0.5">
+                <Label className="text-base dark:text-gray-300">Motivational Quotes</Label>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
+                  Show motivational quotes on the dashboard
+                </p>
+              </div>
+              <Switch
+                checked={showQuotes}
+                onCheckedChange={setShowQuotes}
+                className="data-[state=checked]:bg-purple-600"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Manage Habits Section */}
+        <Card className="card-glass dark:bg-gray-800/90 dark:border-gray-700">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-700 dark:text-gray-200">
+              <Sparkles className="h-5 w-5 text-primary dark:text-purple-400" />
               Manage Habits
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {habits.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-sm text-muted-foreground dark:text-gray-400 text-center py-4">
                 No habits to manage. Add some habits to get started!
               </p>
             ) : (
               habits.map((habit) => (
                 <div
                   key={habit.id}
-                  className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-purple-100 hover:border-primary/20 hover:bg-purple-50/50 transition-all duration-200"
+                  className="flex items-center justify-between p-3 bg-white/80 dark:bg-gray-700/80 rounded-lg border border-purple-100 dark:border-gray-600 hover:border-primary/20 dark:hover:border-purple-500/20 hover:bg-purple-50/50 dark:hover:bg-gray-600/50 transition-all duration-200"
                 >
-                  <span className="text-sm sm:text-base text-gray-700">{habit.name}</span>
+                  <span className="text-sm sm:text-base text-gray-700 dark:text-gray-200">{habit.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteHabit(habit.id, habit.name)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 dark:text-red-400 dark:hover:bg-red-400/10 transition-colors"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
@@ -118,7 +190,7 @@ export default function Settings() {
         </Card>
 
         {/* Account Section */}
-        <Card className="card-glass">
+        <Card className="card-glass dark:bg-gray-800/90 dark:border-gray-700">
           <CardContent className="p-4">
             <Button
               variant="destructive"
@@ -138,16 +210,16 @@ export default function Settings() {
           setDeleteConfirmation(prev => ({ ...prev, isOpen }))
         }
       >
-        <AlertDialogContent className="card-glass">
+        <AlertDialogContent className="card-glass dark:bg-gray-800 dark:border-gray-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="dark:text-gray-200">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-400">
               This will permanently delete "{deleteConfirmation.habitName}" and all its history.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

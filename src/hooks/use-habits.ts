@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -11,6 +10,7 @@ export interface HabitType {
   lastReset: Date;
   resets: Date[];
   createdAt: string;
+  category?: string;
 }
 
 type HabitRow = Database['public']['Tables']['habits']['Row'];
@@ -21,6 +21,7 @@ export interface Habit {
   name: string;
   lastReset: Date;
   resets: Date[];
+  category?: string;
 }
 
 const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -47,12 +48,7 @@ export function useHabits() {
 
       if (error) throw error;
 
-      console.log('Raw habits data from DB:', habits);
-
       return (habits as (HabitRow & { habit_resets: HabitResetRow[] })[]).map((habit) => {
-        console.log('Processing habit:', habit.name);
-        console.log('Reset times before conversion:', habit.habit_resets.map(r => r.reset_time));
-        
         // Convert UTC dates to local timezone
         const lastReset = toZonedTime(new Date(habit.last_reset), userTimeZone);
         const resets = habit.habit_resets.map((reset) => 
@@ -67,39 +63,71 @@ export function useHabits() {
           createdAt: habit.created_at
         };
         
-        console.log('Processed reset times:', processedHabit.resets.map(r => r.toISOString()));
         return processedHabit;
       });
     },
   });
 
   const addHabitMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (params: { name: string; category?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       const { data, error } = await supabase
         .from('habits')
         .insert({
-          name,
+          name: params.name,
           user_id: user.id,
+          // Only include category if it's provided and not empty
+          ...(params.category ? { category: params.category } : {})
         })
-        .select()
-        .single();
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding habit:', error);
+        throw error;
+      }
 
-      await supabase
+      if (!data || data.length === 0) {
+        throw new Error('No data returned from habit insert');
+      }
+
+      const newHabit = data[0];
+
+      // Then, insert the initial reset
+      const now = new Date();
+      const utcDate = fromZonedTime(now, userTimeZone);
+      const resetTime = utcDate.toISOString();
+
+      const { error: resetError } = await supabase
         .from('habit_resets')
         .insert({
-          habit_id: data.id,
+          habit_id: newHabit.id,
+          reset_time: resetTime
         });
 
-      return data;
+      if (resetError) {
+        console.error('Error adding initial reset:', resetError);
+        throw resetError;
+      }
+
+      return newHabit;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      toast({
+        title: "Habit added",
+        description: "Your new habit has been successfully added.",
+      });
     },
+    onError: (error) => {
+      console.error('Habit creation error:', error);
+      toast({
+        title: "Error adding habit",
+        description: error.message || "There was a problem adding your habit.",
+        variant: "destructive"
+      });
+    }
   });
 
   const resetHabitMutation = useMutation({
@@ -109,12 +137,6 @@ export function useHabits() {
       const utcDate = fromZonedTime(localDate, userTimeZone);
       const resetTime = utcDate.toISOString();
       
-      console.log('Sending reset time to DB:', {
-        localDate: localDate.toISOString(),
-        utcDate: resetTime,
-        timeZone: userTimeZone
-      });
-
       const { error: updateError } = await supabase
         .from('habits')
         .update({ last_reset: resetTime })
@@ -142,12 +164,6 @@ export function useHabits() {
       const utcDate = fromZonedTime(resetTime, userTimeZone);
       const isoResetTime = utcDate.toISOString();
       
-      console.log('Adding custom reset:', {
-        localDate: resetTime.toISOString(),
-        utcDate: isoResetTime,
-        timeZone: userTimeZone
-      });
-
       const { error: insertError } = await supabase
         .from('habit_resets')
         .insert({ 
@@ -182,12 +198,6 @@ export function useHabits() {
       // Convert local date to UTC for comparison
       const utcDate = fromZonedTime(resetTime, userTimeZone);
       
-      console.log('Removing reset:', {
-        localDate: resetTime.toISOString(),
-        utcDate: utcDate.toISOString(),
-        timeZone: userTimeZone
-      });
-
       // Create a range in UTC
       const startTime = new Date(utcDate.getTime() - 1000); // 1 second before
       const endTime = new Date(utcDate.getTime() + 1000);   // 1 second after
@@ -257,8 +267,42 @@ export function useHabits() {
     },
   });
 
+  const editHabitMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from('habits')
+        .update({ name })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      toast({
+        title: "Habit updated",
+        description: "Your habit has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update habit: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteHabitMutation = useMutation({
     mutationFn: async (id: string) => {
+      // First delete all resets associated with this habit
+      const { error: resetError } = await supabase
+        .from('habit_resets')
+        .delete()
+        .eq('habit_id', id);
+
+      if (resetError) throw resetError;
+
+      // Then delete the habit itself
       const { error } = await supabase
         .from('habits')
         .delete()
@@ -268,31 +312,28 @@ export function useHabits() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      toast({
+        title: "Habit deleted",
+        description: "Your habit has been deleted successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete habit: ${error.message}`,
+        variant: "destructive",
+      });
     },
   });
 
   return {
     habits,
     isLoading,
-    addHabit: addHabitMutation.mutate,
-    resetHabit: resetHabitMutation.mutate,
-    addCustomReset: addCustomResetMutation.mutate,
-    removeReset: (habitId: string, resetIndex: number) => {
-      const habit = habits.find((h) => h.id === habitId);
-      if (habit) {
-        console.log('Found habit:', habit);
-        console.log('Reset to remove:', {
-          index: resetIndex,
-          reset: habit.resets[resetIndex]
-        });
-        removeResetMutation.mutate({
-          habitId,
-          resetTime: habit.resets[resetIndex],
-        });
-      } else {
-        console.error('Habit not found:', habitId);
-      }
-    },
-    deleteHabit: deleteHabitMutation.mutate,
+    addHabit: addHabitMutation.mutateAsync,
+    resetHabit: resetHabitMutation.mutateAsync,
+    addCustomReset: addCustomResetMutation.mutateAsync,
+    removeReset: removeResetMutation.mutateAsync,
+    editHabit: editHabitMutation.mutateAsync,
+    deleteHabit: deleteHabitMutation.mutateAsync,
   };
 }

@@ -172,6 +172,14 @@ export const calculateStats = (habits: HabitType[]): StatType[] => {
 };
 
 export const calculateCombinedStats = (stats: StatType[]): StatType => {
+  // If there's only one habit, return its stats directly
+  if (stats.length === 1) {
+    return {
+      ...stats[0],
+      name: 'All Habits'
+    };
+  }
+
   return stats.reduce((acc, stat) => ({
     name: 'All Habits',
     totalResets: (acc?.totalResets || 0) + stat.totalResets,

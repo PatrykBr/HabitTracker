@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import Settings from "./pages/Settings";
 import Statistics from "./pages/Statistics";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { HabitsProvider } from "./contexts/HabitsContext";
 
 const queryClient = new QueryClient();
 
@@ -41,49 +41,40 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                isAuthenticated ? (
-                  <Index />
-                ) : (
-                  <Navigate to="/auth" replace />
-                )
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                isAuthenticated ? (
-                  <Settings />
-                ) : (
-                  <Navigate to="/auth" replace />
-                )
-              }
-            />
-            <Route
-              path="/statistics"
-              element={
-                isAuthenticated ? (
-                  <Statistics />
-                ) : (
-                  <Navigate to="/auth" replace />
-                )
-              }
-            />
-            <Route
-              path="/auth"
-              element={
-                !isAuthenticated ? (
-                  <Auth />
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          {isAuthenticated ? (
+            <HabitsProvider>
+              <Routes>
+                <Route
+                  path="/"
+                  element={<Index />}
+                />
+                <Route
+                  path="/settings"
+                  element={<Settings />}
+                />
+                <Route
+                  path="/statistics"
+                  element={<Statistics />}
+                />
+                <Route
+                  path="/auth"
+                  element={<Navigate to="/" replace />}
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </HabitsProvider>
+          ) : (
+            <Routes>
+              <Route
+                path="/auth"
+                element={<Auth />}
+              />
+              <Route
+                path="*"
+                element={<Navigate to="/auth" replace />}
+              />
+            </Routes>
+          )}
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

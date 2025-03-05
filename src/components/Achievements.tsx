@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { useHabits } from '@/hooks/use-habits';
 import { ACHIEVEMENTS, checkAchievements } from '@/utils/achievements';
@@ -40,18 +39,18 @@ export function Achievements() {
             key={achievement.id}
             className={`p-3 rounded-lg border ${
               isUnlocked 
-                ? 'bg-gradient-to-br from-yellow-50 to-white border-yellow-200' 
-                : 'bg-gray-50 border-gray-200'
+                ? 'bg-gradient-to-br from-yellow-50 to-white dark:from-yellow-900/20 dark:to-gray-800 border-yellow-200 dark:border-yellow-900/30' 
+                : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
             }`}
           >
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-xl mb-1">{achievement.icon}</span>
-                <h3 className="font-medium text-sm">{achievement.name}</h3>
-                <p className="text-xs text-gray-600">{achievement.description}</p>
+                <h3 className="font-medium text-sm dark:text-gray-200">{achievement.name}</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{achievement.description}</p>
               </div>
               {isUnlocked && (
-                <span className="text-yellow-600">✓</span>
+                <span className="text-yellow-600 dark:text-yellow-500">✓</span>
               )}
             </div>
           </div>
