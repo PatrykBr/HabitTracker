@@ -108,6 +108,45 @@ export async function getActiveHabit(userId: string, habitId?: string | null) {
   return doc ? serializeHabit(doc) : null;
 }
 
+export async function getActiveHabitWithResetEvents(userId: string, habitId?: string | null) {
+  const filter: Filter<HabitDoc> = { userId, archivedAt: { $exists: false } };
+
+  if (habitId) {
+    filter._id = toObjectId(habitId);
+  }
+
+  const doc = await habits
+    .aggregate<HabitDoc & { events: ResetEventDoc[] }>([
+      { $match: filter },
+      { $sort: { createdAt: 1 } },
+      { $limit: 1 },
+      {
+        $lookup: {
+          from: "reset_events",
+          localField: "_id",
+          foreignField: "habitId",
+          pipeline: [
+            { $match: { userId } },
+            { $sort: { occurredAt: -1, createdAt: -1 } },
+          ],
+          as: "events",
+        },
+      },
+    ])
+    .next();
+
+  if (!doc) {
+    return { habit: null, events: [] };
+  }
+
+  const { events, ...habit } = doc;
+
+  return {
+    habit: serializeHabit(habit),
+    events: events.map(serializeReset),
+  };
+}
+
 export async function getResetEvents(userId: string, habitId: string) {
   const docs = await resetEvents
     .find({ userId, habitId: toObjectId(habitId) })
