@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, ChartNoAxesColumnIncreasing, History, Home, Settings } from "lucide-react";
 
+import { AppRoutePrefetcher } from "@/components/app-route-prefetcher";
 import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-paper text-ink">
+      <AppRoutePrefetcher />
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:flex-row">
         <aside className="hidden w-72 shrink-0 border-r border-ink/10 px-5 py-6 lg:block">
           <div className="sticky top-6 space-y-8">
@@ -24,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <nav className="space-y-2">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-ink/65 transition hover:bg-white hover:text-ink">
+                <Link key={item.href} href={item.href} prefetch className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-ink/65 transition hover:bg-white hover:text-ink">
                   <item.icon aria-hidden className="size-4" />
                   {item.label}
                 </Link>
@@ -40,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav className="fixed inset-x-3 bottom-3 z-40 rounded-[1.6rem] border border-ink/10 bg-white/90 p-2 shadow-[0_18px_70px_rgba(25,31,45,0.2)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-5 gap-1">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={cn("flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[0.68rem] font-semibold text-ink/60 hover:bg-paper hover:text-ink")}>
+            <Link key={item.href} href={item.href} prefetch className={cn("flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[0.68rem] font-semibold text-ink/60 hover:bg-paper hover:text-ink")}>
               <item.icon aria-hidden className="size-5" />
               {item.label}
             </Link>

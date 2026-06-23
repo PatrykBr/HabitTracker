@@ -2,25 +2,21 @@ import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
 
 import { deleteResetAction } from "@/app/actions";
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabit, getResetEvents } from "@/lib/habits";
+import { getActiveHabitWithResetEvents } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function HistoryPage() {
   const user = await requireUser();
-  const habit = await getActiveHabit(user.id);
+  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
 
   if (!habit) {
-    return <AppShell><Card>No habit yet. Start one from Today.</Card></AppShell>;
+    return <Card>No habit yet. Start one from Today.</Card>;
   }
 
-  const events = await getResetEvents(user.id, habit.id);
-
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <header>
           <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">History</p>
           <h1 className="mt-2 font-display text-5xl font-black tracking-[-0.06em]">Every reset recorded.</h1>
@@ -50,7 +46,6 @@ export default async function HistoryPage() {
             <p className="rounded-[1.5rem] bg-mint/35 p-4 text-sm text-ink/65">No resets logged yet.</p>
           )}
         </Card>
-      </div>
-    </AppShell>
+    </div>
   );
 }

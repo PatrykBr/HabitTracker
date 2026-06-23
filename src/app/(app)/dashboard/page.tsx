@@ -1,40 +1,35 @@
 import { format } from "date-fns";
 import { Flame, Sparkles, Target } from "lucide-react";
 
-import { AppShell } from "@/components/app-shell";
 import { HabitForm } from "@/components/habit-form";
 import { ResetForm } from "@/components/reset-form";
 import { Card } from "@/components/ui/card";
-import { calculateStats, getActiveHabit, getResetEvents } from "@/lib/habits";
+import { calculateStats, getActiveHabitWithResetEvents } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ habit?: string }> }) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
-  const habit = await getActiveHabit(user.id, params.habit);
+  const { habit, events } = await getActiveHabitWithResetEvents(user.id, params.habit);
 
   if (!habit) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-2xl space-y-6">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">First entry</p>
-            <h1 className="mt-3 font-display text-5xl font-black tracking-[-0.06em]">What are you done with?</h1>
-          </div>
-          <Card>
-            <HabitForm />
-          </Card>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">First entry</p>
+          <h1 className="mt-3 font-display text-5xl font-black tracking-[-0.06em]">What are you done with?</h1>
         </div>
-      </AppShell>
+        <Card>
+          <HabitForm />
+        </Card>
+      </div>
     );
   }
 
-  const events = await getResetEvents(user.id, habit.id);
   const stats = calculateStats(habit, events);
   const lastReset = events[0];
 
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">Today</p>
@@ -100,8 +95,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             )}
           </Card>
         </section>
-      </div>
-    </AppShell>
+    </div>
   );
 }
 

@@ -1,11 +1,10 @@
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isValid, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import Link from "next/link";
 
-import { AppShell } from "@/components/app-shell";
 import { ResetForm } from "@/components/reset-form";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabit, getMonthResetMap, getResetEvents } from "@/lib/habits";
+import { getActiveHabitWithResetEvents, getMonthResetMap } from "@/lib/habits";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/lib/session";
 
@@ -22,17 +21,12 @@ function parseMonthParam(month?: string) {
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
   const monthDate = parseMonthParam(params.month);
-  const habit = await getActiveHabit(user.id);
+  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
 
   if (!habit) {
-    return (
-      <AppShell>
-        <Card>No habit yet. Start one from Today.</Card>
-      </AppShell>
-    );
+    return <Card>No habit yet. Start one from Today.</Card>;
   }
 
-  const events = await getResetEvents(user.id, habit.id);
   const resetMap = getMonthResetMap(events, monthDate);
   const monthStart = startOfMonth(monthDate);
   const monthEnd = endOfMonth(monthDate);
@@ -44,8 +38,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const next = format(addMonths(monthDate, 1), "yyyy-MM");
 
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">Calendar</p>
@@ -110,7 +103,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             </div>
           </Card>
         </section>
-      </div>
-    </AppShell>
+    </div>
   );
 }

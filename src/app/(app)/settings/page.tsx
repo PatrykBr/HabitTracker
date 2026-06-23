@@ -1,13 +1,12 @@
-import { AppShell } from "@/components/app-shell";
 import { HabitForm } from "@/components/habit-form";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabit } from "@/lib/habits";
+import { getActiveHabitWithResetEvents } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function SettingsPage() {
   const user = await requireUser();
-  const habit = await getActiveHabit(user.id);
+  const { habit } = await getActiveHabitWithResetEvents(user.id);
   const formHabit = habit
     ? {
         id: habit.id,
@@ -19,8 +18,7 @@ export default async function SettingsPage() {
     : null;
 
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <header>
           <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">Settings</p>
           <h1 className="mt-2 font-display text-5xl font-black tracking-[-0.06em]">Keep the record accurate.</h1>
@@ -37,7 +35,6 @@ export default async function SettingsPage() {
             <div className="mt-5"><SignOutButton /></div>
           </Card>
         </section>
-      </div>
-    </AppShell>
+    </div>
   );
 }

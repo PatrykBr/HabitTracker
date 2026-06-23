@@ -1,17 +1,15 @@
-import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
-import { calculateStats, getActiveHabit, getResetEvents } from "@/lib/habits";
+import { calculateStats, getActiveHabitWithResetEvents } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function StatsPage() {
   const user = await requireUser();
-  const habit = await getActiveHabit(user.id);
+  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
 
   if (!habit) {
-    return <AppShell><Card>No habit yet. Start one from Today.</Card></AppShell>;
+    return <Card>No habit yet. Start one from Today.</Card>;
   }
 
-  const events = await getResetEvents(user.id, habit.id);
   const stats = calculateStats(habit, events);
   const statCards = [
     ["Current streak", `${stats.currentDays} days`, "The streak after your latest reset."],
@@ -25,8 +23,7 @@ export default async function StatsPage() {
   ];
 
   return (
-    <AppShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <header>
           <p className="text-sm font-black uppercase tracking-[0.28em] text-violet/70">Stats</p>
           <h1 className="mt-2 font-display text-5xl font-black tracking-[-0.06em]">Patterns, not shame.</h1>
@@ -69,7 +66,6 @@ export default async function StatsPage() {
             </div>
           </Card>
         </section>
-      </div>
-    </AppShell>
+    </div>
   );
 }
