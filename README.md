@@ -1,69 +1,58 @@
-# Welcome to your Lovable project
+# Relapse Ledger
 
-## Project info
+A mobile-first full-stack bad habit tracker for logging resets, backdating slips, seeing calendar history, and measuring progress.
 
-**URL**: https://lovable.dev/projects/4fa02ff4-b9ab-4a12-a4bd-6536f525b747
+## Stack
 
-## How can I edit this code?
+- Next.js 16 App Router
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Better Auth email/password auth
+- MongoDB Atlas via the native MongoDB driver
+- date-fns and Zod
 
-There are several ways of editing your application.
+## Local setup
 
-**Use Lovable**
+1. Install dependencies:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4fa02ff4-b9ab-4a12-a4bd-6536f525b747) and start prompting.
+   ```bash
+   npm install --legacy-peer-deps
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+2. Copy environment variables:
 
-**Use your preferred IDE**
+   ```bash
+   cp .env.example .env.local
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. Fill in:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+   - `MONGODB_URI` with your MongoDB Atlas connection string
+   - `MONGODB_DB` with the database name
+   - `MONGODB_ENABLE_TRANSACTIONS` set to `true` for Atlas/replica set deployments or `false` for standalone local MongoDB
+   - `BETTER_AUTH_SECRET` with a real 32+ character secret
+   - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` with the app origin
+   - `RESEND_API_KEY` and `EMAIL_FROM` for password reset and verification emails
 
-Follow these steps:
+4. Create MongoDB indexes:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+   ```bash
+   npm run db:indexes
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+5. Run the app:
 
-# Step 3: Install the necessary dependencies.
-npm i
+   ```bash
+   npm run dev
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## Verification
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4fa02ff4-b9ab-4a12-a4bd-6536f525b747) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+For production builds, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` must be set.
+Password reset and email verification require `RESEND_API_KEY` and `EMAIL_FROM` in production.
