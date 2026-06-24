@@ -30,17 +30,88 @@ if (!uri) {
 
 const client = new MongoClient(uri);
 
+async function upsertValidator(db, collectionName, validator) {
+  const exists = await db.listCollections({ name: collectionName }).hasNext();
+
+  if (exists) {
+    await db.command({
+      collMod: collectionName,
+      validator,
+      validationLevel: "moderate",
+      validationAction: "error",
+    });
+    return;
+  }
+
+  await db.createCollection(collectionName, {
+    validator,
+    validationLevel: "strict",
+    validationAction: "error",
+  });
+}
+
+const habitValidator = {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["userId", "name", "quitStartedAt", "motivation", "targetDays", "createdAt", "updatedAt"],
+    properties: {
+      userId: { bsonType: "string" },
+      name: { bsonType: "string", minLength: 2 },
+      quitStartedAt: { bsonType: "date" },
+      motivation: { bsonType: "string" },
+      targetDays: { bsonType: "number", minimum: 1, maximum: 3650 },
+      archivedAt: { bsonType: "date" },
+      createdAt: { bsonType: "date" },
+      updatedAt: { bsonType: "date" },
+    },
+  },
+};
+
+const resetEventValidator = {
+  $jsonSchema: {
+    bsonType: "object",
+    required: ["userId", "habitId", "occurredAt", "createdAt", "updatedAt"],
+    properties: {
+      userId: { bsonType: "string" },
+      habitId: { bsonType: "objectId" },
+      occurredAt: { bsonType: "date" },
+      note: { bsonType: "string" },
+      trigger: { bsonType: "string" },
+      createdAt: { bsonType: "date" },
+      updatedAt: { bsonType: "date" },
+    },
+  },
+};
+
 try {
   await client.connect();
   const db = client.db(dbName);
 
   await Promise.all([
-    db.collection("habits").createIndex({ userId: 1, archivedAt: 1, createdAt: 1 }),
-    db.collection("reset_events").createIndex({ userId: 1, habitId: 1, occurredAt: -1, createdAt: -1 }),
-    db.collection("reset_events").createIndex({ userId: 1, occurredAt: -1 }),
+    upsertValidator(db, "habits", habitValidator),
+    upsertValidator(db, "reset_events", resetEventValidator),
   ]);
 
-  console.log(`Indexes are ready in database "${dbName}".`);
+  await Promise.all([
+    db.collection("habits").createIndex({ userId: 1, archivedAt: 1, createdAt: 1 }),
+    db.collection("habits").createIndex(
+      { userId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { archivedAt: { $exists: false } },
+      },
+    ),
+    db.collection("reset_events").createIndex({ userId: 1, habitId: 1, occurredAt: -1, createdAt: -1 }),
+    db.collection("reset_events").createIndex({ userId: 1, occurredAt: -1 }),
+    db.collection("user").createIndex({ email: 1 }, { unique: true }),
+    db.collection("session").createIndex({ token: 1 }, { unique: true }),
+    db.collection("session").createIndex({ userId: 1 }),
+    db.collection("account").createIndex({ userId: 1 }),
+    db.collection("verification").createIndex({ identifier: 1 }),
+    db.collection("rateLimit").createIndex({ key: 1 }, { unique: true }),
+  ]);
+
+  console.log(`Indexes and validators are ready in database "${dbName}".`);
 } finally {
   await client.close();
 }

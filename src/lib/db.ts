@@ -17,6 +17,11 @@ export const dbName = process.env.MONGODB_DB ?? "habit_tracker";
 export const mongoSupportsTransactions =
   process.env.MONGODB_ENABLE_TRANSACTIONS === "true" ||
   (process.env.MONGODB_ENABLE_TRANSACTIONS !== "false" && uri.startsWith("mongodb+srv://"));
+const operationTimeoutMS = Number(process.env.MONGODB_OPERATION_TIMEOUT_MS ?? 10_000);
+
+if (!Number.isFinite(operationTimeoutMS) || operationTimeoutMS <= 0) {
+  throw new Error("MONGODB_OPERATION_TIMEOUT_MS must be a positive number.");
+}
 
 const clientOptions = {
   // Vercel/serverless assumption: every warm function instance owns a pool, so keep it small.
@@ -25,6 +30,8 @@ const clientOptions = {
   minPoolSize: 0,
   // Release inactive sockets quickly for a low-traffic personal app.
   maxIdleTimeMS: 30_000,
+  // Bound short OLTP operations for this app's simple indexed CRUD/stat queries.
+  timeoutMS: operationTimeoutMS,
   // Fail fast enough to show a useful UI error instead of hanging requests.
   serverSelectionTimeoutMS: 5_000,
 };

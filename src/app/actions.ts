@@ -52,10 +52,14 @@ export async function saveHabitAction(
 
   const { habitId, ...habit } = parsed.data;
 
-  if (habitId) {
-    await updateHabit({ userId: user.id, habitId, ...habit });
-  } else {
-    await createHabit({ userId: user.id, ...habit });
+  try {
+    if (habitId) {
+      await updateHabit({ userId: user.id, habitId, ...habit });
+    } else {
+      await createHabit({ userId: user.id, ...habit });
+    }
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Could not save the habit." };
   }
 
   refreshApp();

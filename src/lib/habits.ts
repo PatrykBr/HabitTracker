@@ -9,7 +9,7 @@ import {
   startOfMonth,
   subDays,
 } from "date-fns";
-import { ObjectId, type Filter } from "mongodb";
+import { MongoServerError, ObjectId, type Filter } from "mongodb";
 
 import { db } from "@/lib/db";
 
@@ -175,15 +175,25 @@ export async function createHabit(input: {
 }) {
   const now = new Date();
 
-  const result = await habits.insertOne({
-    userId: input.userId,
-    name: input.name,
-    quitStartedAt: input.quitStartedAt,
-    motivation: input.motivation,
-    targetDays: input.targetDays,
-    createdAt: now,
-    updatedAt: now,
-  });
+  let result;
+
+  try {
+    result = await habits.insertOne({
+      userId: input.userId,
+      name: input.name,
+      quitStartedAt: input.quitStartedAt,
+      motivation: input.motivation,
+      targetDays: input.targetDays,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (error) {
+    if (error instanceof MongoServerError && error.code === 11000) {
+      throw new Error("You already have an active habit.");
+    }
+
+    throw error;
+  }
 
   return result.insertedId.toString();
 }
@@ -196,7 +206,7 @@ export async function updateHabit(input: {
   motivation: string;
   targetDays: number;
 }) {
-  await habits.updateOne(
+  const result = await habits.updateOne(
     { _id: toObjectId(input.habitId), userId: input.userId },
     {
       $set: {
@@ -208,6 +218,10 @@ export async function updateHabit(input: {
       },
     },
   );
+
+  if (result.matchedCount === 0) {
+    throw new Error("Habit not found.");
+  }
 }
 
 export async function createResetEvent(input: {
@@ -236,8 +250,8 @@ export async function createResetEvent(input: {
     userId: input.userId,
     habitId: habit._id,
     occurredAt: input.occurredAt,
-    note: input.note,
-    trigger: input.trigger,
+    ...(input.note ? { note: input.note } : {}),
+    ...(input.trigger ? { trigger: input.trigger } : {}),
     createdAt: now,
     updatedAt: now,
   });

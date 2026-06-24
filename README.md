@@ -30,11 +30,12 @@ A mobile-first full-stack bad habit tracker for logging resets, backdating slips
    - `MONGODB_URI` with your MongoDB Atlas connection string
    - `MONGODB_DB` with the database name
    - `MONGODB_ENABLE_TRANSACTIONS` set to `true` for Atlas/replica set deployments or `false` for standalone local MongoDB
+   - `MONGODB_OPERATION_TIMEOUT_MS` with the maximum time for short MongoDB operations; the example uses `10000` for this app's indexed CRUD/stat workload
    - `BETTER_AUTH_SECRET` with a real 32+ character secret
    - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` with the app origin
    - `RESEND_API_KEY` and `EMAIL_FROM` for password reset and verification emails
 
-4. Create MongoDB indexes:
+4. Create MongoDB indexes and validators:
 
    ```bash
    npm run db:indexes
