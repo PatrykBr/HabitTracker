@@ -13,19 +13,19 @@ export default async function LandingPage() {
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl content-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <section className="space-y-7">
           <div className="inline-flex rounded-full border border-ink/10 bg-white/70 px-4 py-2 text-sm font-semibold text-ink/65 shadow-sm">
-            Private bad-habit recovery tracker
+            Private reset and streak tracker
           </div>
           <div className="space-y-5">
             <h1 className="font-display text-6xl font-black leading-[0.9] tracking-[-0.06em] sm:text-7xl lg:text-8xl">
-              Count the days you kept.
+              Track resets without the noise.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-ink/65">
-              A mobile-first ledger for quitting smoking, vaping, gambling, doomscrolling, or anything else you are done giving power to.
+              Log resets, see streaks, and review patterns over time.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href={session?.user ? "/dashboard" : "/sign-up"} className={buttonClassName({ size: "lg", className: "w-full sm:w-auto" })}>
-              {session?.user ? "Open dashboard" : "Start your ledger"}
+              {session?.user ? "Open dashboard" : "Start tracking"}
               <ArrowRight aria-hidden className="size-4" />
             </Link>
             <Link href="/sign-in" className={buttonClassName({ variant: "quiet", size: "lg", className: "w-full sm:w-auto" })}>
@@ -45,8 +45,8 @@ export default async function LandingPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { icon: RotateCcw, title: "Reset later", body: "Backdate slips when life gets messy." },
-                { icon: CalendarDays, title: "Calendar scars", body: "See every reset in context." },
+                { icon: RotateCcw, title: "Backdate resets", body: "Log the actual time when needed." },
+                { icon: CalendarDays, title: "Calendar view", body: "Review resets by day and month." },
                 { icon: ShieldCheck, title: "Progress stats", body: "Spot triggers and longest streaks." },
               ].map((item) => (
                 <div key={item.title} className="rounded-3xl bg-paper p-4">

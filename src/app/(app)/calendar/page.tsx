@@ -51,19 +51,24 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </header>
 
         <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-          <Card>
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-black uppercase tracking-[0.16em] text-ink/40">
+          <Card className="p-3 sm:p-5">
+            <div className="grid grid-cols-7 gap-1.5 text-center text-[0.62rem] font-black uppercase tracking-[0.12em] text-ink/40 sm:gap-2 sm:text-xs sm:tracking-[0.16em]">
               {[
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun",
-              ].map((day) => <span key={day}>{day}</span>)}
+                ["M", "Mon"],
+                ["T", "Tue"],
+                ["W", "Wed"],
+                ["T", "Thu"],
+                ["F", "Fri"],
+                ["S", "Sat"],
+                ["S", "Sun"],
+              ].map(([shortDay, day]) => (
+                <span key={day}>
+                  <span className="sm:hidden">{shortDay}</span>
+                  <span className="hidden sm:inline">{day}</span>
+                </span>
+              ))}
             </div>
-            <div className="mt-3 grid grid-cols-7 gap-2">
+            <div className="mt-2 grid grid-cols-7 gap-1.5 sm:mt-3 sm:gap-2">
               {gridDays.map((day) => {
                 const key = format(day, "yyyy-MM-dd");
                 const dayEvents = resetMap.get(key) ?? [];
@@ -73,17 +78,17 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   <div
                     key={key}
                     className={cn(
-                      "min-h-20 rounded-2xl border p-2 sm:min-h-24",
+                      "aspect-square rounded-2xl border p-1.5 sm:aspect-auto sm:min-h-24 sm:p-2",
                       isSameMonth(day, monthDate) ? "border-ink/10 bg-paper" : "border-transparent bg-transparent text-ink/25",
                       hasReset ? "border-ember/40 bg-ember/10" : "",
                     )}
                   >
-                    <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-start justify-between gap-0.5 sm:gap-1">
                       <span className="text-sm font-black">{format(day, "d")}</span>
-                      {hasReset ? <span className="rounded-full bg-ember px-2 py-0.5 text-[0.65rem] font-black text-white">{dayEvents.length}</span> : null}
+                      {hasReset ? <span className="min-w-4 rounded-full bg-ember px-1 py-0.5 text-center text-[0.58rem] font-black leading-none text-white sm:min-w-0 sm:px-2 sm:text-[0.65rem] sm:leading-normal">{dayEvents.length}</span> : null}
                     </div>
                     {hasReset ? (
-                      <div className="mt-3 space-y-1">
+                      <div className="mt-3 hidden space-y-1 sm:block">
                         {dayEvents.slice(0, 2).map((event) => (
                           <p key={event.id} className="truncate text-[0.68rem] font-semibold text-ember">{event.trigger || "Reset"}</p>
                         ))}

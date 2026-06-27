@@ -3,14 +3,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Relapse Ledger",
-  description: "Track bad habit resets, streaks, calendar history, and recovery stats.",
-  applicationName: "Relapse Ledger",
+  title: "Reset Tracker",
+  description: "Track resets, streaks, calendar history, and stats.",
+  applicationName: "Reset Tracker",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Relapse Ledger",
+    title: "Reset Tracker",
   },
   formatDetection: {
     telephone: false,

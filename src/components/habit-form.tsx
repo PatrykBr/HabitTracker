@@ -26,13 +26,13 @@ export function HabitForm({ habit }: { habit?: HabitFormValue | null }) {
       {habit ? <input type="hidden" name="habitId" value={habit.id} /> : null}
 
       <div className="space-y-2">
-        <Label htmlFor="name">Bad habit</Label>
+        <Label htmlFor="name">What are you tracking?</Label>
         <Field id="name" name="name" defaultValue={habit?.name ?? "Smoking"} required />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="quitStartedAt">Clean since</Label>
+          <Label htmlFor="quitStartedAt">Tracking since</Label>
           <Field
             id="quitStartedAt"
             name="quitStartedAt"
@@ -42,17 +42,17 @@ export function HabitForm({ habit }: { habit?: HabitFormValue | null }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="targetDays">First serious target</Label>
+          <Label htmlFor="targetDays">First target</Label>
           <Field id="targetDays" name="targetDays" type="number" min={1} max={3650} defaultValue={habit?.targetDays ?? 30} required />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="motivation">Reason to keep going</Label>
+        <Label htmlFor="motivation">Motivation note</Label>
         <TextArea
           id="motivation"
           name="motivation"
-          defaultValue={habit?.motivation ?? "I want my breath, money, and mornings back."}
+          defaultValue={habit?.motivation ?? ""}
           maxLength={280}
         />
       </div>

@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Relapse Ledger",
-    short_name: "Ledger",
-    description: "A private habit recovery tracker.",
+    name: "Reset Tracker",
+    short_name: "Tracker",
+    description: "A private reset and streak tracker.",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",

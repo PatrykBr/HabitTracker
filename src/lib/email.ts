@@ -48,8 +48,8 @@ async function sendAuthEmail({
 export async function sendPasswordResetEmail({ to, url }: AuthEmailInput) {
   await sendAuthEmail({
     to,
-    subject: "Reset your Relapse Ledger password",
-    text: `Open this link to reset your Relapse Ledger password:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
+    subject: "Reset your Reset Tracker password",
+    text: `Open this link to reset your Reset Tracker password:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
     developmentMessage: `Password reset requested for ${to}. Development reset link: ${url}`,
   });
 }
@@ -57,8 +57,8 @@ export async function sendPasswordResetEmail({ to, url }: AuthEmailInput) {
 export async function sendVerificationEmail({ to, url }: AuthEmailInput) {
   await sendAuthEmail({
     to,
-    subject: "Verify your Relapse Ledger email",
-    text: `Open this link to verify your Relapse Ledger email address:\n\n${url}\n\nIf you did not create this account, you can ignore this email.`,
+    subject: "Verify your Reset Tracker email",
+    text: `Open this link to verify your Reset Tracker email address:\n\n${url}\n\nIf you did not create this account, you can ignore this email.`,
     developmentMessage: `Email verification requested for ${to}. Development verification link: ${url}`,
   });
 }

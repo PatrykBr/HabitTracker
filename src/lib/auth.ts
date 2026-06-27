@@ -14,7 +14,7 @@ function getTrustedOrigins() {
 }
 
 export const auth = betterAuth({
-  appName: "Relapse Ledger",
+  appName: "Reset Tracker",
   database: mongodbAdapter(db, {
     client: mongoClient,
     transaction: mongoSupportsTransactions,

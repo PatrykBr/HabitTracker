@@ -48,12 +48,18 @@ export type HabitStats = {
   longestDays: number;
   totalResets: number;
   resetsThisWeek: number;
+  resetsPreviousWeek: number;
   resetsThisMonth: number;
   averageStreakDays: number;
   avoidedDays: number;
+  cleanDaysThisWeek: number;
+  daysSinceLastReset: number | null;
   nextMilestoneDays: number;
+  daysUntilNextMilestone: number;
   milestoneProgress: number;
   resetFreeRate: number;
+  weeklyResetTrend: number;
+  streakVsAverageDays: number;
   commonTriggers: Array<{ trigger: string; count: number }>;
 };
 
@@ -272,9 +278,13 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
   const ascending = [...events].sort(
     (a, b) => a.occurredAt.getTime() - b.occurredAt.getTime(),
   );
+  const oldestReset = ascending[0];
   const latestReset = ascending.at(-1);
   const currentStart = latestReset?.occurredAt ?? habit.quitStartedAt;
-  const elapsedDays = Math.max(0, differenceInCalendarDays(now, habit.quitStartedAt));
+  const trackingStart = oldestReset && isBefore(oldestReset.occurredAt, habit.quitStartedAt)
+    ? oldestReset.occurredAt
+    : habit.quitStartedAt;
+  const elapsedDays = Math.max(0, differenceInCalendarDays(now, trackingStart));
   const currentDays = Math.max(0, differenceInCalendarDays(now, currentStart));
   const currentHours = Math.max(
     0,
@@ -282,17 +292,22 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
   );
 
   const completedStreaks: number[] = [];
-  let segmentStart = habit.quitStartedAt;
+  let segmentStart = trackingStart;
+  let hasOpenSegment = !oldestReset || !isBefore(oldestReset.occurredAt, habit.quitStartedAt);
 
   for (const event of ascending) {
-    if (isBefore(event.occurredAt, habit.quitStartedAt)) {
+    if (isBefore(event.occurredAt, segmentStart)) {
       continue;
     }
 
-    completedStreaks.push(
-      Math.max(0, differenceInCalendarDays(event.occurredAt, segmentStart)),
-    );
+    if (hasOpenSegment) {
+      completedStreaks.push(
+        Math.max(0, differenceInCalendarDays(event.occurredAt, segmentStart)),
+      );
+    }
+
     segmentStart = event.occurredAt;
+    hasOpenSegment = true;
   }
 
   const allStreaks = [...completedStreaks, currentDays];
@@ -319,20 +334,36 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
     .filter((days) => days > currentDays)
     .sort((a, b) => a - b);
   const nextMilestoneDays = milestoneOptions[0] ?? habit.targetDays;
+  const resetsThisWeek = events.filter((event) => isAfter(event.occurredAt, weekStart)).length;
+  const previousWeekStart = subDays(now, 14);
+  const resetsPreviousWeek = events.filter(
+    (event) => isAfter(event.occurredAt, previousWeekStart) && !isAfter(event.occurredAt, weekStart),
+  ).length;
+  const resetDaysThisWeek = new Set(
+    events
+      .filter((event) => isAfter(event.occurredAt, weekStart))
+      .map((event) => format(event.occurredAt, "yyyy-MM-dd")),
+  );
 
   return {
     currentDays,
     currentHours,
     longestDays,
     totalResets: events.length,
-    resetsThisWeek: events.filter((event) => isAfter(event.occurredAt, weekStart)).length,
+    resetsThisWeek,
+    resetsPreviousWeek,
     resetsThisMonth: events.filter((event) => isAfter(event.occurredAt, monthStart)).length,
     averageStreakDays,
     avoidedDays: Math.max(0, elapsedDays - resetDays.size),
+    cleanDaysThisWeek: Math.max(0, 7 - resetDaysThisWeek.size),
+    daysSinceLastReset: latestReset ? Math.max(0, differenceInCalendarDays(now, latestReset.occurredAt)) : null,
     nextMilestoneDays,
+    daysUntilNextMilestone: Math.max(0, nextMilestoneDays - currentDays),
     milestoneProgress: Math.min(100, Math.round((currentDays / nextMilestoneDays) * 100)),
     resetFreeRate:
       elapsedDays === 0 ? 100 : Math.max(0, Math.round(((elapsedDays - resetDays.size) / elapsedDays) * 100)),
+    weeklyResetTrend: resetsThisWeek - resetsPreviousWeek,
+    streakVsAverageDays: currentDays - averageStreakDays,
     commonTriggers: [...triggerCounts.entries()]
       .map(([trigger, count]) => ({ trigger, count }))
       .sort((a, b) => b.count - a.count)
