@@ -11,17 +11,45 @@ import {
 } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
+const datetimeLocalPattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;
+
+function parseDateTimeLocal(value: unknown, timezoneOffset: unknown) {
+  if (typeof value !== "string" || value === "") {
+    return value;
+  }
+
+  const offset = typeof timezoneOffset === "string" ? Number(timezoneOffset) : NaN;
+  const match = datetimeLocalPattern.exec(value);
+
+  if (!Number.isFinite(offset) || !match) {
+    return new Date(value);
+  }
+
+  const [, year, month, day, hour, minute, second = "0"] = match;
+
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+    ) + offset * 60 * 1000,
+  );
+}
+
 const habitSchema = z.object({
   habitId: z.string().optional(),
   name: z.string().trim().min(2, "Name the habit you are leaving behind."),
-  quitStartedAt: z.coerce.date().refine((date) => date <= new Date(), "Use a clean-since date in the past or now."),
+  quitStartedAt: z.date().refine((date) => date <= new Date(), "Use a clean-since date in the past or now."),
   motivation: z.string().trim().max(280).default(""),
   targetDays: z.coerce.number().int().min(1).max(3650).default(30),
 });
 
 const resetSchema = z.object({
   habitId: z.string().min(1),
-  occurredAt: z.coerce.date().refine((date) => date <= new Date(), "Use a reset date in the past or now."),
+  occurredAt: z.date().refine((date) => date <= new Date(), "Use a reset date in the past or now."),
   note: z.string().trim().max(360).optional(),
   trigger: z.string().trim().max(80).optional(),
 });
@@ -44,7 +72,11 @@ export async function saveHabitAction(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
-  const parsed = habitSchema.safeParse(Object.fromEntries(formData));
+  const raw = Object.fromEntries(formData);
+  const parsed = habitSchema.safeParse({
+    ...raw,
+    quitStartedAt: parseDateTimeLocal(raw.quitStartedAt, raw.timezoneOffset),
+  });
 
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the habit details." };
@@ -72,11 +104,10 @@ export async function resetHabitAction(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
-  const fallbackOccurredAt = new Date().toISOString().slice(0, 16);
   const raw = Object.fromEntries(formData);
   const parsed = resetSchema.safeParse({
     ...raw,
-    occurredAt: raw.occurredAt || fallbackOccurredAt,
+    occurredAt: raw.occurredAt ? parseDateTimeLocal(raw.occurredAt, raw.timezoneOffset) : new Date(),
     note: raw.note || undefined,
     trigger: raw.trigger || undefined,
   });

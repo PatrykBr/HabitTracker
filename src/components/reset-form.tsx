@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { RotateCcw } from "lucide-react";
-import { useActionState } from "react";
+import { type FormEvent, useActionState } from "react";
 
 import { resetHabitAction, type ActionState } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,23 @@ import { Field, Label, TextArea } from "@/components/ui/card";
 
 const initialState: ActionState = { ok: false, message: "" };
 
+function updateTimezoneOffset(event: FormEvent<HTMLFormElement>) {
+  const form = event.currentTarget;
+  const occurredAt = form.elements.namedItem("occurredAt") as HTMLInputElement | null;
+  const timezoneOffset = form.elements.namedItem("timezoneOffset") as HTMLInputElement | null;
+
+  if (occurredAt?.value && timezoneOffset) {
+    timezoneOffset.value = String(new Date(occurredAt.value).getTimezoneOffset());
+  }
+}
+
 export function ResetForm({ habitId, compact = false }: { habitId: string; compact?: boolean }) {
   const [state, formAction, isPending] = useActionState(resetHabitAction, initialState);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} onSubmit={updateTimezoneOffset} className="space-y-4">
       <input type="hidden" name="habitId" value={habitId} />
+      <input type="hidden" name="timezoneOffset" value={new Date().getTimezoneOffset()} />
 
       <div className={compact ? "grid gap-3" : "grid gap-4 sm:grid-cols-2"}>
         <div className="space-y-2">
