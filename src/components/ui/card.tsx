@@ -15,7 +15,7 @@ export function Field({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   return (
     <input
       className={cn(
-        "h-12 w-full rounded-2xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-ink/30 focus:bg-white focus:ring-4 focus:ring-mint/30",
+        "block h-12 w-full min-w-0 max-w-full rounded-2xl border border-ink/10 bg-paper px-4 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-ink/30 focus:bg-white focus:ring-4 focus:ring-mint/30",
         className,
       )}
       {...props}
