@@ -40,6 +40,7 @@ input[type="datetime-local"] {
   -webkit-appearance: none;
   appearance: none;
   inline-size: 100%;
+  line-height: normal;
   min-inline-size: 0;
   max-inline-size: 100%;
 }
@@ -47,8 +48,18 @@ input[type="datetime-local"] {
 input[type="date"]::-webkit-date-and-time-value,
 input[type="time"]::-webkit-date-and-time-value,
 input[type="datetime-local"]::-webkit-date-and-time-value {
+  block-size: 100%;
+  display: flex;
+  align-items: center;
   min-inline-size: 0;
   text-align: left;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  display: flex;
+  align-items: center;
 }
 
 .liquid-nav {
