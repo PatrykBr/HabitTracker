@@ -34,6 +34,23 @@ body {
   color: #191f2d;
 }
 
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  min-inline-size: 0;
+  text-align: left;
+}
+
 .liquid-nav {
   isolation: isolate;
   overflow: hidden;
