@@ -7,13 +7,15 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Label } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 type AuthMode = "sign-in" | "sign-up";
+type FormMessage = { text: string; tone: "error" | "success" };
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FormMessage | null>(null);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,7 +24,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const password = String(formData.get("password") ?? "");
     const name = String(formData.get("name") ?? "");
 
-    setMessage("");
+    setMessage(null);
     startTransition(async () => {
       const callbackURL = `${window.location.origin}/dashboard`;
       const result =
@@ -31,12 +33,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           : await authClient.signIn.email({ email, password, callbackURL });
 
       if (result.error) {
-        setMessage(result.error.message ?? "That did not work. Check your details and try again.");
+        setMessage({
+          text: result.error.message ?? "That did not work. Check your details and try again.",
+          tone: "error",
+        });
         return;
       }
 
       if (mode === "sign-up") {
-        setMessage("Check your email to verify your account before signing in.");
+        setMessage({ text: "Check your email to verify your account before signing in.", tone: "success" });
         return;
       }
 
@@ -72,7 +77,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         />
       </div>
 
-      {message ? <p className="rounded-2xl bg-ember/10 px-4 py-3 text-sm text-ember">{message}</p> : null}
+      {message ? (
+        <p className={cn(
+          "rounded-2xl px-4 py-3 text-sm",
+          message.tone === "error" ? "bg-ember/10 text-ember" : "bg-mint/35 text-ink/70",
+        )}>
+          {message.text}
+        </p>
+      ) : null}
 
       <Button type="submit" className="w-full" size="lg" disabled={isPending}>
         {isPending ? "Working…" : mode === "sign-up" ? "Create account" : "Sign in"}

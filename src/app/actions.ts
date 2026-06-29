@@ -59,12 +59,12 @@ export type ActionState = {
   message: string;
 };
 
+const appPaths = ["/dashboard", "/calendar", "/history", "/stats", "/settings"];
+
 function refreshApp() {
-  revalidatePath("/dashboard");
-  revalidatePath("/calendar");
-  revalidatePath("/history");
-  revalidatePath("/stats");
-  revalidatePath("/settings");
+  for (const path of appPaths) {
+    revalidatePath(path);
+  }
 }
 
 export async function saveHabitAction(

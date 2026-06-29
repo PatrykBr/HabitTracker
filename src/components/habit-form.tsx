@@ -1,23 +1,14 @@
 "use client";
 
 import { format } from "date-fns";
-import { type FormEvent, useActionState } from "react";
+import { useActionState } from "react";
 
 import { saveHabitAction, type ActionState } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Field, Label, TextArea } from "@/components/ui/card";
+import { updateFormTimezoneOffset } from "@/lib/utils";
 
 const initialState: ActionState = { ok: false, message: "" };
-
-function updateTimezoneOffset(event: FormEvent<HTMLFormElement>) {
-  const form = event.currentTarget;
-  const quitStartedAt = form.elements.namedItem("quitStartedAt") as HTMLInputElement | null;
-  const timezoneOffset = form.elements.namedItem("timezoneOffset") as HTMLInputElement | null;
-
-  if (quitStartedAt?.value && timezoneOffset) {
-    timezoneOffset.value = String(new Date(quitStartedAt.value).getTimezoneOffset());
-  }
-}
 
 type HabitFormValue = {
   id: string;
@@ -32,7 +23,7 @@ export function HabitForm({ habit }: { habit?: HabitFormValue | null }) {
   const quitStartedAt = habit ? new Date(habit.quitStartedAt) : new Date();
 
   return (
-    <form action={formAction} onSubmit={updateTimezoneOffset} className="space-y-4">
+    <form action={formAction} onSubmit={(event) => updateFormTimezoneOffset(event.currentTarget, "quitStartedAt")} className="space-y-4">
       {habit ? <input type="hidden" name="habitId" value={habit.id} /> : null}
       <input type="hidden" name="timezoneOffset" value={new Date(quitStartedAt).getTimezoneOffset()} />
 

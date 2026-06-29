@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 import { Card } from "@/components/ui/card";
-import { calculateStats, getActiveHabitWithResetEvents } from "@/lib/habits";
+import { calculateStats, getActiveHabitEventHistory } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ const timeBuckets = [
 
 export default async function StatsPage() {
   const user = await requireUser();
-  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
+  const { habit, events } = await getActiveHabitEventHistory(user.id);
 
   if (!habit) {
     return (
@@ -40,27 +40,41 @@ export default async function StatsPage() {
   const now = new Date();
   const currentYear = now.getFullYear();
   const oldestReset = events.at(-1);
-  const resetsThisYear = events.filter((event) => event.occurredAt.getFullYear() === currentYear).length;
   const maxStreak = Math.max(stats.currentDays, stats.longestDays, stats.averageStreakDays, 1);
   const maxTriggerCount = Math.max(...stats.commonTriggers.map((trigger) => trigger.count), 1);
 
   const weekdayCounts = Array.from({ length: 7 }, () => 0);
   const hourCounts = Array.from({ length: 24 }, () => 0);
   const monthCounts = Array.from({ length: 12 }, () => 0);
+  const bucketCounts = Array.from({ length: timeBuckets.length }, () => 0);
+  let resetsThisYear = 0;
 
   for (const event of events) {
-    weekdayCounts[event.occurredAt.getDay()] += 1;
-    hourCounts[event.occurredAt.getHours()] += 1;
-    monthCounts[event.occurredAt.getMonth()] += 1;
+    const occurredAt = event.occurredAt;
+    const hour = occurredAt.getHours();
+
+    weekdayCounts[occurredAt.getDay()] += 1;
+    hourCounts[hour] += 1;
+    monthCounts[occurredAt.getMonth()] += 1;
+
+    if (occurredAt.getFullYear() === currentYear) {
+      resetsThisYear += 1;
+    }
+
+    const bucketIndex = timeBuckets.findIndex((bucket) => hour >= bucket.start && hour <= bucket.end);
+
+    if (bucketIndex !== -1) {
+      bucketCounts[bucketIndex] += 1;
+    }
   }
 
   const weekdayStats = weekdayOrder.map((day) => ({
     label: day.label,
     count: weekdayCounts[day.index],
   }));
-  const bucketStats = timeBuckets.map((bucket) => ({
+  const bucketStats = timeBuckets.map((bucket, index) => ({
     ...bucket,
-    count: hourCounts.slice(bucket.start, bucket.end + 1).reduce((sum, count) => sum + count, 0),
+    count: bucketCounts[index],
   }));
   const monthStats = monthCounts.map((count, index) => ({
     label: format(new Date(currentYear, index, 1), "MMM"),

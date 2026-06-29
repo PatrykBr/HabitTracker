@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 
-import { db, mongoClient, mongoSupportsTransactions } from "@/lib/db";
+import { db, getMongoSupportsTransactions, mongoClient } from "@/lib/db";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 
 function getTrustedOrigins() {
@@ -17,7 +17,7 @@ export const auth = betterAuth({
   appName: "Reset Tracker",
   database: mongodbAdapter(db, {
     client: mongoClient,
-    transaction: mongoSupportsTransactions,
+    transaction: getMongoSupportsTransactions(),
   }),
   emailAndPassword: {
     enabled: true,
@@ -66,5 +66,3 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
 });
-
-export type Session = typeof auth.$Infer.Session;

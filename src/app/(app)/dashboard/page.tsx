@@ -5,13 +5,13 @@ import Link from "next/link";
 import { HabitForm } from "@/components/habit-form";
 import { ResetForm } from "@/components/reset-form";
 import { Card } from "@/components/ui/card";
-import { calculateStats, getActiveHabitWithResetEvents } from "@/lib/habits";
+import { calculateStats, getActiveHabitEventHistory } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ habit?: string }> }) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
-  const { habit, events } = await getActiveHabitWithResetEvents(user.id, params.habit);
+  const { habit, events } = await getActiveHabitEventHistory(user.id, params.habit);
 
   if (!habit) {
     return (
@@ -198,12 +198,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
 }
 
-function StatusTile({ label, value, detail, dark = false }: { label: string; value: string; detail: string; dark?: boolean }) {
+function StatusTile({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className={cn("rounded-2xl p-4 ring-1", dark ? "bg-paper/10 ring-paper/10" : "bg-white/65 ring-ink/10")}>
-      <p className={cn("text-xs font-black uppercase tracking-[0.16em]", dark ? "text-paper/45" : "text-ink/40")}>{label}</p>
+    <div className="rounded-2xl bg-white/65 p-4 ring-1 ring-ink/10">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-ink/40">{label}</p>
       <p className="mt-2 text-2xl font-black tracking-[-0.04em]">{value}</p>
-      <p className={cn("mt-1 text-xs leading-5", dark ? "text-paper/50" : "text-ink/50")}>{detail}</p>
+      <p className="mt-1 text-xs leading-5 text-ink/50">{detail}</p>
     </div>
   );
 }

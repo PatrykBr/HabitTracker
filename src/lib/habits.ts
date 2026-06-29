@@ -11,7 +11,7 @@ import {
 } from "date-fns";
 import { MongoServerError, ObjectId, type Filter } from "mongodb";
 
-import { db } from "@/lib/db";
+import { getMongoDb } from "@/lib/db";
 
 export type HabitDoc = {
   _id?: ObjectId;
@@ -63,8 +63,13 @@ export type HabitStats = {
   commonTriggers: Array<{ trigger: string; count: number }>;
 };
 
-const habits = db.collection<HabitDoc>("habits");
-const resetEvents = db.collection<ResetEventDoc>("reset_events");
+function habits() {
+  return getMongoDb().collection<HabitDoc>("habits");
+}
+
+function resetEvents() {
+  return getMongoDb().collection<ResetEventDoc>("reset_events");
+}
 
 function serializeHabit(habit: HabitDoc): Habit {
   const { _id, ...habitFields } = habit;
@@ -93,83 +98,62 @@ export function toObjectId(id: string) {
   return new ObjectId(id);
 }
 
-export async function getHabits(userId: string) {
-  const docs = await habits
-    .find({ userId, archivedAt: { $exists: false } })
-    .sort({ createdAt: 1 })
-    .toArray();
-
-  return docs.map(serializeHabit);
+function optionalObjectId(id: string) {
+  return ObjectId.isValid(id) ? new ObjectId(id) : null;
 }
 
 export async function getActiveHabit(userId: string, habitId?: string | null) {
   const filter: Filter<HabitDoc> = { userId, archivedAt: { $exists: false } };
 
   if (habitId) {
-    filter._id = toObjectId(habitId);
+    const objectId = optionalObjectId(habitId);
+
+    if (objectId) {
+      filter._id = objectId;
+    }
   }
 
-  const doc = await habits.findOne(filter, { sort: { createdAt: 1 } });
+  const doc = await habits().findOne(filter, { sort: { createdAt: 1 } });
 
   return doc ? serializeHabit(doc) : null;
 }
 
-export async function getActiveHabitWithResetEvents(userId: string, habitId?: string | null) {
-  const filter: Filter<HabitDoc> = { userId, archivedAt: { $exists: false } };
+export async function getResetEventsForHabit(
+  userId: string,
+  habitId: string,
+  range?: { start: Date; end: Date },
+) {
+  const objectId = optionalObjectId(habitId);
 
-  if (habitId) {
-    filter._id = toObjectId(habitId);
+  if (!objectId) {
+    return [];
   }
 
-  const doc = await habits
-    .aggregate<HabitDoc & { events: ResetEventDoc[] }>([
-      { $match: filter },
-      { $sort: { createdAt: 1 } },
-      { $limit: 1 },
-      {
-        $lookup: {
-          from: "reset_events",
-          localField: "_id",
-          foreignField: "habitId",
-          pipeline: [
-            { $match: { userId } },
-            { $sort: { occurredAt: -1, createdAt: -1 } },
-          ],
-          as: "events",
-        },
-      },
-    ])
-    .next();
+  const filter: Filter<ResetEventDoc> = { userId, habitId: objectId };
 
-  if (!doc) {
-    return { habit: null, events: [] };
+  if (range) {
+    filter.occurredAt = { $gte: range.start, $lte: range.end };
   }
 
-  const { events, ...habit } = doc;
-
-  return {
-    habit: serializeHabit(habit),
-    events: events.map(serializeReset),
-  };
-}
-
-export async function getResetEvents(userId: string, habitId: string) {
-  const docs = await resetEvents
-    .find({ userId, habitId: toObjectId(habitId) })
+  const docs = await resetEvents()
+    .find(filter)
     .sort({ occurredAt: -1, createdAt: -1 })
     .toArray();
 
   return docs.map(serializeReset);
 }
 
-export async function getRecentResetEvents(userId: string, limit = 6) {
-  const docs = await resetEvents
-    .find({ userId })
-    .sort({ occurredAt: -1 })
-    .limit(limit)
-    .toArray();
+export async function getActiveHabitEventHistory(userId: string, habitId?: string | null) {
+  const habit = await getActiveHabit(userId, habitId);
 
-  return docs.map(serializeReset);
+  if (!habit) {
+    return { habit: null, events: [] };
+  }
+
+  return {
+    habit,
+    events: await getResetEventsForHabit(userId, habit.id),
+  };
 }
 
 export async function createHabit(input: {
@@ -184,7 +168,7 @@ export async function createHabit(input: {
   let result;
 
   try {
-    result = await habits.insertOne({
+    result = await habits().insertOne({
       userId: input.userId,
       name: input.name,
       quitStartedAt: input.quitStartedAt,
@@ -212,8 +196,8 @@ export async function updateHabit(input: {
   motivation: string;
   targetDays: number;
 }) {
-  const result = await habits.updateOne(
-    { _id: toObjectId(input.habitId), userId: input.userId },
+  const result = await habits().updateOne(
+    { _id: toObjectId(input.habitId), userId: input.userId, archivedAt: { $exists: false } },
     {
       $set: {
         name: input.name,
@@ -237,9 +221,10 @@ export async function createResetEvent(input: {
   note?: string;
   trigger?: string;
 }) {
-  const habit = await habits.findOne({
+  const habit = await habits().findOne({
     _id: toObjectId(input.habitId),
     userId: input.userId,
+    archivedAt: { $exists: false },
   });
 
   if (!habit) {
@@ -252,7 +237,7 @@ export async function createResetEvent(input: {
 
   const now = new Date();
 
-  await resetEvents.insertOne({
+  await resetEvents().insertOne({
     userId: input.userId,
     habitId: habit._id,
     occurredAt: input.occurredAt,
@@ -267,8 +252,14 @@ export async function deleteResetEvent(input: {
   userId: string;
   resetId: string;
 }) {
-  await resetEvents.deleteOne({
-    _id: toObjectId(input.resetId),
+  const resetId = optionalObjectId(input.resetId);
+
+  if (!resetId) {
+    return;
+  }
+
+  await resetEvents().deleteOne({
+    _id: resetId,
     userId: input.userId,
   });
 }
@@ -320,11 +311,30 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
     : currentDays;
 
   const weekStart = subDays(now, 7);
+  const previousWeekStart = subDays(now, 14);
   const monthStart = startOfMonth(now);
-  const resetDays = new Set(events.map((event) => format(event.occurredAt, "yyyy-MM-dd")));
+  const resetDays = new Set<string>();
+  const resetDaysThisWeek = new Set<string>();
   const triggerCounts = new Map<string, number>();
+  let resetsThisWeek = 0;
+  let resetsPreviousWeek = 0;
+  let resetsThisMonth = 0;
 
   for (const event of events) {
+    const resetDay = format(event.occurredAt, "yyyy-MM-dd");
+    resetDays.add(resetDay);
+
+    if (isAfter(event.occurredAt, weekStart)) {
+      resetsThisWeek += 1;
+      resetDaysThisWeek.add(resetDay);
+    } else if (isAfter(event.occurredAt, previousWeekStart)) {
+      resetsPreviousWeek += 1;
+    }
+
+    if (isAfter(event.occurredAt, monthStart)) {
+      resetsThisMonth += 1;
+    }
+
     if (event.trigger) {
       triggerCounts.set(event.trigger, (triggerCounts.get(event.trigger) ?? 0) + 1);
     }
@@ -334,16 +344,6 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
     .filter((days) => days > currentDays)
     .sort((a, b) => a - b);
   const nextMilestoneDays = milestoneOptions[0] ?? habit.targetDays;
-  const resetsThisWeek = events.filter((event) => isAfter(event.occurredAt, weekStart)).length;
-  const previousWeekStart = subDays(now, 14);
-  const resetsPreviousWeek = events.filter(
-    (event) => isAfter(event.occurredAt, previousWeekStart) && !isAfter(event.occurredAt, weekStart),
-  ).length;
-  const resetDaysThisWeek = new Set(
-    events
-      .filter((event) => isAfter(event.occurredAt, weekStart))
-      .map((event) => format(event.occurredAt, "yyyy-MM-dd")),
-  );
 
   return {
     currentDays,
@@ -352,7 +352,7 @@ export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
     totalResets: events.length,
     resetsThisWeek,
     resetsPreviousWeek,
-    resetsThisMonth: events.filter((event) => isAfter(event.occurredAt, monthStart)).length,
+    resetsThisMonth,
     averageStreakDays,
     avoidedDays: Math.max(0, elapsedDays - resetDays.size),
     cleanDaysThisWeek: Math.max(0, 7 - resetDaysThisWeek.size),

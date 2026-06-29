@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, type Db } from "mongodb";
 
 function getMongoUri() {
   if (process.env.MONGODB_URI) {
@@ -12,39 +12,66 @@ function getMongoUri() {
   return "mongodb://127.0.0.1:27017";
 }
 
-const uri = getMongoUri();
-export const dbName = process.env.MONGODB_DB ?? "habit_tracker";
-export const mongoSupportsTransactions =
-  process.env.MONGODB_ENABLE_TRANSACTIONS === "true" ||
-  (process.env.MONGODB_ENABLE_TRANSACTIONS !== "false" && uri.startsWith("mongodb+srv://"));
-const operationTimeoutMS = Number(process.env.MONGODB_OPERATION_TIMEOUT_MS ?? 10_000);
+function getOperationTimeoutMS() {
+  const operationTimeoutMS = Number(process.env.MONGODB_OPERATION_TIMEOUT_MS ?? 10_000);
 
-if (!Number.isFinite(operationTimeoutMS) || operationTimeoutMS <= 0) {
-  throw new Error("MONGODB_OPERATION_TIMEOUT_MS must be a positive number.");
+  if (!Number.isFinite(operationTimeoutMS) || operationTimeoutMS <= 0) {
+    throw new Error("MONGODB_OPERATION_TIMEOUT_MS must be a positive number.");
+  }
+
+  return operationTimeoutMS;
 }
 
-const clientOptions = {
-  // Vercel/serverless assumption: every warm function instance owns a pool, so keep it small.
-  maxPoolSize: 5,
-  // Avoid holding idle Atlas connections open while the app is quiet.
-  minPoolSize: 0,
-  // Release inactive sockets quickly for a low-traffic personal app.
-  maxIdleTimeMS: 30_000,
-  // Bound short OLTP operations for this app's simple indexed CRUD/stat queries.
-  timeoutMS: operationTimeoutMS,
-  // Fail fast enough to show a useful UI error instead of hanging requests.
-  serverSelectionTimeoutMS: 5_000,
-};
+export function getDbName() {
+  return process.env.MONGODB_DB ?? "habit_tracker";
+}
+
+export function getMongoSupportsTransactions() {
+  return process.env.MONGODB_ENABLE_TRANSACTIONS === "true" ||
+    (process.env.MONGODB_ENABLE_TRANSACTIONS !== "false" && process.env.MONGODB_URI?.startsWith("mongodb+srv://") === true);
+}
 
 declare global {
   var __habitTrackerMongoClient: MongoClient | undefined;
 }
 
-export const mongoClient =
-  globalThis.__habitTrackerMongoClient ?? new MongoClient(uri, clientOptions);
+export function getMongoClient() {
+  if (!globalThis.__habitTrackerMongoClient) {
+    globalThis.__habitTrackerMongoClient = new MongoClient(getMongoUri(), {
+      // Vercel/serverless assumption: every warm function instance owns a pool, so keep it small.
+      maxPoolSize: 5,
+      // Avoid holding idle Atlas connections open while the app is quiet.
+      minPoolSize: 0,
+      // Release inactive sockets quickly for a low-traffic personal app.
+      maxIdleTimeMS: 30_000,
+      // Bound short OLTP operations for this app's simple indexed CRUD/stat queries.
+      timeoutMS: getOperationTimeoutMS(),
+      // Fail fast enough to show a useful UI error instead of hanging requests.
+      serverSelectionTimeoutMS: 5_000,
+    });
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__habitTrackerMongoClient = mongoClient;
+  return globalThis.__habitTrackerMongoClient;
 }
 
-export const db = mongoClient.db(dbName);
+export function getMongoDb() {
+  return getMongoClient().db(getDbName());
+}
+
+export const mongoClient = new Proxy({} as MongoClient, {
+  get(_target, property) {
+    const client = getMongoClient();
+    const value = Reflect.get(client, property, client);
+
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
+
+export const db = new Proxy({} as Db, {
+  get(_target, property) {
+    const database = getMongoDb();
+    const value = Reflect.get(database, property, database);
+
+    return typeof value === "function" ? value.bind(database) : value;
+  },
+});

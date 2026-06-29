@@ -1,12 +1,12 @@
 import { HabitForm } from "@/components/habit-form";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabitWithResetEvents } from "@/lib/habits";
+import { getActiveHabit } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function SettingsPage() {
   const user = await requireUser();
-  const { habit } = await getActiveHabitWithResetEvents(user.id);
+  const habit = await getActiveHabit(user.id);
   const formHabit = habit
     ? {
         id: habit.id,

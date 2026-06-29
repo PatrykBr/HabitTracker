@@ -87,7 +87,7 @@ input[type="datetime-local"]::-webkit-datetime-edit {
 
 .liquid-nav-vertical::before {
   inset: 0.5rem;
-  height: calc((100% - 3rem) / 5);
+  height: calc((100% - var(--vertical-nav-gaps)) / var(--nav-count));
   transform: translateY(calc(var(--active-index) * (100% + 0.5rem)));
 }
 
@@ -95,7 +95,7 @@ input[type="datetime-local"]::-webkit-datetime-edit {
   top: 0.5rem;
   bottom: 0.5rem;
   left: 0.5rem;
-  width: calc((100% - 2rem) / 5);
+  width: calc((100% - var(--horizontal-nav-gaps)) / var(--nav-count));
   transform: translateX(calc(var(--active-index) * (100% + 0.25rem)));
 }
 

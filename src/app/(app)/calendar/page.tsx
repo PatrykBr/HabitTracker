@@ -4,9 +4,19 @@ import Link from "next/link";
 import { ResetForm } from "@/components/reset-form";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabitWithResetEvents, getMonthResetMap } from "@/lib/habits";
+import { getActiveHabit, getMonthResetMap, getResetEventsForHabit } from "@/lib/habits";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/lib/session";
+
+const weekdayLabels = [
+  ["M", "Mon"],
+  ["T", "Tue"],
+  ["W", "Wed"],
+  ["T", "Thu"],
+  ["F", "Fri"],
+  ["S", "Sat"],
+  ["S", "Sun"],
+] as const;
 
 function parseMonthParam(month?: string) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
@@ -21,15 +31,16 @@ function parseMonthParam(month?: string) {
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
   const monthDate = parseMonthParam(params.month);
-  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd = endOfMonth(monthDate);
+  const habit = await getActiveHabit(user.id);
 
   if (!habit) {
     return <Card>No habit yet. Start one from Today.</Card>;
   }
 
+  const events = await getResetEventsForHabit(user.id, habit.id, { start: monthStart, end: monthEnd });
   const resetMap = getMonthResetMap(events, monthDate);
-  const monthStart = startOfMonth(monthDate);
-  const monthEnd = endOfMonth(monthDate);
   const gridDays = eachDayOfInterval({
     start: startOfWeek(monthStart, { weekStartsOn: 1 }),
     end: endOfWeek(monthEnd, { weekStartsOn: 1 }),
@@ -53,15 +64,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
           <Card className="p-3 sm:p-5">
             <div className="grid grid-cols-7 gap-1.5 text-center text-[0.62rem] font-black uppercase tracking-[0.12em] text-ink/40 sm:gap-2 sm:text-xs sm:tracking-[0.16em]">
-              {[
-                ["M", "Mon"],
-                ["T", "Tue"],
-                ["W", "Wed"],
-                ["T", "Thu"],
-                ["F", "Fri"],
-                ["S", "Sat"],
-                ["S", "Sun"],
-              ].map(([shortDay, day]) => (
+              {weekdayLabels.map(([shortDay, day]) => (
                 <span key={day}>
                   <span className="sm:hidden">{shortDay}</span>
                   <span className="hidden sm:inline">{day}</span>

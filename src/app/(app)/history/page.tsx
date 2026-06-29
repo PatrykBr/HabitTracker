@@ -4,12 +4,12 @@ import { CalendarDays, Clock, NotebookText, Trash2 } from "lucide-react";
 import { deleteResetAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getActiveHabitWithResetEvents } from "@/lib/habits";
+import { getActiveHabitEventHistory } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
 export default async function HistoryPage() {
   const user = await requireUser();
-  const { habit, events } = await getActiveHabitWithResetEvents(user.id);
+  const { habit, events } = await getActiveHabitEventHistory(user.id);
 
   if (!habit) {
     return (
@@ -23,20 +23,28 @@ export default async function HistoryPage() {
 
   const latestReset = events[0];
   const oldestReset = events.at(-1);
-  const resetsWithTriggers = events.filter((event) => event.trigger).length;
-  const resetsWithNotes = events.filter((event) => event.note).length;
-  const groupedEvents = events.reduce<Array<{ key: string; label: string; events: typeof events }>>((groups, event) => {
+  const groupedEvents: Array<{ key: string; label: string; events: typeof events }> = [];
+  let resetsWithTriggers = 0;
+  let resetsWithNotes = 0;
+
+  for (const event of events) {
     const key = format(event.occurredAt, "yyyy-MM");
-    const currentGroup = groups.at(-1);
+    const currentGroup = groupedEvents.at(-1);
+
+    if (event.trigger) {
+      resetsWithTriggers += 1;
+    }
+
+    if (event.note) {
+      resetsWithNotes += 1;
+    }
 
     if (currentGroup?.key === key) {
       currentGroup.events.push(event);
     } else {
-      groups.push({ key, label: format(event.occurredAt, "MMMM yyyy"), events: [event] });
+      groupedEvents.push({ key, label: format(event.occurredAt, "MMMM yyyy"), events: [event] });
     }
-
-    return groups;
-  }, []);
+  }
 
   return (
     <div className="space-y-6">
