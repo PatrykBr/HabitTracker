@@ -266,7 +266,7 @@ export async function deleteResetEvent(input: {
 
 export function calculateStats(habit: Habit, events: ResetEvent[]): HabitStats {
   const now = new Date();
-  const ascending = [...events].sort(
+  const ascending = events.toSorted(
     (a, b) => a.occurredAt.getTime() - b.occurredAt.getTime(),
   );
   const oldestReset = ascending[0];

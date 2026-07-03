@@ -2,49 +2,32 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, Label } from "@/components/ui/card";
+import { StatusMessage } from "@/components/ui/form-feedback";
+import { useAuthForm } from "@/components/use-auth-form";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
-
-type FormMessage = { text: string; tone: "error" | "success" };
-
-function StatusMessage({ message }: { message: FormMessage }) {
-  return (
-    <p className={cn(
-      "rounded-2xl px-4 py-3 text-sm",
-      message.tone === "error" ? "bg-ember/10 text-ember" : "bg-mint/35 text-ink/70",
-    )}>
-      {message.text}
-    </p>
-  );
-}
 
 export function ForgotPasswordForm() {
-  const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState<FormMessage | null>(null);
+  const { isPending, message, submit } = useAuthForm();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
 
-    setMessage(null);
-    startTransition(async () => {
-      const result = await authClient.requestPasswordReset({
-        email,
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (result.error) {
-        setMessage({ text: result.error.message ?? "Could not request a reset link. Try again.", tone: "error" });
-        return;
-      }
-
-      setMessage({ text: "If that email exists, a reset link has been sent.", tone: "success" });
-    });
+    submit(
+      () =>
+        authClient.requestPasswordReset({
+          email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
+      {
+        errorFallback: "Could not request a reset link. Try again.",
+        successMessage: "If that email exists, a reset link has been sent.",
+      },
+    );
   }
 
   return (
@@ -71,28 +54,17 @@ export function ForgotPasswordForm() {
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState<FormMessage | null>(null);
+  const { isPending, message, submit } = useAuthForm();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const newPassword = String(formData.get("password") ?? "");
 
-    setMessage(null);
-    startTransition(async () => {
-      const result = await authClient.resetPassword({ newPassword, token });
-
-      if (result.error) {
-        setMessage({
-          text: result.error.message ?? "Could not reset your password. Request a new link and try again.",
-          tone: "error",
-        });
-        return;
-      }
-
-      setMessage({ text: "Password reset. Redirecting to sign in…", tone: "success" });
-      router.push("/sign-in");
+    submit(() => authClient.resetPassword({ newPassword, token }), {
+      errorFallback: "Could not reset your password. Request a new link and try again.",
+      successMessage: "Password reset. Redirecting to sign in…",
+      onSuccess: () => router.push("/sign-in"),
     });
   }
 

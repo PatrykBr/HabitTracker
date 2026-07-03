@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
 import { Card } from "@/components/ui/card";
+import { EmptyHabitCard } from "@/components/ui/empty-habit-card";
 import { calculateStats, getActiveHabitEventHistory } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -27,13 +28,7 @@ export default async function StatsPage() {
   const { habit, events } = await getActiveHabitEventHistory(user.id);
 
   if (!habit) {
-    return (
-      <Card className="mx-auto max-w-2xl p-6">
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-violet/70">Stats</p>
-        <h1 className="mt-2 text-3xl font-black tracking-[-0.04em]">No habit yet.</h1>
-        <p className="mt-2 text-sm leading-6 text-ink/60">Start one from Today to see streak, trend, and reset patterns.</p>
-      </Card>
-    );
+    return <EmptyHabitCard eyebrow="Stats" description="Start one from Today to see streak, trend, and reset patterns." />;
   }
 
   const stats = calculateStats(habit, events);

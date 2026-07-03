@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     ? {
         id: habit.id,
         name: habit.name,
-        quitStartedAt: habit.quitStartedAt.toISOString(),
+        quitStartedAt: habit.quitStartedAt,
         motivation: habit.motivation,
         targetDays: habit.targetDays,
       }

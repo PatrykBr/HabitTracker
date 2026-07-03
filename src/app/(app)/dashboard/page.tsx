@@ -31,20 +31,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const lastReset = events[0];
   const today = new Date();
   const lastSevenDays = eachDayOfInterval({ start: subDays(today, 6), end: today });
-  const resetsByDay = new Map<string, typeof events>();
+  const resetCountByDay = new Map(lastSevenDays.map((day) => [format(day, "yyyy-MM-dd"), 0]));
 
   for (const event of events) {
     const key = format(event.occurredAt, "yyyy-MM-dd");
-    const dayEvents = resetsByDay.get(key) ?? [];
+    const count = resetCountByDay.get(key);
 
-    dayEvents.push(event);
-    resetsByDay.set(key, dayEvents);
+    if (count !== undefined) {
+      resetCountByDay.set(key, count + 1);
+    }
   }
 
-  const sevenDayResetCount = lastSevenDays.reduce(
-    (count, day) => count + (resetsByDay.get(format(day, "yyyy-MM-dd"))?.length ?? 0),
-    0,
-  );
+  const sevenDayResetCount = [...resetCountByDay.values()].reduce((total, count) => total + count, 0);
   const sevenDayCopy = sevenDayResetCount === 0
     ? "No resets logged in the last 7 days."
     : `${sevenDayResetCount} reset${sevenDayResetCount === 1 ? "" : "s"} logged across the last seven days.`;
@@ -120,8 +118,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                 {lastSevenDays.map((day) => {
                   const key = format(day, "yyyy-MM-dd");
-                  const dayEvents = resetsByDay.get(key) ?? [];
-                  const resetCount = dayEvents.length;
+                  const resetCount = resetCountByDay.get(key) ?? 0;
                   const hasReset = resetCount > 0;
 
                   return (

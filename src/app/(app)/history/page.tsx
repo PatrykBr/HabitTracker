@@ -4,6 +4,7 @@ import { CalendarDays, Clock, NotebookText, Trash2 } from "lucide-react";
 import { deleteResetAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyHabitCard } from "@/components/ui/empty-habit-card";
 import { getActiveHabitEventHistory } from "@/lib/habits";
 import { requireUser } from "@/lib/session";
 
@@ -12,13 +13,7 @@ export default async function HistoryPage() {
   const { habit, events } = await getActiveHabitEventHistory(user.id);
 
   if (!habit) {
-    return (
-      <Card className="mx-auto max-w-2xl p-6">
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-violet/70">History</p>
-        <h1 className="mt-2 text-3xl font-black tracking-[-0.04em]">No habit yet.</h1>
-        <p className="mt-2 text-sm leading-6 text-ink/60">Start one from Today, then resets will appear here in order.</p>
-      </Card>
-    );
+    return <EmptyHabitCard eyebrow="History" description="Start one from Today, then resets will appear here in order." />;
   }
 
   const latestReset = events[0];

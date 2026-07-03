@@ -3,29 +3,28 @@
 import { format } from "date-fns";
 import { useActionState } from "react";
 
-import { saveHabitAction, type ActionState } from "@/app/actions";
+import { saveHabitAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Field, Label, TextArea } from "@/components/ui/card";
+import { ActionStatus, initialActionState } from "@/components/ui/form-feedback";
 import { updateFormTimezoneOffset } from "@/lib/utils";
-
-const initialState: ActionState = { ok: false, message: "" };
 
 type HabitFormValue = {
   id: string;
   name: string;
-  quitStartedAt: string;
+  quitStartedAt: Date;
   motivation: string;
   targetDays: number;
 };
 
 export function HabitForm({ habit }: { habit?: HabitFormValue | null }) {
-  const [state, formAction, isPending] = useActionState(saveHabitAction, initialState);
-  const quitStartedAt = habit ? new Date(habit.quitStartedAt) : new Date();
+  const [state, formAction, isPending] = useActionState(saveHabitAction, initialActionState);
+  const quitStartedAt = habit?.quitStartedAt ?? new Date();
 
   return (
     <form action={formAction} onSubmit={(event) => updateFormTimezoneOffset(event.currentTarget, "quitStartedAt")} className="space-y-4">
       {habit ? <input type="hidden" name="habitId" value={habit.id} /> : null}
-      <input type="hidden" name="timezoneOffset" value={new Date(quitStartedAt).getTimezoneOffset()} />
+      <input type="hidden" name="timezoneOffset" value={quitStartedAt.getTimezoneOffset()} />
 
       <div className="space-y-2">
         <Label htmlFor="name">What are you tracking?</Label>
@@ -59,9 +58,7 @@ export function HabitForm({ habit }: { habit?: HabitFormValue | null }) {
         />
       </div>
 
-      {state.message ? (
-        <p className={state.ok ? "text-sm font-medium text-ink" : "text-sm font-medium text-ember"}>{state.message}</p>
-      ) : null}
+      <ActionStatus state={state} />
 
       <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
         {isPending ? "Saving…" : habit ? "Save habit" : "Start tracking"}

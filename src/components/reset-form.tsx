@@ -4,15 +4,14 @@ import { format } from "date-fns";
 import { RotateCcw } from "lucide-react";
 import { useActionState } from "react";
 
-import { resetHabitAction, type ActionState } from "@/app/actions";
+import { resetHabitAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Field, Label, TextArea } from "@/components/ui/card";
+import { ActionStatus, initialActionState } from "@/components/ui/form-feedback";
 import { updateFormTimezoneOffset } from "@/lib/utils";
 
-const initialState: ActionState = { ok: false, message: "" };
-
 export function ResetForm({ habitId, compact = false }: { habitId: string; compact?: boolean }) {
-  const [state, formAction, isPending] = useActionState(resetHabitAction, initialState);
+  const [state, formAction, isPending] = useActionState(resetHabitAction, initialActionState);
 
   return (
     <form action={formAction} onSubmit={(event) => updateFormTimezoneOffset(event.currentTarget, "occurredAt")} className="space-y-4">
@@ -35,9 +34,7 @@ export function ResetForm({ habitId, compact = false }: { habitId: string; compa
         <TextArea id="note" name="note" placeholder="What happened right before it?" maxLength={360} />
       </div>
 
-      {state.message ? (
-        <p className={state.ok ? "text-sm font-medium text-ink" : "text-sm font-medium text-ember"}>{state.message}</p>
-      ) : null}
+      <ActionStatus state={state} />
 
       <Button type="submit" variant="ember" size={compact ? "md" : "lg"} disabled={isPending} className="w-full">
         <RotateCcw aria-hidden className="size-4" />

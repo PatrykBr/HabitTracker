@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ResetForm } from "@/components/reset-form";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyHabitCard } from "@/components/ui/empty-habit-card";
 import { getActiveHabit, getMonthResetMap, getResetEventsForHabit } from "@/lib/habits";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/lib/session";
@@ -36,7 +37,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const habit = await getActiveHabit(user.id);
 
   if (!habit) {
-    return <Card>No habit yet. Start one from Today.</Card>;
+    return <EmptyHabitCard eyebrow="Calendar" description="Start one from Today to review resets by day and month." />;
   }
 
   const events = await getResetEventsForHabit(user.id, habit.id, { start: monthStart, end: monthEnd });

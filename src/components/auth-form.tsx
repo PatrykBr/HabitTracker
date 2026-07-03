@@ -2,20 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, Label } from "@/components/ui/card";
+import { StatusMessage } from "@/components/ui/form-feedback";
+import { useAuthForm } from "@/components/use-auth-form";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 
 type AuthMode = "sign-in" | "sign-up";
-type FormMessage = { text: string; tone: "error" | "success" };
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState<FormMessage | null>(null);
+  const { isPending, message, submit } = useAuthForm();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,31 +21,26 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
     const name = String(formData.get("name") ?? "");
+    const callbackURL = `${window.location.origin}/dashboard`;
 
-    setMessage(null);
-    startTransition(async () => {
-      const callbackURL = `${window.location.origin}/dashboard`;
-      const result =
+    submit(
+      () =>
         mode === "sign-up"
-          ? await authClient.signUp.email({ email, password, name, callbackURL })
-          : await authClient.signIn.email({ email, password, callbackURL });
-
-      if (result.error) {
-        setMessage({
-          text: result.error.message ?? "That did not work. Check your details and try again.",
-          tone: "error",
-        });
-        return;
-      }
-
-      if (mode === "sign-up") {
-        setMessage({ text: "Check your email to verify your account before signing in.", tone: "success" });
-        return;
-      }
-
-      router.push("/dashboard");
-      router.refresh();
-    });
+          ? authClient.signUp.email({ email, password, name, callbackURL })
+          : authClient.signIn.email({ email, password, callbackURL }),
+      {
+        errorFallback: "That did not work. Check your details and try again.",
+        successMessage:
+          mode === "sign-up" ? "Check your email to verify your account before signing in." : undefined,
+        onSuccess:
+          mode === "sign-in"
+            ? () => {
+                router.push("/dashboard");
+                router.refresh();
+              }
+            : undefined,
+      },
+    );
   }
 
   return (
@@ -77,14 +70,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         />
       </div>
 
-      {message ? (
-        <p className={cn(
-          "rounded-2xl px-4 py-3 text-sm",
-          message.tone === "error" ? "bg-ember/10 text-ember" : "bg-mint/35 text-ink/70",
-        )}>
-          {message.text}
-        </p>
-      ) : null}
+      {message ? <StatusMessage message={message} /> : null}
 
       <Button type="submit" className="w-full" size="lg" disabled={isPending}>
         {isPending ? "Working…" : mode === "sign-up" ? "Create account" : "Sign in"}

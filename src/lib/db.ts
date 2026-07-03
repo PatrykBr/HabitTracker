@@ -22,7 +22,7 @@ function getOperationTimeoutMS() {
   return operationTimeoutMS;
 }
 
-export function getDbName() {
+function getDbName() {
   return process.env.MONGODB_DB ?? "habit_tracker";
 }
 
@@ -35,7 +35,7 @@ declare global {
   var __habitTrackerMongoClient: MongoClient | undefined;
 }
 
-export function getMongoClient() {
+function getMongoClient() {
   if (!globalThis.__habitTrackerMongoClient) {
     globalThis.__habitTrackerMongoClient = new MongoClient(getMongoUri(), {
       // Vercel/serverless assumption: every warm function instance owns a pool, so keep it small.
