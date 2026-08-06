@@ -1,0 +1,5 @@
+{
+  "read_only_files": [
+    "**/routeTree.gen.ts"
+  ]
+}
