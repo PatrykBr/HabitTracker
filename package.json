@@ -21,7 +21,9 @@
     "test:coverage": "bun test --coverage",
     "dev:mongo": "bun scripts/dev-mongo.mjs",
     "generate:pwa-assets": "bun scripts/generate-pwa-assets.mjs",
-    "smoke:data": "bun --no-env-file scripts/smoke-data.mjs"
+    "smoke:data": "bun --no-env-file scripts/smoke-data.mjs",
+    "smoke:server": "bun --no-env-file scripts/smoke-server.mjs",
+    "smoke:ui": "bun --no-env-file scripts/smoke-ui.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.41",
