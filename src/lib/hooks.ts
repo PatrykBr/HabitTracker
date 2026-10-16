@@ -1,4 +1,51 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { userMessage } from './errors'
+
+export interface AsyncAction<Args extends unknown[]> {
+  /** Runs the action; resolves true on success, false if it threw. */
+  run: (...args: Args) => Promise<boolean>
+  busy: boolean
+  /** User-facing message from the last failed run, until cleared or re-run. */
+  error: string | null
+  clearError: () => void
+}
+
+/**
+ * Busy/error state for one user-triggered request (submit, delete, sign out).
+ * Only `UserFacingError` messages are shown verbatim; anything else - network
+ * failures, driver errors - gets `fallbackMessage`.
+ */
+export function useAsyncAction<Args extends unknown[]>(
+  action: (...args: Args) => Promise<unknown>,
+  fallbackMessage: string,
+): AsyncAction<Args> {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inFlight = useRef(false)
+
+  const run = async (...args: Args): Promise<boolean> => {
+    // State updates aren't synchronous: two submits in one tick can both run.
+    if (inFlight.current) return false
+    inFlight.current = true
+    setBusy(true)
+    setError(null)
+    try {
+      await action(...args)
+      return true
+    } catch (err) {
+      setError(userMessage(err, fallbackMessage))
+      return false
+    } finally {
+      inFlight.current = false
+      setBusy(false)
+    }
+  }
+
+  // Stable so components can list it as an effect dependency.
+  const clearError = useCallback(() => setError(null), [])
+
+  return { run, busy, error, clearError }
+}
 
 /** A Date that ticks on an interval — powers all live streak counters. */
 export function useNow(intervalMs = 1000): Date {
@@ -12,6 +59,8 @@ export function useNow(intervalMs = 1000): Date {
 
 /** Tracks navigator.onLine so we can show a clear offline state. */
 export function useOnline(): boolean {
+  // SSR and the first browser render must agree. Node also exposes navigator,
+  // but has no onLine property; read the actual connection after mounting.
   const [online, setOnline] = useState(true)
   useEffect(() => {
     setOnline(navigator.onLine)

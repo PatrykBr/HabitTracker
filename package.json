@@ -16,6 +16,9 @@
     "start": "NODE_ENV=production bun server.ts",
     "preview": "bun run start",
     "typecheck": "bun check",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
     "dev:mongo": "bun scripts/dev-mongo.mjs",
     "generate:pwa-assets": "bun scripts/generate-pwa-assets.mjs",
     "smoke:data": "bun --no-env-file scripts/smoke-data.mjs"

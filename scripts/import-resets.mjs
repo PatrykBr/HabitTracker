@@ -1,80 +1,87 @@
-// One-off import: pulls reset timestamps from an exported JSON file into an
-// existing habit. Only occurredAt/createdAt date-times are used.
-// Usage:
-//   node scripts/import-resets.mjs <MONGODB_URI> <db> <habitId> <userId> <json-file>
-import { readFileSync } from 'node:fs'
+// Import historical reset timestamps into an existing, owned habit.
+// Usage: bun scripts/import-resets.mjs <uri> <db> <habitId> <userId> <json-file>
 import { MongoClient, ObjectId } from 'mongodb'
 
 const [uri, dbName, habitIdHex, userId, file] = process.argv.slice(2)
-if (!uri || !dbName || !habitIdHex || !userId || !file) {
-  console.error('usage: node scripts/import-resets.mjs <uri> <db> <habitId> <userId> <json-file>')
-  process.exit(1)
+if (
+  !uri ||
+  !dbName ||
+  !ObjectId.isValid(habitIdHex ?? '') ||
+  !userId ||
+  !file
+) {
+  throw new Error(
+    'usage: bun scripts/import-resets.mjs <uri> <db> <habitId> <userId> <json-file>',
+  )
+}
+const events = await Bun.file(file).json()
+if (!Array.isArray(events))
+  throw new Error('The export must be an array of events.')
+const now = new Date()
+const times = new Map()
+for (const event of events) {
+  const value = event?.occurredAt?.$date ?? event?.occurredAt
+  if (typeof value !== 'string') continue
+  const timestamp = new Date(value)
+  if (Number.isNaN(timestamp.getTime()) || timestamp > now) continue
+  const loggedValue = event?.createdAt?.$date ?? event?.createdAt
+  const loggedAt = typeof loggedValue === 'string' ? new Date(loggedValue) : now
+  times.set(timestamp.getTime(), {
+    timestamp,
+    createdAt: Number.isNaN(loggedAt.getTime()) ? now : loggedAt,
+  })
 }
 
-const events = JSON.parse(readFileSync(file, 'utf8'))
 const client = new MongoClient(uri)
 const db = client.db(dbName)
 const habitId = new ObjectId(habitIdHex)
-
-const now = new Date()
-const times = events
-  .map((e) => ({
-    ts: new Date(e.occurredAt?.$date ?? e.occurredAt),
-    loggedAt: e.createdAt ? new Date(e.createdAt.$date ?? e.createdAt) : now,
-  }))
-  .filter((t) => !Number.isNaN(t.ts.getTime()) && t.ts <= now)
-console.log('events in file:', events.length, '| valid:', times.length)
-
-const existing = await db
-  .collection('resets')
-  .find({ habitId })
-  .project({ timestamp: 1 })
-  .toArray()
-const existingKeys = new Set(existing.map((r) => r.timestamp.getTime()))
-const seen = new Set()
-const docs = []
-for (const t of times) {
-  const k = t.ts.getTime()
-  if (existingKeys.has(k) || seen.has(k)) continue
-  seen.add(k)
-  docs.push({
-    habitId,
-    userId,
-    timestamp: t.ts,
-    trigger: null,
-    note: null,
-    createdAt: t.loggedAt,
-  })
-}
-console.log(
-  'existing resets:',
-  existing.length,
-  '| to insert:',
-  docs.length,
-  '| dupes skipped:',
-  times.length - docs.length,
-)
-
-if (docs.length) await db.collection('resets').insertMany(docs)
-
-// Backdate the habit start so imported resets fall inside its lifetime.
-const earliest = new Date(Math.min(...times.map((t) => t.ts.getTime())))
-const habit = await db.collection('habits').findOne({ _id: habitId })
-if (habit.startDate > earliest) {
-  await db
-    .collection('habits')
-    .updateOne({ _id: habitId }, { $set: { startDate: earliest } })
-  console.log(
-    'startDate backdated:',
-    habit.startDate.toISOString(),
-    '->',
-    earliest.toISOString(),
+try {
+  const inserted = await client.withSession((session) =>
+    session.withTransaction(async () => {
+      // Same parent write as application mutations: imports cannot race edits/deletion.
+      const habit = await db
+        .collection('habits')
+        .findOneAndUpdate(
+          { _id: habitId, userId },
+          { $inc: { revision: 1 } },
+          { session, returnDocument: 'after' },
+        )
+      if (!habit)
+        throw new Error('No habit belongs to that habit/user combination.')
+      const existing = await db
+        .collection('resets')
+        .find({ habitId, userId }, { session, projection: { timestamp: 1 } })
+        .toArray()
+      const known = new Set(existing.map((r) => r.timestamp.getTime()))
+      const docs = Array.from(times.values())
+        .filter((t) => !known.has(t.timestamp.getTime()))
+        .map((t) => ({
+          ...t,
+          habitId,
+          userId,
+          trigger: null,
+          note: null,
+        }))
+      let earliest = habit.startDate
+      for (const { timestamp } of times.values())
+        if (timestamp < earliest) earliest = timestamp
+      if (earliest < habit.startDate) {
+        await db
+          .collection('habits')
+          .updateOne(
+            { _id: habitId, userId },
+            { $set: { startDate: earliest } },
+            { session },
+          )
+      }
+      if (docs.length)
+        await db.collection('resets').insertMany(docs, { session })
+      return docs.length
+    }),
   )
+  console.log(
+    `Events: ${events.length}; valid unique timestamps: ${times.size}; inserted: ${inserted}`,
+  )
+} finally {
+  await client.close()
 }
-
-const total = await db.collection('resets').countDocuments({ habitId })
-const first = await db.collection('resets').find({ habitId }).sort({ timestamp: 1 }).limit(1).toArray()
-const last = await db.collection('resets').find({ habitId }).sort({ timestamp: -1 }).limit(1).toArray()
-console.log('total resets now:', total)
-console.log('earliest:', first[0].timestamp.toISOString(), '| latest:', last[0].timestamp.toISOString())
-await client.close()

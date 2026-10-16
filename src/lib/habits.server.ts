@@ -1,6 +1,9 @@
 import { ObjectId } from 'mongodb'
-import { collections } from './db.server'
+import type { ClientSession } from 'mongodb'
+import { collections, ensureIndexes, getMongoClient } from './db.server'
 import type { HabitDoc, ResetDoc } from './db.server'
+import { UserFacingError } from './errors'
+import type { HabitFormInput, LogResetInput } from './schemas'
 import type { HabitDetail, HabitSummary, ResetEntry } from './types'
 
 /** Small grace window so "now" resets aren't rejected by client/server clock skew. */
@@ -67,26 +70,23 @@ export async function listHabitsForUser(
   })
 }
 
-export interface CreateHabitInput {
-  name: string
-  icon: string
-  color: string
-  startDate: string
-  costPerUnit: number | null
-  unitsPerDay: number | null
+function parseStartDate(value: string): Date {
+  const startDate = new Date(value)
+  if (Number.isNaN(startDate.getTime())) {
+    throw new UserFacingError('That start date doesn’t look right — try again.')
+  }
+  if (startDate.getTime() > Date.now() + CLOCK_SKEW_MS) {
+    throw new UserFacingError('The start date can’t be in the future.')
+  }
+  return startDate
 }
 
 export async function createHabitForUser(
   userId: string,
-  input: CreateHabitInput,
+  input: HabitFormInput,
 ): Promise<HabitSummary> {
-  const startDate = new Date(input.startDate)
-  if (Number.isNaN(startDate.getTime())) {
-    throw new Error('That start date doesn’t look right — try again.')
-  }
-  if (startDate.getTime() > Date.now() + CLOCK_SKEW_MS) {
-    throw new Error('The start date can’t be in the future.')
-  }
+  const startDate = parseStartDate(input.startDate)
+  await ensureIndexes()
   const { habits } = collections()
   const doc: HabitDoc = {
     _id: new ObjectId(),
@@ -113,6 +113,73 @@ async function findOwnedHabit(
   return habits.findOne({ _id, userId })
 }
 
+/**
+ * All history mutations write the parent first. Snapshot reads alone don't
+ * conflict with concurrent inserts into another collection; this write makes
+ * Mongo retry competing edits/logs/deletes against the latest committed state.
+ */
+async function mutateHabit<T>(
+  userId: string,
+  habitId: string,
+  action: (habit: HabitDoc, session: ClientSession) => Promise<T>,
+): Promise<T> {
+  const _id = toObjectId(habitId)
+  if (!_id) throw new UserFacingError('We couldn’t find that habit.')
+  await ensureIndexes()
+  const { habits } = collections()
+  return getMongoClient().withSession((session) =>
+    session.withTransaction(async () => {
+      const habit = await habits.findOneAndUpdate(
+        { _id, userId },
+        { $inc: { revision: 1 } },
+        { session, returnDocument: 'after' },
+      )
+      if (!habit) throw new UserFacingError('We couldn’t find that habit.')
+      return action(habit, session)
+    }),
+  )
+}
+
+export async function updateHabitForUser(
+  userId: string,
+  habitId: string,
+  patch: HabitFormInput,
+): Promise<void> {
+  const startDate = parseStartDate(patch.startDate)
+  return mutateHabit(userId, habitId, async (habit, session) => {
+    const { habits, resets } = collections()
+    // Moving the start later than an existing reset would put that reset
+    // before the habit began - the same rule logging enforces, from the other side.
+    const earliest = await resets
+      .find({ habitId: habit._id, userId }, { session })
+      .sort({ timestamp: 1 })
+      .limit(1)
+      .toArray()
+    if (
+      earliest.length > 0 &&
+      startDate.getTime() > earliest[0].timestamp.getTime()
+    ) {
+      throw new UserFacingError(
+        'The start date has to be on or before your first logged reset.',
+      )
+    }
+    await habits.updateOne(
+      { _id: habit._id, userId },
+      {
+        $set: {
+          name: patch.name,
+          icon: patch.icon,
+          color: patch.color,
+          startDate,
+          costPerUnit: patch.costPerUnit,
+          unitsPerDay: patch.unitsPerDay,
+        },
+      },
+      { session },
+    )
+  })
+}
+
 export async function getHabitDetailForUser(
   userId: string,
   habitId: string,
@@ -134,53 +201,51 @@ export async function getHabitDetailForUser(
   }
 }
 
-export interface LogResetInput {
-  habitId: string
-  timestamp: string
-  trigger: string | null
-  note: string | null
-}
-
 export async function logResetForUser(
   userId: string,
   input: LogResetInput,
 ): Promise<ResetEntry> {
-  const habit = await findOwnedHabit(userId, input.habitId)
-  if (!habit) {
-    throw new Error('We couldn’t find that habit.')
-  }
   const timestamp = new Date(input.timestamp)
   if (Number.isNaN(timestamp.getTime())) {
-    throw new Error('That date and time doesn’t look right — try again.')
-  }
-  if (timestamp.getTime() > Date.now() + CLOCK_SKEW_MS) {
-    throw new Error('A reset can’t be in the future.')
-  }
-  if (timestamp.getTime() < habit.startDate.getTime()) {
-    throw new Error('That’s before you started tracking this habit.')
-  }
-  const { resets } = collections()
-  const latest = await resets
-    .find({ habitId: habit._id, userId })
-    .sort({ timestamp: -1 })
-    .limit(1)
-    .toArray()
-  if (latest.length > 0 && timestamp.getTime() <= latest[0].timestamp.getTime()) {
-    throw new Error(
-      'That’s earlier than a reset you already logged. Pick a time after your most recent reset.',
+    throw new UserFacingError(
+      'That date and time doesn’t look right — try again.',
     )
   }
-  const doc: ResetDoc = {
-    _id: new ObjectId(),
-    habitId: habit._id,
-    userId,
-    timestamp,
-    trigger: input.trigger,
-    note: input.note,
-    createdAt: new Date(),
+  if (timestamp.getTime() > Date.now() + CLOCK_SKEW_MS) {
+    throw new UserFacingError('A reset can’t be in the future.')
   }
-  await resets.insertOne(doc)
-  return resetToEntry(doc)
+  return mutateHabit(userId, input.habitId, async (habit, session) => {
+    if (timestamp.getTime() < habit.startDate.getTime()) {
+      throw new UserFacingError(
+        'That’s before you started tracking this habit.',
+      )
+    }
+    const { resets } = collections()
+    const latest = await resets
+      .find({ habitId: habit._id, userId }, { session })
+      .sort({ timestamp: -1 })
+      .limit(1)
+      .toArray()
+    if (
+      latest.length > 0 &&
+      timestamp.getTime() <= latest[0].timestamp.getTime()
+    ) {
+      throw new UserFacingError(
+        'That’s earlier than a reset you already logged. Pick a time after your most recent reset.',
+      )
+    }
+    const doc: ResetDoc = {
+      _id: new ObjectId(),
+      habitId: habit._id,
+      userId,
+      timestamp,
+      trigger: input.trigger,
+      note: input.note,
+      createdAt: new Date(),
+    }
+    await resets.insertOne(doc, { session })
+    return resetToEntry(doc)
+  })
 }
 
 export async function deleteResetForUser(
@@ -188,28 +253,31 @@ export async function deleteResetForUser(
   resetId: string,
 ): Promise<void> {
   const _id = toObjectId(resetId)
-  if (!_id) throw new Error('We couldn’t find that reset.')
+  if (!_id) throw new UserFacingError('We couldn’t find that reset.')
   const { resets } = collections()
-  const result = await resets.deleteOne({ _id, userId })
-  if (result.deletedCount === 0) {
-    throw new Error('We couldn’t find that reset.')
-  }
+  const reset = await resets.findOne({ _id, userId })
+  if (!reset) throw new UserFacingError('We couldn’t find that reset.')
+  await mutateHabit(
+    userId,
+    reset.habitId.toHexString(),
+    async (habit, session) => {
+      const result = await resets.deleteOne(
+        { _id, habitId: habit._id, userId },
+        { session },
+      )
+      if (result.deletedCount === 0)
+        throw new UserFacingError('We couldn’t find that reset.')
+    },
+  )
 }
 
 export async function deleteHabitForUser(
   userId: string,
   habitId: string,
 ): Promise<void> {
-  const habit = await findOwnedHabit(userId, habitId)
-  if (!habit) throw new Error('We couldn’t find that habit.')
-  const { habits, resets } = collections()
-  // Delete the habit first: if the reset cleanup below fails, the leftovers
-  // are unreachable (all queries go through the habit) instead of the habit
-  // surviving with its history destroyed. No transactions — standalone Mongo
-  // (e.g. the dev memory server) doesn't support them.
-  const result = await habits.deleteOne({ _id: habit._id, userId })
-  if (result.deletedCount === 0) {
-    throw new Error('We couldn’t find that habit.')
-  }
-  await resets.deleteMany({ habitId: habit._id, userId })
+  await mutateHabit(userId, habitId, async (habit, session) => {
+    const { habits, resets } = collections()
+    await habits.deleteOne({ _id: habit._id, userId }, { session })
+    await resets.deleteMany({ habitId: habit._id, userId }, { session })
+  })
 }

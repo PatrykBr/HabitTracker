@@ -9,29 +9,9 @@ import {
   getHabitDetailForUser,
   listHabitsForUser,
   logResetForUser,
+  updateHabitForUser,
 } from './habits.server'
-
-const createHabitSchema = z
-  .object({
-    name: z.string().trim().min(1, 'Give your habit a name.').max(60),
-    icon: z.string().min(1).max(8),
-    color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-    startDate: z.string(),
-    costPerUnit: z.number().positive().max(1_000_000).nullable(),
-    unitsPerDay: z.number().positive().max(10_000).nullable(),
-  })
-  // Savings stats need both numbers — half-filled settings would silently do nothing.
-  .refine((d) => (d.costPerUnit === null) === (d.unitsPerDay === null), {
-    message:
-      'To track savings, fill in both cost per unit and units per day — or leave both empty.',
-  })
-
-const logResetSchema = z.object({
-  habitId: z.string(),
-  timestamp: z.string(),
-  trigger: z.string().trim().max(32).nullable(),
-  note: z.string().trim().max(500).nullable(),
-})
+import { habitFormSchema, logResetSchema, updateHabitSchema } from './schemas'
 
 export const listHabits = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -41,14 +21,22 @@ export const listHabits = createServerFn({ method: 'GET' }).handler(
 )
 
 export const createHabit = createServerFn({ method: 'POST' })
-  .inputValidator(createHabitSchema)
+  .validator(habitFormSchema)
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     return createHabitForUser(userId, data)
   })
 
+export const updateHabit = createServerFn({ method: 'POST' })
+  .validator(updateHabitSchema)
+  .handler(async ({ data }) => {
+    const userId = await requireUserId()
+    await updateHabitForUser(userId, data.habitId, data.patch)
+    return { ok: true }
+  })
+
 export const getHabitDetail = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ habitId: z.string() }))
+  .validator(z.object({ habitId: z.string() }))
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     const detail = await getHabitDetailForUser(userId, data.habitId)
@@ -57,19 +45,14 @@ export const getHabitDetail = createServerFn({ method: 'GET' })
   })
 
 export const logReset = createServerFn({ method: 'POST' })
-  .inputValidator(logResetSchema)
+  .validator(logResetSchema)
   .handler(async ({ data }) => {
     const userId = await requireUserId()
-    return logResetForUser(userId, {
-      habitId: data.habitId,
-      timestamp: data.timestamp,
-      trigger: data.trigger && data.trigger.length > 0 ? data.trigger : null,
-      note: data.note && data.note.length > 0 ? data.note : null,
-    })
+    return logResetForUser(userId, data)
   })
 
 export const deleteReset = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ resetId: z.string() }))
+  .validator(z.object({ resetId: z.string() }))
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     await deleteResetForUser(userId, data.resetId)
@@ -77,7 +60,7 @@ export const deleteReset = createServerFn({ method: 'POST' })
   })
 
 export const deleteHabit = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ habitId: z.string() }))
+  .validator(z.object({ habitId: z.string() }))
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     await deleteHabitForUser(userId, data.habitId)
