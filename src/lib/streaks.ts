@@ -1,3 +1,5 @@
+import type { ResetEntry } from './types'
+
 /**
  * Pure streak math. Timestamps are stored in UTC; everything that involves
  * "which day was that" uses local Date methods so days match the user's
@@ -16,25 +18,40 @@ export interface Segment {
   ongoing: boolean
 }
 
-/** Chronological streak segments: habit start → reset 1 → … → now. */
-export function buildSegments(
+/** Static history derived once per load; the live counter adds only its own duration. */
+export function summarizeHistory(
   startDate: Date,
-  resetTimesAsc: Date[],
-  now: Date,
-): Segment[] {
-  const bounds = [startDate, ...resetTimesAsc, now]
-  const segments: Segment[] = []
-  for (let i = 0; i < bounds.length - 1; i++) {
-    const start = bounds[i]
-    const end = bounds[i + 1]
-    segments.push({
+  resetsNewestFirst: ResetEntry[],
+) {
+  const resetDatesAsc: Date[] = []
+  const brokenByResetId = new Map<string, number>()
+  const completedSegments: Segment[] = []
+  let completedMax = 0
+  let completedTotal = 0
+  let start = startDate
+  for (let i = resetsNewestFirst.length - 1; i >= 0; i--) {
+    const reset = resetsNewestFirst[i]
+    const end = new Date(reset.timestamp)
+    const ms = Math.max(0, end.getTime() - start.getTime())
+    resetDatesAsc.push(end)
+    brokenByResetId.set(reset.id, ms)
+    completedSegments.push({
       start,
       end,
-      ms: Math.max(0, end.getTime() - start.getTime()),
-      ongoing: i === bounds.length - 2,
+      ms,
+      ongoing: false,
     })
+    completedMax = Math.max(completedMax, ms)
+    completedTotal += ms
+    start = end
   }
-  return segments
+  return {
+    resetDatesAsc,
+    brokenByResetId,
+    completedSegments,
+    completedMax,
+    completedTotal,
+  }
 }
 
 export function currentStreakStart(
@@ -72,18 +89,7 @@ export function milestoneCrossed(
   prevMs: number,
   currentMs: number,
 ): Milestone | null {
-  return (
-    MILESTONES.find((m) => prevMs < m.ms && currentMs >= m.ms) ?? null
-  )
-}
-
-export function longestStreakMs(segments: Segment[]): number {
-  return segments.reduce((max, s) => Math.max(max, s.ms), 0)
-}
-
-export function averageStreakMs(segments: Segment[]): number {
-  if (segments.length === 0) return 0
-  return segments.reduce((sum, s) => sum + s.ms, 0) / segments.length
+  return MILESTONES.find((m) => prevMs < m.ms && currentMs >= m.ms) ?? null
 }
 
 /** Counts per local day-of-week, index 0 = Sunday. */

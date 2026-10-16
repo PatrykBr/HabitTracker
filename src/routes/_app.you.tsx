@@ -1,110 +1,88 @@
-import { useEffect, useState } from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import ConfirmSheet from '../components/ConfirmSheet'
+import NavBar from '../components/NavBar'
+import SegmentedControl from '../components/SegmentedControl'
 import { authClient } from '../lib/auth-client'
 import { formatDate } from '../lib/format'
+import { useAsyncAction } from '../lib/hooks'
+import { readStoredTheme, setTheme } from '../lib/theme'
+import type { ThemeMode } from '../lib/theme'
 
 export const Route = createFileRoute('/_app/you')({
+  // Reads localStorage and formats a date in the visitor's locale - client-only.
+  ssr: 'data-only',
+  pendingComponent: YouPending,
   component: YouPage,
 })
 
-type ThemeMode = 'auto' | 'light' | 'dark'
-
-function applyTheme(mode: ThemeMode) {
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  const resolved = mode === 'auto' ? (prefersDark ? 'dark' : 'light') : mode
-  const root = document.documentElement
-  root.classList.remove('light', 'dark')
-  root.classList.add(resolved)
-  if (mode === 'auto') root.removeAttribute('data-theme')
-  else root.setAttribute('data-theme', mode)
-  root.style.colorScheme = resolved
-  localStorage.setItem('theme', mode)
+function YouPending() {
+  return (
+    <>
+      <NavBar title="You" />
+      <div className="cell h-24 animate-pulse opacity-60" />
+      <div className="cell mt-3 h-32 animate-pulse opacity-60" />
+    </>
+  )
 }
+
+const THEME_OPTIONS: ReadonlyArray<[ThemeMode, string]> = [
+  ['auto', 'Auto'],
+  ['light', 'Light'],
+  ['dark', 'Dark'],
+]
 
 function YouPage() {
   const { user } = Route.useRouteContext()
-  const router = useRouter()
-  const [theme, setTheme] = useState<ThemeMode>('auto')
+  // Safe to read storage in the initializer: this route never renders on the server.
+  const [theme, setThemeState] = useState<ThemeMode>(readStoredTheme)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [signOutError, setSignOutError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light' || stored === 'dark' || stored === 'auto') {
-      setTheme(stored)
-    }
-  }, [])
+  const signOut = useAsyncAction(async () => {
+    const result = await authClient.signOut()
+    if (result.error) throw new Error(result.error.message)
+    // Discard private loader data and pending preloads for the signed-out user.
+    window.location.replace('/login')
+  }, 'Couldn’t sign out. Check your connection and try again.')
 
-  const signOut = async () => {
-    setBusy(true)
-    setSignOutError(null)
-    try {
-      await authClient.signOut()
-      await router.invalidate()
-      await router.navigate({ to: '/login' })
-    } catch {
-      setSignOutError("Couldn't sign out. Check your connection and try again.")
-    } finally {
-      setBusy(false)
-    }
+  const chooseTheme = (mode: ThemeMode) => {
+    setThemeState(mode)
+    setTheme(mode)
   }
 
   return (
-    <div className="pt-6">
-      <h1 className="anim-rise-in text-[2rem] font-extrabold tracking-tight">
-        You
-      </h1>
+    <>
+      <NavBar title="You" />
 
-      <div className="anim-rise-in card mt-4 flex items-center gap-4 p-5">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent-soft)] text-xl font-bold text-[var(--accent)]">
+      <div className="anim-rise-in cell flex items-center gap-4 p-5">
+        <span className="profile-mark t-rounded flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-semibold">
           {user.username.slice(0, 1).toUpperCase()}
         </span>
-        <span>
-          <span className="block text-lg font-bold tracking-tight">
+        <span className="min-w-0">
+          <span className="block truncate text-lg font-bold tracking-tight">
             {user.username}
           </span>
-          <span className="block text-[0.8125rem] text-[var(--text-3)]">
+          <span className="block text-[0.8125rem] text-[var(--text-2)]">
             Taking it back since {formatDate(new Date(user.createdAt))}
           </span>
         </span>
       </div>
 
-      <div className="anim-rise-in card mt-3 p-5" style={{ animationDelay: '60ms' }}>
-        <h2 className="text-[0.8125rem] font-semibold tracking-wide text-[var(--text-3)] uppercase">
-          Appearance
-        </h2>
-        <div className="mt-3 flex rounded-2xl bg-[var(--field-bg)] p-1">
-          {(
-            [
-              ['auto', 'Auto'],
-              ['light', 'Light'],
-              ['dark', 'Dark'],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={theme === value}
-              onClick={() => {
-                setTheme(value)
-                applyTheme(value)
-              }}
-              className="flex-1 rounded-xl py-2 text-sm font-semibold transition-colors"
-              style={
-                theme === value
-                  ? { background: 'var(--card)', color: 'var(--text)' }
-                  : { color: 'var(--text-3)' }
-              }
-            >
-              {label}
-            </button>
-          ))}
+      <div
+        className="anim-rise-in cell mt-3 p-5"
+        style={{ animationDelay: '60ms' }}
+      >
+        <h2 className="t-headline m-0">Appearance</h2>
+        <div className="mt-3">
+          <SegmentedControl
+            aria-label="Appearance"
+            options={THEME_OPTIONS}
+            value={theme}
+            onChange={chooseTheme}
+          />
         </div>
-        <p className="mt-2 text-[0.75rem] text-[var(--text-3)]">
-          Auto follows your system setting. Dark is where Reset feels most at
-          home.
+        <p className="mt-2 mb-0 text-[0.75rem] text-[var(--text-2)]">
+          Auto follows your device’s light or dark appearance.
         </p>
       </div>
 
@@ -112,7 +90,7 @@ function YouPage() {
         <button
           type="button"
           onClick={() => setConfirmSignOut(true)}
-          className="card press w-full p-4 text-center text-[0.9375rem] font-semibold text-[var(--danger)]"
+          className="cell row-press w-full p-4 text-center text-[0.9375rem] font-semibold text-[var(--danger-text)]"
         >
           Sign out
         </button>
@@ -126,15 +104,15 @@ function YouPage() {
         open={confirmSignOut}
         onClose={() => {
           setConfirmSignOut(false)
-          setSignOutError(null)
+          signOut.clearError()
         }}
-        onConfirm={signOut}
+        onConfirm={() => void signOut.run()}
         title="Sign out?"
         message="Your streaks keep counting while you’re away. Come back any time."
         confirmLabel="Sign out"
-        busy={busy}
-        error={signOutError}
+        busy={signOut.busy}
+        error={signOut.error}
       />
-    </div>
+    </>
   )
 }

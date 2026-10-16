@@ -1,69 +1,132 @@
-import { Link } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from '@tanstack/react-router'
+import { IconHouse, IconPerson, IconPlus } from './Icons'
 
-function HouseIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
-    </svg>
-  )
+interface TabBarProps {
+  /** Show the detached add-habit accessory. */
+  showAdd: boolean
+  onAdd: () => void
 }
 
-function PersonIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c1.5-3.5 4.5-5.5 8-5.5s6.5 2 8 5.5" />
-    </svg>
-  )
-}
+const TABS = [
+  { to: '/', label: 'Habits', Icon: IconHouse },
+  { to: '/you', label: 'You', Icon: IconPerson },
+] as const
 
-const tabClass =
-  'press flex flex-1 flex-col items-center gap-1 rounded-2xl py-2 text-[0.6875rem] font-semibold text-[var(--text-3)] no-underline'
-const activeTabClass = 'text-[var(--accent)]'
+const TAB_W = 'clamp(84px, calc((100vw - 160px) / 2), 112px)'
+const TAB_W_MIN = 56
+const TAB_H = 54
 
-/** Floating liquid-glass bottom tab bar — the primary navigation. */
-export default function TabBar() {
+/**
+ * Floating Liquid Glass tab bar. A capsule with the tabs, a sliding
+ * selection pill, and a detached circular accessory button. Minimizes to the
+ * selected tab's icon while scrolling down and expands on scroll up
+ * (disabled under reduced motion).
+ */
+export default function TabBar({ showAdd, onAdd }: TabBarProps) {
+  const { pathname } = useLocation()
+  const activeIndex = pathname.startsWith('/you') ? 1 : 0
+  const [minimized, setMinimized] = useState(false)
+
+  useEffect(() => {
+    setMinimized(false)
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let lastY = window.scrollY
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = window.requestAnimationFrame(() => {
+        raf = 0
+        const y = window.scrollY
+        const maxY =
+          document.documentElement.scrollHeight - window.innerHeight
+        const dy = y - lastY
+        lastY = y
+        if (y <= 24 || y >= maxY - 24) setMinimized(false)
+        else if (dy > 4) setMinimized(true)
+        else if (dy < -4) setMinimized(false)
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) window.cancelAnimationFrame(raf)
+    }
+  }, [pathname])
+
+  const tabWidth = minimized ? TAB_W_MIN : TAB_W
+  const transition =
+    'width 0.45s var(--spring), opacity 0.2s var(--ease-out), transform 0.45s var(--spring)'
+
   return (
-    <nav
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 safe-x"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
-    >
-      <div className="glass pointer-events-auto flex w-full max-w-xs gap-1 rounded-[1.5rem] p-1.5">
-        <Link
-          to="/"
-          className={tabClass}
-          activeProps={{ className: `${tabClass} ${activeTabClass}` }}
-          activeOptions={{ exact: true }}
+    <>
+      <div className="scroll-edge scroll-edge-bottom z-30" aria-hidden />
+      <nav
+        aria-label="Main"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-center gap-[12px] px-[16px] safe-x"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
+      >
+        <div
+          className="glass pointer-events-auto relative flex shrink-0 rounded-full p-[6px]"
+          style={{ transition }}
         >
-          <HouseIcon className="h-6 w-6" />
-          Habits
-        </Link>
-        <Link
-          to="/you"
-          className={tabClass}
-          activeProps={{ className: `${tabClass} ${activeTabClass}` }}
-        >
-          <PersonIcon className="h-6 w-6" />
-          You
-        </Link>
-      </div>
-    </nav>
+          {/* Selection pill slides between tabs */}
+          <span
+            aria-hidden
+            className="tab-selection absolute top-[6px] bottom-[6px] left-[6px] rounded-full"
+            style={{
+              width: tabWidth,
+              transform: `translateX(${minimized || activeIndex === 0 ? '0px' : TAB_W})`,
+              transition,
+            }}
+          />
+          {TABS.map(({ to, label, Icon }, i) => {
+            const active = i === activeIndex
+            const hidden = minimized && !active
+            return (
+              <Link
+                key={to}
+                to={to}
+                aria-current={active ? 'page' : undefined}
+                aria-hidden={hidden || undefined}
+                tabIndex={hidden ? -1 : undefined}
+                className="relative flex flex-col items-center justify-center overflow-hidden rounded-full no-underline"
+                style={{
+                  width: hidden ? 0 : tabWidth,
+                  height: minimized ? TAB_H : `max(${TAB_H}px, 3.125rem)`,
+                  opacity: hidden ? 0 : 1,
+                  color: active ? 'var(--accent-text)' : 'var(--text-2)',
+                  transition,
+                }}
+              >
+                <Icon filled={active} className="h-6 w-6 shrink-0" />
+                <span
+                  className="t-caption2 mt-0.5 font-semibold whitespace-nowrap"
+                  style={{
+                    height: minimized ? 0 : '1.18em',
+                    opacity: minimized ? 0 : 1,
+                    overflow: 'hidden',
+                    transition: 'height 0.3s var(--ease-out), opacity 0.15s',
+                  }}
+                >
+                  {label}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+
+        {showAdd ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            aria-label="Add a habit"
+            className="glass glass-press anim-pop-in pointer-events-auto flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full text-[var(--accent-text)]"
+          >
+            <IconPlus className="h-7 w-7" />
+          </button>
+        ) : null}
+      </nav>
+    </>
   )
 }

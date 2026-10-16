@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { useServerFn } from '@tanstack/react-start'
 import Celebration from '../components/Celebration'
 import ConfirmSheet from '../components/ConfirmSheet'
+import HabitSheet from '../components/HabitSheet'
 import JourneyTimeline from '../components/JourneyTimeline'
 import MilestoneStrip from '../components/MilestoneStrip'
+import NavBar from '../components/NavBar'
+import { IconChevronLeft, IconReset } from '../components/Icons'
 import MonthCalendar from '../components/MonthCalendar'
 import PatternsCard from '../components/PatternsCard'
 import ResetSheet from '../components/ResetSheet'
@@ -11,27 +15,49 @@ import Sheet from '../components/Sheet'
 import StreakBars from '../components/StreakBars'
 import StreakHero from '../components/StreakHero'
 import TrendChart from '../components/TrendChart'
-import { deleteHabit, deleteReset, getHabitDetail } from '../lib/habits.functions'
-import { haptic, useNow, useOnline } from '../lib/hooks'
-import { DAY_MS, currentStreakStart, milestoneCrossed } from '../lib/streaks'
+import { userMessage } from '../lib/errors'
+import { habitColor, labelColor, tint } from '../lib/color'
+import {
+  deleteHabit,
+  deleteReset,
+  getHabitDetail,
+} from '../lib/habits.functions'
+import { haptic, useAsyncAction, useNow, useOnline } from '../lib/hooks'
+import {
+  DAY_MS,
+  currentStreakStart,
+  milestoneCrossed,
+  summarizeHistory,
+  localDayKey,
+} from '../lib/streaks'
 import type { Segment } from '../lib/streaks'
 import { formatDateTime, formatMoney, formatUnits } from '../lib/format'
-import type { ResetEntry } from '../lib/types'
+import type { HabitDetail, ResetEntry } from '../lib/types'
 
 export const Route = createFileRoute('/_app/habits/$habitId')({
+  // Live counter, calendar and date formatting depend on the visitor's clock,
+  // timezone and locale - render client-side only (loader still runs on the server).
+  ssr: 'data-only',
   loader: ({ params }) => getHabitDetail({ data: { habitId: params.habitId } }),
   pendingComponent: DetailPending,
   errorComponent: DetailError,
   notFoundComponent: DetailNotFound,
-  component: HabitDetailPage,
+  component: HabitDetailRoute,
 })
+
+function HabitDetailRoute() {
+  const { habitId } = Route.useParams()
+  const habit = Route.useLoaderData()
+  if (!habit) return <DetailNotFound />
+  return <HabitDetailPage key={habitId} habit={habit} />
+}
 
 function DetailPending() {
   return (
     <div className="pt-6">
-      <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--field-bg)]" />
-      <div className="mx-auto mt-10 h-40 w-56 animate-pulse rounded-3xl bg-[var(--field-bg)]" />
-      <div className="card mt-10 h-28 animate-pulse opacity-60" />
+      <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--fill-3)]" />
+      <div className="mx-auto mt-10 h-40 w-56 animate-pulse rounded-3xl bg-[var(--fill-3)]" />
+      <div className="cell mt-10 h-28 animate-pulse opacity-60" />
     </div>
   )
 }
@@ -47,7 +73,7 @@ function DetailNotFound() {
       </p>
       <Link
         to="/"
-        className="press mt-1 rounded-2xl bg-[var(--accent)] px-6 py-3 text-[0.9375rem] font-bold text-white no-underline"
+        className="btn btn-tinted mt-1 w-auto no-underline"
       >
         Back to habits
       </Link>
@@ -55,19 +81,22 @@ function DetailNotFound() {
   )
 }
 
-function DetailError({ error }: { error: Error }) {
+function DetailError({ error }: { error: unknown }) {
   const router = useRouter()
   return (
     <div className="flex flex-col items-center gap-3 pt-24 text-center">
       <div className="text-4xl">🌧️</div>
       <h1 className="text-lg font-bold">We couldn’t load this habit</h1>
       <p className="max-w-xs text-[0.875rem] text-[var(--text-2)]">
-        {error.message || 'Something went wrong on our side.'}
+        {userMessage(
+          error,
+          'Something went wrong on our side — try again in a moment.',
+        )}
       </p>
       <button
         type="button"
         onClick={() => router.invalidate()}
-        className="press mt-1 rounded-2xl bg-[var(--accent)] px-6 py-3 text-[0.9375rem] font-bold text-white"
+        className="btn btn-tinted mt-1 w-auto"
       >
         Try again
       </button>
@@ -78,20 +107,13 @@ function DetailError({ error }: { error: Error }) {
 function SectionCard({
   title,
   children,
-  delay = 0,
 }: {
   title: string
   children: React.ReactNode
-  delay?: number
 }) {
   return (
-    <section
-      className="anim-rise-in card p-4"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-[var(--text-3)] uppercase">
-        {title}
-      </h2>
+    <section className="cell p-4">
+      <h2 className="t-headline mt-0 mb-3">{title}</h2>
       {children}
     </section>
   )
@@ -107,86 +129,65 @@ function StatTile({
   color?: string
 }) {
   return (
-    <div className="rounded-2xl bg-[var(--field-bg)] px-3.5 py-3">
+    <div className="rounded-2xl bg-[var(--fill-4)] px-3.5 py-3">
       <div
         className="tabular text-xl font-extrabold tracking-tight"
-        style={color ? { color } : undefined}
+        style={color ? { color: labelColor(color) } : undefined}
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[0.6875rem] font-medium text-[var(--text-3)]">
+      <div className="mt-0.5 text-[0.6875rem] font-medium text-[var(--text-2)]">
         {label}
       </div>
     </div>
   )
 }
 
-function HabitDetailPage() {
-  const habit = Route.useLoaderData()
+/** What the current streak has avoided so far, plus the habit's usual weekly spend. */
+function savingsFor(
+  costPerUnit: number,
+  unitsPerDay: number,
+  streakMs: number,
+) {
+  const unitsAvoided = (streakMs / DAY_MS) * unitsPerDay
+  return {
+    unitsAvoided,
+    moneySaved: unitsAvoided * costPerUnit,
+    weeklySpend: costPerUnit * unitsPerDay * 7,
+  }
+}
+
+function HabitDetailPage({ habit }: { habit: HabitDetail }) {
+  const color = habitColor(habit.color)
   const router = useRouter()
   const online = useOnline()
   const now = useNow(1000)
 
+  const deleteResetFn = useServerFn(deleteReset)
+  const deleteHabitFn = useServerFn(deleteHabit)
+
   const [resetOpen, setResetOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [celebration, setCelebration] = useState<string | null>(null)
+  // The day's entries stay around while the sheet animates closed, so its
+  // title doesn't blank out mid-animation; `dayDetailOpen` drives visibility.
   const [dayDetail, setDayDetail] = useState<{
     label: string
     entries: ResetEntry[]
   } | null>(null)
+  const [dayDetailOpen, setDayDetailOpen] = useState(false)
   const [confirmDeleteHabit, setConfirmDeleteHabit] = useState(false)
   const [resetToDelete, setResetToDelete] = useState<ResetEntry | null>(null)
-  const [deleteBusy, setDeleteBusy] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const startDate = useMemo(() => new Date(habit.startDate), [habit.startDate])
 
   // Everything derivable from the (per-load static) reset history is computed
   // once here — the component re-renders every second for the live counter,
   // and this must not be O(resets) per tick.
-  const history = useMemo(() => {
-    const resetDatesAsc = habit.resets
-      .map((r) => new Date(r.timestamp))
-      .reverse()
-
-    // Streak each reset ended, keyed by reset id (resets are newest-first).
-    const brokenByResetId = new Map<string, number>()
-    habit.resets.forEach((r, i) => {
-      const ascIndex = habit.resets.length - 1 - i
-      const prevBoundary =
-        ascIndex > 0 ? resetDatesAsc[ascIndex - 1] : startDate
-      brokenByResetId.set(
-        r.id,
-        Math.max(
-          0,
-          new Date(r.timestamp).getTime() - prevBoundary.getTime(),
-        ),
-      )
-    })
-
-    // Completed streak segments: habit start → reset 1 → … → latest reset.
-    const completedSegments: Segment[] = resetDatesAsc.map((end, i) => {
-      const start = i > 0 ? resetDatesAsc[i - 1] : startDate
-      return {
-        start,
-        end,
-        ms: Math.max(0, end.getTime() - start.getTime()),
-        ongoing: false,
-      }
-    })
-    const completedMax = completedSegments.reduce(
-      (max, s) => Math.max(max, s.ms),
-      0,
-    )
-    const completedTotal = completedSegments.reduce((sum, s) => sum + s.ms, 0)
-
-    return {
-      resetDatesAsc,
-      brokenByResetId,
-      completedSegments,
-      completedMax,
-      completedTotal,
-    }
-  }, [habit.resets, startDate])
+  const history = useMemo(
+    () => summarizeHistory(startDate, habit.resets),
+    [habit.resets, startDate],
+  )
 
   const lastResetAt =
     habit.lastResetAt !== null ? new Date(habit.lastResetAt) : null
@@ -194,201 +195,178 @@ function HabitDetailPage() {
   const since = currentStreakStart(startDate, lastResetAt)
   const streakMs = Math.max(0, now.getTime() - since.getTime())
   // Only the ongoing segment depends on "now" — O(1) per tick.
-  const segments: Segment[] = [
-    ...history.completedSegments,
-    { start: since, end: now, ms: streakMs, ongoing: true },
-  ]
+  const ongoing: Segment = {
+    start: since,
+    end: now,
+    ms: streakMs,
+    ongoing: true,
+  }
   const longest = Math.max(history.completedMax, streakMs)
-  const average = (history.completedTotal + streakMs) / segments.length
+  const average =
+    (history.completedTotal + streakMs) / (habit.resets.length + 1)
 
   // Celebrate milestones crossed while the page is open.
-  const prevMsRef = useRef<number | null>(null)
+  const prevMsRef = useRef<{ since: number; ms: number } | null>(null)
   useEffect(() => {
-    if (prevMsRef.current !== null && prevMsRef.current < streakMs) {
-      const crossed = milestoneCrossed(prevMsRef.current, streakMs)
+    const previous = prevMsRef.current
+    if (previous?.since === since.getTime() && previous.ms < streakMs) {
+      const crossed = milestoneCrossed(previous.ms, streakMs)
       if (crossed) {
         setCelebration(`${crossed.label} clean`)
         haptic([15, 80, 15, 80, 15])
       }
     }
-    prevMsRef.current = streakMs
-  }, [streakMs])
+    prevMsRef.current = { since: since.getTime(), ms: streakMs }
+  }, [streakMs, since.getTime()])
 
-  const streakDays = streakMs / DAY_MS
-  const hasCostStats =
-    habit.costPerUnit !== null &&
-    habit.unitsPerDay !== null &&
-    habit.costPerUnit > 0 &&
-    habit.unitsPerDay > 0
-  const unitsAvoided = habit.unitsPerDay !== null ? streakDays * habit.unitsPerDay : 0
-  const moneySaved =
-    hasCostStats && habit.costPerUnit !== null
-      ? unitsAvoided * habit.costPerUnit
-      : 0
-  const weeklySavings =
-    hasCostStats && habit.costPerUnit !== null && habit.unitsPerDay !== null
-      ? habit.costPerUnit * habit.unitsPerDay * 7
-      : 0
+  // Both savings fields are set together or not at all (enforced server-side).
+  const savings =
+    habit.costPerUnit !== null && habit.unitsPerDay !== null
+      ? savingsFor(habit.costPerUnit, habit.unitsPerDay, streakMs)
+      : null
 
-  const removeReset = async () => {
-    if (!resetToDelete) return
-    setDeleteBusy(true)
-    setDeleteError(null)
-    try {
-      await deleteReset({ data: { resetId: resetToDelete.id } })
-      setResetToDelete(null)
-      await router.invalidate()
-    } catch (err) {
-      // Keep the sheet open so the user can retry.
-      setDeleteError(
-        err instanceof Error && err.message
-          ? err.message
-          : 'We couldn’t remove that reset — mind trying again?',
-      )
-    } finally {
-      setDeleteBusy(false)
-    }
-  }
+  // Each confirm sheet owns its request state; on failure it stays open to retry.
+  const removeReset = useAsyncAction(async (reset: ResetEntry) => {
+    await deleteResetFn({ data: { resetId: reset.id } })
+    setResetToDelete(null)
+    await router.invalidate()
+  }, 'We couldn’t remove that reset — mind trying again?')
 
-  const removeHabit = async () => {
-    setDeleteBusy(true)
-    setDeleteError(null)
-    try {
-      await deleteHabit({ data: { habitId: habit.id } })
-      await router.navigate({ to: '/' })
-      await router.invalidate()
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error && err.message
-          ? err.message
-          : 'We couldn’t delete this habit — mind trying again?',
-      )
-    } finally {
-      setDeleteBusy(false)
-    }
-  }
+  const removeHabit = useAsyncAction(async () => {
+    await deleteHabitFn({ data: { habitId: habit.id } })
+    await router.navigate({ to: '/' })
+    await router.invalidate()
+  }, 'We couldn’t delete this habit — mind trying again?')
 
-  const openDayDetail = useCallback(
-    (label: string, entries: ResetEntry[]) => setDayDetail({ label, entries }),
-    [],
-  )
+  const openDayDetail = useCallback((label: string, entries: ResetEntry[]) => {
+    setDayDetail({ label, entries })
+    setDayDetailOpen(true)
+  }, [])
   const celebrationDone = useCallback(() => setCelebration(null), [])
 
   return (
-    <div className="pt-4">
-      <div className="anim-rise-in flex items-center justify-between">
-        <Link
-          to="/"
-          className="glass press flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold text-[var(--text)] no-underline"
-        >
-          ‹ Habits
-        </Link>
-        <span
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
-          style={{
-            background: `${habit.color}1f`,
-            border: `1px solid ${habit.color}44`,
-          }}
-        >
-          {habit.icon}
-        </span>
-      </div>
+    <div>
+      <NavBar
+        title={habit.name}
+        leading={
+          <Link
+            to="/"
+            aria-label="Back to habits"
+            className="glass glass-press flex h-11 w-11 items-center justify-center rounded-full text-[var(--text)] no-underline"
+          >
+            <IconChevronLeft className="h-6 w-6" />
+          </Link>
+        }
+        trailing={
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            disabled={!online}
+            className="glass glass-press t-body flex min-h-11 items-center justify-center rounded-full px-4 text-[var(--text)] disabled:opacity-50"
+          >
+            Edit
+          </button>
+        }
+      />
 
-      <h1 className="anim-rise-in mt-4 text-center text-xl font-bold tracking-tight">
-        {habit.name}
-      </h1>
-
-      <div className="anim-rise-in">
-        <StreakHero
-          sinceMs={streakMs}
-          since={since}
-          hadResets={habit.totalResets > 0}
-          color={habit.color}
-        />
-      </div>
+      <StreakHero
+        sinceMs={streakMs}
+        since={since}
+        hadResets={habit.totalResets > 0}
+        color={color}
+      />
 
       <button
         type="button"
         disabled={!online}
         onClick={() => setResetOpen(true)}
-        className="glass press anim-rise-in mx-auto block w-full max-w-xs rounded-2xl py-4 text-[0.9375rem] font-bold disabled:opacity-50"
-        style={{ color: habit.color, border: `1.5px solid ${habit.color}55` }}
+        className="btn glass glass-press reset-action mx-auto flex max-w-xs disabled:opacity-50"
+        style={{
+          ['--tint' as string]: color,
+          ['--label-tint' as string]: labelColor(color),
+        }}
       >
-        I slipped — log a reset
+        <IconReset className="h-5 w-5" />
+        <span>Log a reset</span>
       </button>
-      <p className="anim-rise-in mt-2 text-center text-[0.75rem] text-[var(--text-3)]">
+      <p className="mt-2 text-center text-[0.75rem] text-[var(--text-3)]">
         Honest logging beats perfect streaks.
       </p>
 
       <div className="mt-6 flex flex-col gap-3">
-        <SectionCard title="Milestones" delay={40}>
-          <MilestoneStrip streakMs={streakMs} color={habit.color} />
+        <SectionCard title="Milestones">
+          <MilestoneStrip streakMs={streakMs} color={color} />
         </SectionCard>
 
-        <SectionCard title="Stats" delay={80}>
+        <SectionCard title="Stats">
           <StreakBars
             currentMs={streakMs}
             longestMs={longest}
             averageMs={average}
             totalResets={habit.totalResets}
-            color={habit.color}
+            color={color}
           />
           <div className="mt-4 grid grid-cols-2 gap-2">
             <StatTile
               label={habit.totalResets === 1 ? 'reset logged' : 'resets logged'}
               value={String(habit.totalResets)}
             />
-            {hasCostStats ? (
+            {savings ? (
               <>
                 <StatTile
                   label="units avoided"
-                  value={formatUnits(unitsAvoided)}
+                  value={formatUnits(savings.unitsAvoided)}
                 />
                 <StatTile
                   label="saved this streak"
-                  value={formatMoney(moneySaved)}
-                  color={habit.color}
+                  value={formatMoney(savings.moneySaved)}
+                  color={color}
                 />
                 <StatTile
-                  label="saved per week at this pace"
-                  value={formatMoney(weeklySavings)}
+                  label="you’d have spent per week"
+                  value={formatMoney(savings.weeklySpend)}
                 />
               </>
             ) : null}
           </div>
-          {!hasCostStats ? (
+          {!savings ? (
             <p className="mt-2 text-[0.6875rem] text-[var(--text-3)]">
-              Add cost per unit and units per day when creating a habit to see
-              money saved.
+              Add cost per unit and units per day (tap Edit) to see money saved.
             </p>
           ) : null}
         </SectionCard>
 
-        <SectionCard title="Streak trend" delay={120}>
-          <TrendChart segments={segments} color={habit.color} />
-        </SectionCard>
-
-        <SectionCard title="When resets happen" delay={160}>
-          <PatternsCard resetDates={history.resetDatesAsc} color={habit.color} />
-        </SectionCard>
-
-        <SectionCard title="Calendar" delay={200}>
-          <MonthCalendar
-            startDate={startDate}
-            resets={habit.resets}
-            color={habit.color}
-            onSelectDay={openDayDetail}
+        <SectionCard title="Streak trend">
+          <TrendChart
+            completed={history.completedSegments}
+            ongoing={ongoing}
+            color={color}
           />
         </SectionCard>
 
-        <SectionCard title="Journey" delay={240}>
+        <SectionCard title="When resets happen">
+          <PatternsCard resetDates={history.resetDatesAsc} color={color} />
+        </SectionCard>
+
+        <SectionCard title="Calendar">
+          <MonthCalendar
+            key={habit.id}
+            startDate={startDate}
+            resets={habit.resets}
+            color={color}
+            onSelectDay={openDayDetail}
+            todayKey={localDayKey(now)}
+          />
+        </SectionCard>
+
+        <SectionCard title="Journey">
           <JourneyTimeline
             key={habit.id}
             startDate={startDate}
             resets={habit.resets}
             brokenMs={history.brokenByResetId}
             currentStreakMs={streakMs}
-            color={habit.color}
+            color={color}
             onDeleteReset={setResetToDelete}
           />
         </SectionCard>
@@ -396,8 +374,7 @@ function HabitDetailPage() {
         <button
           type="button"
           onClick={() => setConfirmDeleteHabit(true)}
-          className="anim-rise-in press mx-auto mt-2 rounded-full px-4 py-2 text-[0.8125rem] font-semibold text-[var(--danger)]"
-          style={{ animationDelay: '280ms' }}
+          className="mx-auto mt-2 min-h-11 rounded-full px-4 py-2 text-[0.9375rem] font-semibold text-[var(--danger-text)]"
         >
           Stop tracking this habit
         </button>
@@ -408,26 +385,33 @@ function HabitDetailPage() {
         onClose={() => setResetOpen(false)}
         habitId={habit.id}
         habitName={habit.name}
-        color={habit.color}
+        color={color}
         streakStart={since}
         onLogged={() => router.invalidate()}
       />
 
+      <HabitSheet
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        habit={habit}
+        onSaved={() => router.invalidate()}
+      />
+
       <Sheet
-        open={dayDetail !== null}
-        onClose={() => setDayDetail(null)}
-        title={dayDetail?.label}
+        open={dayDetailOpen}
+        onClose={() => setDayDetailOpen(false)}
+        title={dayDetail?.label ?? 'Resets'}
       >
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {dayDetail?.entries.map((entry) => (
-            <li key={entry.id} className="rounded-2xl bg-[var(--field-bg)] p-3.5">
+            <li key={entry.id} className="rounded-2xl bg-[var(--fill-4)] p-3.5">
               <div className="text-[0.875rem] font-semibold">
                 {formatDateTime(new Date(entry.timestamp))}
               </div>
               {entry.trigger ? (
                 <div
                   className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold"
-                  style={{ background: `${habit.color}22`, color: habit.color }}
+                  style={{ background: tint(color, 13), color: labelColor(color) }}
                 >
                   {entry.trigger}
                 </div>
@@ -446,35 +430,37 @@ function HabitDetailPage() {
         open={resetToDelete !== null}
         onClose={() => {
           setResetToDelete(null)
-          setDeleteError(null)
+          removeReset.clearError()
         }}
-        onConfirm={removeReset}
+        onConfirm={() => {
+          if (resetToDelete) void removeReset.run(resetToDelete)
+        }}
         title="Remove this reset?"
         message="Use this if it was logged by mistake. Your streaks will be recalculated as if it never happened."
         confirmLabel="Remove reset"
         danger
-        busy={deleteBusy}
-        error={resetToDelete !== null ? deleteError : null}
+        busy={removeReset.busy}
+        error={removeReset.error}
       />
 
       <ConfirmSheet
         open={confirmDeleteHabit}
         onClose={() => {
           setConfirmDeleteHabit(false)
-          setDeleteError(null)
+          removeHabit.clearError()
         }}
-        onConfirm={removeHabit}
+        onConfirm={() => void removeHabit.run()}
         title={`Stop tracking “${habit.name}”?`}
         message="This deletes the habit and its whole history. There’s no undo — but you can always start tracking it again."
         confirmLabel="Delete habit"
         danger
-        busy={deleteBusy}
-        error={confirmDeleteHabit ? deleteError : null}
+        busy={removeHabit.busy}
+        error={removeHabit.error}
       />
 
       <Celebration
         trigger={celebration}
-        color={habit.color}
+        color={color}
         onDone={celebrationDone}
       />
     </div>

@@ -1,126 +1,113 @@
 import { useState } from 'react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { authClient } from '../lib/auth-client'
+import { UserFacingError } from '../lib/errors'
+import { haptic, useAsyncAction } from '../lib/hooks'
 import {
-  createFileRoute,
-  redirect,
-  useRouter,
-} from '@tanstack/react-router'
-import { authClient, internalEmailFor } from '../lib/auth-client'
-import { getSessionUser } from '../lib/auth.functions'
-import { haptic } from '../lib/hooks'
+  credentialsSchema,
+  firstIssueMessage,
+  internalEmailFor,
+} from '../lib/schemas'
+import { clearSessionCache, fetchSessionUser } from '../lib/session'
+import SegmentedControl from '../components/SegmentedControl'
+import { ErrorNote } from '../components/ConfirmSheet'
+import { onColor } from '../lib/color'
+import { IconReset } from '../components/Icons'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
-    const user = await getSessionUser()
+    clearSessionCache()
+    const user = await fetchSessionUser()
     if (user) throw redirect({ to: '/' })
   },
   component: LoginPage,
 })
 
-const USERNAME_RE = /^[a-zA-Z0-9_.]{3,30}$/
+type Mode = 'signin' | 'signup'
+
+const MODE_OPTIONS: ReadonlyArray<[Mode, string]> = [
+  ['signin', 'Sign in'],
+  ['signup', 'Create account'],
+]
 
 function LoginPage() {
-  const router = useRouter()
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<Mode>('signin')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+  const submit = useAsyncAction(async () => {
+    const parsed = credentialsSchema.safeParse({ username, password })
+    if (!parsed.success) {
+      throw new UserFacingError(firstIssueMessage(parsed.error))
+    }
+    const u = parsed.data.username
+    const result =
+      mode === 'signup'
+        ? await authClient.signUp.email({
+            email: internalEmailFor(u),
+            name: u,
+            username: u,
+            password: parsed.data.password,
+          })
+        : await authClient.signIn.username({
+            username: u,
+            password: parsed.data.password,
+          })
 
-    const u = username.trim()
-    if (!USERNAME_RE.test(u)) {
-      setError(
-        'Usernames are 3–30 characters: letters, numbers, dots or underscores.',
+    if (result.error) {
+      // Better Auth's messages are written for end users ("Invalid username or password").
+      throw new UserFacingError(
+        result.error.message ??
+          'That didn’t work — check your details and try again.',
       )
-      return
     }
-    if (password.length < 8) {
-      setError('Your password needs at least 8 characters.')
-      return
-    }
-
-    setBusy(true)
-    try {
-      const result =
-        mode === 'signup'
-          ? await authClient.signUp.email({
-              email: internalEmailFor(u),
-              name: u,
-              username: u,
-              password,
-            })
-          : await authClient.signIn.username({ username: u, password })
-
-      if (result.error) {
-        setError(
-          result.error.message ??
-            'That didn’t work — check your details and try again.',
-        )
-        return
-      }
-      haptic(10)
-      await router.invalidate()
-      await router.navigate({ to: '/' })
-    } catch {
-      setError('We couldn’t reach the server — check your connection.')
-    } finally {
-      setBusy(false)
-    }
-  }
+    haptic(10)
+    // Start with an empty router cache when the account changes.
+    window.location.replace('/')
+  }, 'Something went wrong — check your connection and try again.')
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-10 safe-top safe-bottom">
       <div className="anim-rise-in">
         <div className="mb-8 flex flex-col items-center text-center">
           <div
-            className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] text-3xl"
+            className="glass flex h-18 w-18 items-center justify-center rounded-[1.5rem]"
             style={{
-              background: 'var(--accent-soft)',
-              border: '1px solid var(--card-border)',
+              color: 'var(--accent-text)',
             }}
           >
-            ↺
+            <IconReset className="h-9 w-9" />
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Reset</h1>
+          <h1 className="t-rounded mt-4 text-[2.5rem] font-bold tracking-tight">Reset</h1>
           <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] leading-relaxed text-[var(--text-2)]">
             Quit hard things, one streak at a time.
           </p>
         </div>
 
-        <div className="card p-5">
-          <div className="mb-4 flex rounded-2xl bg-[var(--field-bg)] p-1">
-            {(
-              [
-                ['signin', 'Sign in'],
-                ['signup', 'Create account'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={mode === value}
-                onClick={() => {
-                  setMode(value)
-                  setError(null)
-                }}
-                className="flex-1 rounded-xl py-2 text-sm font-semibold transition-colors"
-                style={
-                  mode === value
-                    ? { background: 'var(--card)', color: 'var(--text)' }
-                    : { color: 'var(--text-3)' }
-                }
-              >
-                {label}
-              </button>
-            ))}
+        <div className="cell p-5">
+          <div className="mb-4">
+            <SegmentedControl
+              aria-label="Account access"
+              options={MODE_OPTIONS}
+              value={mode}
+              disabled={submit.busy}
+              onChange={(value) => {
+                setMode(value)
+                submit.clearError()
+              }}
+            />
           </div>
 
-          <form onSubmit={submit} className="flex flex-col gap-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              void submit.run()
+            }}
+            className="flex flex-col gap-3"
+          >
             <input
-              className="field"
+              className="field field-standalone"
+              name="username"
               placeholder="Username"
               aria-label="Username"
               autoComplete="username"
@@ -130,7 +117,8 @@ function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
             />
             <input
-              className="field"
+              className="field field-standalone"
+              name="password"
               type="password"
               placeholder="Password"
               aria-label="Password"
@@ -141,21 +129,15 @@ function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            {error ? (
-              <p
-                role="alert"
-                className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-[0.8125rem] font-medium text-[var(--danger)]"
-              >
-                {error}
-              </p>
-            ) : null}
+            {submit.error ? <ErrorNote>{submit.error}</ErrorNote> : null}
 
             <button
               type="submit"
-              disabled={busy}
-              className="press mt-1 w-full rounded-2xl bg-[var(--accent)] py-3.5 text-[0.9375rem] font-bold text-white disabled:opacity-50"
+              disabled={submit.busy}
+              className="btn btn-filled mt-1"
+              style={{ ['--on-tint' as string]: onColor('var(--accent)') }}
             >
-              {busy
+              {submit.busy
                 ? 'One moment…'
                 : mode === 'signup'
                   ? 'Start fresh'

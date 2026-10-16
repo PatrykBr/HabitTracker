@@ -1,8 +1,11 @@
+import { labelColor, onColor, tint } from '../lib/color'
 import { MILESTONES, nextMilestone } from '../lib/streaks'
 import { formatDurationHuman } from '../lib/format'
+import { IconCheck } from './Icons'
 
 interface MilestoneStripProps {
   streakMs: number
+  /** Resolved CSS color (see `habitColor`). */
   color: string
 }
 
@@ -11,41 +14,43 @@ export default function MilestoneStrip({ streakMs, color }: MilestoneStripProps)
   const next = nextMilestone(streakMs)
   return (
     <div>
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto py-2">
         {MILESTONES.map((m) => {
           const achieved = streakMs >= m.ms
           return (
             <div
               key={m.short}
-              className="flex shrink-0 flex-col items-center gap-1 rounded-2xl px-3.5 py-2.5"
-              style={{
-                background: achieved ? `${color}22` : 'var(--field-bg)',
-                border: `1px solid ${achieved ? `${color}55` : 'transparent'}`,
-              }}
+              className="milestone-token"
+              role="img"
+              aria-label={`${m.label}${achieved ? ', reached' : ''}`}
             >
               <span
-                className="text-sm font-bold tabular"
-                style={{ color: achieved ? color : 'var(--text-3)' }}
+                className="milestone-mark tabular"
+                style={{
+                  background: achieved ? color : tint(color, 7),
+                  color: achieved ? onColor(color) : labelColor(color),
+                  boxShadow: achieved ? undefined : `inset 0 0 0 1px ${tint(color, 15)}`,
+                }}
               >
-                {achieved ? '✓' : ''} {m.short}
+                {achieved ? <IconCheck className="h-5 w-5" /> : m.short}
               </span>
-              <span className="text-[0.625rem] font-medium text-[var(--text-3)]">
+              <span className="t-caption1 text-[var(--text-2)]">
                 {m.label}
               </span>
             </div>
           )
         })}
       </div>
-      {next ? (
-        <p className="mt-2 text-[0.8125rem] text-[var(--text-2)]">
-          Next up: <span className="font-semibold">{next.label}</span> — about{' '}
-          {formatDurationHuman(next.ms - streakMs)} away. Keep going.
-        </p>
-      ) : (
-        <p className="mt-2 text-[0.8125rem] text-[var(--text-2)]">
-          Every milestone, reached. Extraordinary.
-        </p>
-      )}
+      <p className="t-footnote mt-3 mb-0 text-[var(--text-2)]">
+        {next ? (
+          <>
+            Next up: <span className="font-semibold text-[var(--text)]">{next.label}</span>{' '}
+            — about {formatDurationHuman(next.ms - streakMs)} away.
+          </>
+        ) : (
+          <>Every milestone, reached. Extraordinary.</>
+        )}
+      </p>
     </div>
   )
 }

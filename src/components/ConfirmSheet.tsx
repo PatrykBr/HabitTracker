@@ -1,4 +1,6 @@
 import Sheet from './Sheet'
+import { onColor } from '../lib/color'
+import { useOnline } from '../lib/hooks'
 
 interface ConfirmSheetProps {
   open: boolean
@@ -14,7 +16,7 @@ interface ConfirmSheetProps {
   error?: string | null
 }
 
-/** Custom confirm dialog — never native confirm(). */
+/** Confirmation sheet (iOS action-sheet pattern) — never native confirm(). */
 export default function ConfirmSheet({
   open,
   onClose,
@@ -27,27 +29,23 @@ export default function ConfirmSheet({
   busy = false,
   error = null,
 }: ConfirmSheetProps) {
+  const online = useOnline()
+  const color = danger ? 'var(--danger)' : 'var(--accent)'
   return (
     <Sheet open={open} onClose={onClose} title={title} dismissible={!busy}>
-      <p className="mb-5 text-center text-[0.9375rem] leading-relaxed text-[var(--text-2)]">
+      <p className="t-subhead mx-2 mt-0 mb-5 text-center text-[var(--text-2)]">
         {message}
       </p>
-      {error ? (
-        <p
-          role="alert"
-          className="mb-3 rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-center text-[0.8125rem] font-medium text-[var(--danger)]"
-        >
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorNote>{error}</ErrorNote> : null}
       <div className="flex flex-col gap-2">
         <button
           type="button"
-          disabled={busy}
+          disabled={busy || !online}
           onClick={onConfirm}
-          className="press w-full rounded-2xl py-3.5 text-[0.9375rem] font-bold text-white disabled:opacity-50"
+          className="btn btn-filled"
           style={{
-            background: danger ? 'var(--danger)' : 'var(--accent)',
+            ['--tint' as string]: color,
+            ['--on-tint' as string]: onColor(color),
           }}
         >
           {busy ? 'One moment…' : confirmLabel}
@@ -56,11 +54,26 @@ export default function ConfirmSheet({
           type="button"
           onClick={onClose}
           disabled={busy}
-          className="press w-full rounded-2xl bg-[var(--field-bg)] py-3.5 text-[0.9375rem] font-semibold text-[var(--text)]"
+          className="btn btn-gray"
         >
           {cancelLabel}
         </button>
       </div>
     </Sheet>
+  )
+}
+
+/** Inline error for forms and confirmations. */
+export function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className="t-footnote mx-1 mt-0 mb-3 rounded-[var(--r-inner)] px-3.5 py-2.5 font-medium text-[var(--danger)]"
+      style={{
+        background: 'color-mix(in srgb, var(--danger) 12%, transparent)',
+      }}
+    >
+      {children}
+    </p>
   )
 }

@@ -1,4 +1,5 @@
 /** Client-safe DTOs shared between server functions and UI. Dates are ISO strings (UTC). */
+import { SYSTEM_COLORS, SYSTEM_COLOR_NAMES } from './color'
 
 export interface HabitSummary {
   id: string
@@ -37,17 +38,13 @@ export const TRIGGER_SUGGESTIONS = [
   'Routine',
 ] as const
 
-/** Curated palette — every color reads well on both themes. */
-export const HABIT_COLORS = [
-  '#2FD6A7',
-  '#4EA8FF',
-  '#A78BFA',
-  '#F472B6',
-  '#FF7A6B',
-  '#FFB020',
-  '#A3E635',
-  '#22D3EE',
-] as const
+/**
+ * The 12 iOS system colors (light variants — the stored value). Rendering goes
+ * through `habitColor()` in `color.ts`, which swaps in the dark variant via CSS.
+ */
+export const HABIT_COLORS = SYSTEM_COLOR_NAMES.map(
+  (name) => SYSTEM_COLORS[name].light,
+)
 
 export const HABIT_ICONS = [
   '🚬',

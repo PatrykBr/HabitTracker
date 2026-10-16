@@ -1,9 +1,12 @@
+import { tint } from '../lib/color'
 import { HOUR_MS } from '../lib/streaks'
 import type { Segment } from '../lib/streaks'
 import { formatDate, formatDurationShort } from '../lib/format'
 
 interface TrendChartProps {
-  segments: Segment[]
+  completed: Segment[]
+  ongoing: Segment
+  /** Resolved CSS color (see `habitColor`). */
   color: string
 }
 
@@ -11,17 +14,22 @@ interface TrendChartProps {
  * Simple bar chart of streak lengths over time (oldest → newest). The current,
  * ongoing streak is the highlighted last bar.
  */
-export default function TrendChart({ segments, color }: TrendChartProps) {
-  if (segments.length < 2) {
+export default function TrendChart({
+  completed,
+  ongoing,
+  color,
+}: TrendChartProps) {
+  if (completed.length === 0) {
     return (
-      <p className="py-4 text-center text-[0.8125rem] text-[var(--text-3)]">
+      <p className="t-footnote m-0 py-2 text-center text-[var(--text-2)]">
         Once you’ve logged a reset, your streak lengths will chart here so you
         can watch them grow.
       </p>
     )
   }
 
-  const shown = segments.slice(-24)
+  const shown = [...completed.slice(-23), ongoing]
+  const total = completed.length + 1
   const max = Math.max(...shown.map((s) => s.ms), HOUR_MS)
   const W = 320
   const H = 120
@@ -47,22 +55,22 @@ export default function TrendChart({ segments, color }: TrendChartProps) {
               width={barW}
               height={h}
               rx={Math.min(5, barW / 2)}
-              fill={s.ongoing ? color : `${color}55`}
+              // CSS color functions must go through `style` to work in SVG.
+              style={{ fill: s.ongoing ? color : tint(color, 35) }}
             />
           )
         })}
       </svg>
-      <div className="mt-2 flex justify-between text-[0.6875rem] text-[var(--text-3)]">
+      <div className="t-caption1 mt-2 flex justify-between text-[var(--text-2)]">
         <span>{formatDate(shown[0].start)}</span>
         <span>
-          longest {formatDurationShort(Math.max(...shown.map((s) => s.ms)))}
+          Longest {formatDurationShort(Math.max(...shown.map((s) => s.ms)))}
         </span>
-        <span>now</span>
+        <span>Now</span>
       </div>
-      {segments.length > shown.length ? (
-        <p className="mt-1 text-[0.6875rem] text-[var(--text-3)]">
-          Showing the most recent {shown.length} streaks (of {segments.length}
-          ). Days are measured in your local timezone.
+      {total > shown.length ? (
+        <p className="t-caption1 mt-1 mb-0 text-[var(--text-3)]">
+          Showing the most recent {shown.length} streaks (of {total}).
         </p>
       ) : null}
     </div>

@@ -1,24 +1,55 @@
-import { useState } from 'react'
-import Sheet from './Sheet'
+import { useEffect, useState } from 'react'
+import { useServerFn } from '@tanstack/react-start'
+import { ErrorNote } from './ConfirmSheet'
+import { Group, Row } from './GroupedList'
+import SegmentedControl from './SegmentedControl'
+import Sheet, { SHEET_CLOSE_MS } from './Sheet'
+import { onColor } from '../lib/color'
+import { UserFacingError } from '../lib/errors'
 import { logReset } from '../lib/habits.functions'
-import { haptic, useOnline } from '../lib/hooks'
+import { haptic, useAsyncAction, useOnline } from '../lib/hooks'
 import {
   formatDateTime,
   formatDurationHuman,
   toDatetimeLocalValue,
 } from '../lib/format'
 import { TRIGGER_SUGGESTIONS } from '../lib/types'
+import { firstIssueMessage, logResetSchema } from '../lib/schemas'
 
 interface ResetSheetProps {
   open: boolean
   onClose: () => void
   habitId: string
   habitName: string
+  /** Resolved CSS color (see `habitColor`). */
   color: string
   /** When the current streak began (habit start or the latest reset). */
   streakStart: Date
-  onLogged: () => void
+  onLogged: () => void | Promise<void>
 }
+
+type When = 'now' | 'earlier'
+
+const WHEN_OPTIONS: ReadonlyArray<readonly [When, string]> = [
+  ['now', 'Just now'],
+  ['earlier', 'Earlier'],
+]
+
+interface FormState {
+  step: 'form' | 'confirm'
+  when: When
+  earlierValue: string
+  trigger: string | null
+  note: string
+}
+
+const initialForm = (): FormState => ({
+  step: 'form',
+  when: 'now',
+  earlierValue: toDatetimeLocalValue(new Date()),
+  trigger: null,
+  note: '',
+})
 
 /**
  * Log a reset: defaults to now, supports backdating ("forgot to log this
@@ -34,220 +65,208 @@ export default function ResetSheet({
   onLogged,
 }: ResetSheetProps) {
   const online = useOnline()
-  const [step, setStep] = useState<'form' | 'confirm'>('form')
-  const [when, setWhen] = useState<'now' | 'earlier'>('now')
-  const [earlierValue, setEarlierValue] = useState(() =>
-    toDatetimeLocalValue(new Date()),
-  )
-  const [trigger, setTrigger] = useState<string | null>(null)
-  const [note, setNote] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const reset = () => {
-    setStep('form')
-    setWhen('now')
-    setEarlierValue(toDatetimeLocalValue(new Date()))
-    setTrigger(null)
-    setNote('')
-    setError(null)
-    setBusy(false)
-  }
-
-  const close = () => {
-    onClose()
-    // Let the close animation finish before wiping state.
-    window.setTimeout(reset, 250)
-  }
+  const logResetFn = useServerFn(logReset)
+  const [form, setForm] = useState<FormState>(initialForm)
+  /** Validation problems caught before the confirm step (bad or too-early time). */
+  const [stepError, setStepError] = useState<string | null>(null)
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   /** The moment being logged: now, or the backdated time (null if unparsable). */
   const chosenTime = (): Date | null => {
-    if (when === 'now') return new Date()
-    const d = new Date(earlierValue)
+    if (form.when === 'now') return new Date()
+    const d = new Date(form.earlierValue)
     return Number.isNaN(d.getTime()) ? null : d
   }
 
-  const goToConfirm = () => {
-    const ts = chosenTime()
-    if (!ts) {
-      setError('That date and time doesn’t look right — try again.')
+  const submit = useAsyncAction(async () => {
+    const timestamp = chosenTime()
+    if (!timestamp) {
+      throw new UserFacingError(
+        'That date and time doesn’t look right — try again.',
+      )
+    }
+    const parsed = logResetSchema.safeParse({
+      habitId,
+      timestamp: timestamp.toISOString(),
+      trigger: form.trigger,
+      note: form.note,
+    })
+    if (!parsed.success)
+      throw new UserFacingError(firstIssueMessage(parsed.error))
+    try {
+      await logResetFn({
+        data: parsed.data,
+      })
+    } catch (err) {
+      // Whatever went wrong, the form is where the user can fix it.
+      set('step', 'form')
+      throw err
+    }
+    haptic([12, 60, 12])
+    onClose()
+    await onLogged()
+  }, 'Something went wrong — mind trying again?')
+
+  // Reset once the close animation has finished; re-opening cancels the reset.
+  const { clearError } = submit
+  useEffect(() => {
+    if (open) {
+      setForm(initialForm())
       return
     }
-    if (when === 'earlier' && ts.getTime() <= streakStart.getTime()) {
-      setError(
+    const t = window.setTimeout(() => {
+      setForm(initialForm())
+      setStepError(null)
+      clearError()
+    }, SHEET_CLOSE_MS)
+    return () => window.clearTimeout(t)
+  }, [open, clearError])
+
+  const goToConfirm = () => {
+    setStepError(null)
+    submit.clearError()
+    const ts = chosenTime()
+    if (!ts) {
+      setStepError('That date and time doesn’t look right — try again.')
+      return
+    }
+    if (form.when === 'earlier' && ts.getTime() <= streakStart.getTime()) {
+      setStepError(
         `That’s before this streak started (${formatDateTime(streakStart)}) — pick a later time.`,
       )
       return
     }
-    setError(null)
-    setStep('confirm')
-  }
-
-  const submit = async () => {
-    setBusy(true)
-    setError(null)
-    const timestamp = chosenTime()
-    if (!timestamp) {
-      setError('That date and time doesn’t look right — try again.')
-      setBusy(false)
-      setStep('form')
+    if (ts.getTime() > Date.now()) {
+      setStepError('A reset can’t be in the future.')
       return
     }
-    try {
-      await logReset({
-        data: {
-          habitId,
-          timestamp: timestamp.toISOString(),
-          trigger,
-          note: note.trim() || null,
-        },
-      })
-      haptic([12, 60, 12])
-      onLogged()
-      close()
-    } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : 'Something went wrong — mind trying again?',
-      )
-      setStep('form')
-    } finally {
-      setBusy(false)
-    }
+    set('step', 'confirm')
   }
+
+  const error = stepError ?? submit.error
 
   const confirmTime = chosenTime()
   const endedMs = confirmTime
     ? Math.max(0, confirmTime.getTime() - streakStart.getTime())
     : 0
+  const tintVars = {
+    ['--tint' as string]: color,
+    ['--on-tint' as string]: onColor(color),
+  }
 
   return (
     <Sheet
       open={open}
-      onClose={close}
-      title={step === 'form' ? 'Log a reset' : 'Ready?'}
-      dismissible={!busy}
+      onClose={onClose}
+      title={form.step === 'form' ? 'Log a Reset' : 'Ready?'}
+      dismissible={!submit.busy}
     >
-      {step === 'form' ? (
-        <div className="flex flex-col gap-4">
-          <p className="-mt-2 text-center text-[0.8125rem] leading-relaxed text-[var(--text-2)]">
+      {form.step === 'form' ? (
+        <div className="flex flex-col gap-5">
+          <p className="t-footnote mx-2 -mt-1 mb-0 text-center text-[var(--text-2)]">
             A reset is part of quitting — logging it honestly is the win here.
           </p>
 
-          <div className="flex rounded-2xl bg-[var(--field-bg)] p-1">
-            {(['now', 'earlier'] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={when === option}
-                onClick={() => setWhen(option)}
-                className="flex-1 rounded-xl py-2 text-sm font-semibold transition-colors"
-                style={
-                  when === option
-                    ? { background: 'var(--card)', color: 'var(--text)' }
-                    : { color: 'var(--text-3)' }
-                }
-              >
-                {option === 'now' ? 'Just now' : 'Earlier'}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            aria-label="When did it happen?"
+            options={WHEN_OPTIONS}
+            value={form.when}
+            onChange={(when) => {
+              setStepError(null)
+              set('when', when)
+            }}
+          />
 
-          {when === 'earlier' ? (
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[0.8125rem] font-semibold text-[var(--text-2)]">
-                When did it happen?
-              </span>
-              <input
-                type="datetime-local"
-                className="field"
-                value={earlierValue}
-                min={toDatetimeLocalValue(streakStart)}
-                max={toDatetimeLocalValue(new Date())}
-                onChange={(e) => setEarlierValue(e.target.value)}
-              />
-              <span className="text-[0.6875rem] text-[var(--text-3)]">
-                Any time after this streak began ({formatDateTime(streakStart)}).
-              </span>
-            </label>
+          {form.when === 'earlier' ? (
+            <Group
+              footer={`Any time after this streak began (${formatDateTime(streakStart)}).`}
+            >
+              <Row className="adaptive-form-row flex-col items-stretch gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-3">
+                <label htmlFor="reset-when" className="flex-1">
+                  When
+                </label>
+                <input
+                  id="reset-when"
+                  type="datetime-local"
+                  className="field min-w-0 text-right text-[var(--text-2)] min-[380px]:w-auto"
+                  name="timestamp"
+                  value={form.earlierValue}
+                  min={toDatetimeLocalValue(streakStart)}
+                  max={toDatetimeLocalValue(new Date())}
+                  onChange={(e) => {
+                    setStepError(null)
+                    set('earlierValue', e.target.value)
+                  }}
+                />
+              </Row>
+            </Group>
           ) : null}
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[0.8125rem] font-semibold text-[var(--text-2)]">
-              What triggered it? <span className="font-normal text-[var(--text-3)]">(optional)</span>
-            </span>
-            <div className="flex flex-wrap gap-1.5">
+          <Group
+            title="Trigger"
+            footer="Optional. Spotting patterns is half the battle."
+          >
+            <div className="flex flex-wrap gap-2 p-3">
               {TRIGGER_SUGGESTIONS.map((t) => {
-                const active = trigger === t
+                const active = form.trigger === t
                 return (
                   <button
                     key={t}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => setTrigger(active ? null : t)}
-                    className="press rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold"
-                    style={
-                      active
-                        ? { background: `${color}26`, color, border: `1px solid ${color}66` }
-                        : {
-                            background: 'var(--field-bg)',
-                            color: 'var(--text-2)',
-                            border: '1px solid transparent',
-                          }
-                    }
+                    onClick={() => set('trigger', active ? null : t)}
+                    className="chip"
+                    style={tintVars}
                   >
                     {t}
                   </button>
                 )
               })}
             </div>
-          </div>
+          </Group>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[0.8125rem] font-semibold text-[var(--text-2)]">
-              Note <span className="font-normal text-[var(--text-3)]">(optional)</span>
-            </span>
-            <textarea
-              className="field resize-none"
-              rows={2}
-              maxLength={500}
-              placeholder="Anything worth remembering about this one?"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </label>
+          <Group title="Note">
+            <Row className="items-start">
+              <textarea
+                className="field resize-none"
+                name="note"
+                aria-label="Note"
+                rows={2}
+                maxLength={500}
+                placeholder="Anything worth remembering about this one? (optional)"
+                value={form.note}
+                onChange={(e) => set('note', e.target.value)}
+              />
+            </Row>
+          </Group>
 
-          {error ? (
-            <p
-              role="alert"
-              className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-[0.8125rem] font-medium text-[var(--danger)]"
+          <div>
+            {error ? <ErrorNote>{error}</ErrorNote> : null}
+            {!online ? (
+              <p className="t-footnote mb-3 text-center text-[var(--text-2)]">
+                You’re offline — reconnect to log this reset.
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={!online}
+              onClick={goToConfirm}
+              className="btn btn-filled"
+              style={tintVars}
             >
-              {error}
-            </p>
-          ) : null}
-          {!online ? (
-            <p className="text-center text-[0.8125rem] text-[var(--text-3)]">
-              You’re offline — reconnect to log this reset.
-            </p>
-          ) : null}
-
-          <button
-            type="button"
-            disabled={!online}
-            onClick={goToConfirm}
-            className="press w-full rounded-2xl py-3.5 text-[0.9375rem] font-bold text-white disabled:opacity-50"
-            style={{ background: color }}
-          >
-            Continue
-          </button>
+              Continue
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          <p className="text-center text-[0.9375rem] leading-relaxed text-[var(--text-2)]">
+        <div className="flex flex-col gap-2">
+          <p className="t-subhead mx-2 mt-0 mb-4 text-center text-[var(--text-2)]">
             This closes a {formatDurationHuman(endedMs)} streak on{' '}
-            <span className="font-semibold text-[var(--text)]">{habitName}</span>
-            {when === 'earlier' && confirmTime ? (
+            <span className="font-semibold text-[var(--text)]">
+              {habitName}
+            </span>
+            {form.when === 'earlier' && confirmTime ? (
               <>
                 {' '}
                 as of{' '}
@@ -260,18 +279,18 @@ export default function ResetSheet({
           </p>
           <button
             type="button"
-            disabled={busy || !online}
-            onClick={submit}
-            className="press w-full rounded-2xl py-3.5 text-[0.9375rem] font-bold text-white disabled:opacity-50"
-            style={{ background: color }}
+            disabled={submit.busy || !online}
+            onClick={() => void submit.run()}
+            className="btn btn-filled"
+            style={tintVars}
           >
-            {busy ? 'Logging…' : 'Restart my streak'}
+            {submit.busy ? 'Logging…' : 'Restart My Streak'}
           </button>
           <button
             type="button"
-            disabled={busy}
-            onClick={() => setStep('form')}
-            className="press w-full rounded-2xl bg-[var(--field-bg)] py-3.5 text-[0.9375rem] font-semibold"
+            disabled={submit.busy}
+            onClick={() => set('step', 'form')}
+            className="btn btn-gray"
           >
             Back
           </button>

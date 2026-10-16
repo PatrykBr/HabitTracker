@@ -1,3 +1,4 @@
+import { labelColor, tint } from '../lib/color'
 import { formatDurationShort } from '../lib/format'
 
 interface StreakBarsProps {
@@ -5,6 +6,7 @@ interface StreakBarsProps {
   longestMs: number
   averageMs: number
   totalResets: number
+  /** Resolved CSS color (see `habitColor`). */
   color: string
 }
 
@@ -31,47 +33,47 @@ export default function StreakBars({
 
   return (
     <div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center gap-2.5">
-            <span className="w-14 shrink-0 text-[0.6875rem] font-semibold tracking-wide text-[var(--text-3)] uppercase">
+          <div key={row.label} className="flex items-center gap-3">
+            <span className="t-footnote w-14 shrink-0 text-[var(--text-2)]">
               {row.label}
             </span>
-            <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-[var(--field-bg)]">
+            <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-[var(--fill-4)]">
               <div
-                className="absolute inset-y-0 left-0 rounded-lg"
+                className="absolute inset-y-0 left-0 rounded-full"
                 style={{
                   width: `${Math.max(2, (row.ms / max) * 100)}%`,
-                  background: row.main ? color : `${color}44`,
-                  transition: 'width 0.6s cubic-bezier(0.22, 1.2, 0.36, 1)',
+                  background: row.main ? color : tint(color, 35),
+                  transition: 'width 0.6s var(--spring)',
                 }}
               />
             </div>
-            <span className="tabular w-16 shrink-0 text-right text-[0.8125rem] font-bold">
+            <span className="tabular t-subhead w-16 shrink-0 text-right font-semibold">
               {formatDurationShort(row.ms)}
             </span>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 mb-0 text-[0.8125rem] text-[var(--text-2)]">
+      <p className="t-footnote mt-3 mb-0 text-[var(--text-2)]">
         {totalResets === 0 ? (
           <>No resets yet — this run is the whole story so far.</>
         ) : atRecord ? (
           <>
             This is your{' '}
-            <span className="font-semibold" style={{ color }}>
+            <span className="font-semibold" style={{ color: labelColor(color) }}>
               longest run ever
             </span>
             . Every second extends the record.
           </>
         ) : (
           <>
-            You're{' '}
-            <span className="font-semibold" style={{ color }}>
+            You’re{' '}
+            <span className="font-semibold" style={{ color: labelColor(color) }}>
               {pct}%
             </span>{' '}
-            of the way to your record — you've done it before.
+            of the way to your record — you’ve done it before.
           </>
         )}
       </p>

@@ -1,4 +1,6 @@
 import { memo, useRef, useState } from 'react'
+import { IconChevronLeft, IconChevronRight } from './Icons'
+import { onColor, tint } from '../lib/color'
 import { formatMonthYear } from '../lib/format'
 import { localDayKey } from '../lib/streaks'
 import type { ResetEntry } from '../lib/types'
@@ -6,8 +8,11 @@ import type { ResetEntry } from '../lib/types'
 interface MonthCalendarProps {
   startDate: Date
   resets: ResetEntry[]
+  /** Resolved CSS color (see `habitColor`). */
   color: string
   onSelectDay: (dayLabel: string, entries: ResetEntry[]) => void
+  /** Changes at local midnight without rerendering on every counter tick. */
+  todayKey: string
 }
 
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -25,6 +30,7 @@ export default memo(function MonthCalendar({
   resets,
   color,
   onSelectDay,
+  todayKey,
 }: MonthCalendarProps) {
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -43,7 +49,8 @@ export default memo(function MonthCalendar({
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const leadingBlanks = monthStart.getDay()
   const startKey = localDayKey(startDate)
-  const todayKey = localDayKey(today)
+  const glyph = onColor(color)
+  const todayRing = `0 0 0 2px var(--bg-2), 0 0 0 4px ${color}`
 
   const canGoBack =
     viewYear > startDate.getFullYear() ||
@@ -58,6 +65,9 @@ export default memo(function MonthCalendar({
     setViewMonth(next.getMonth())
   }
 
+  const navClass =
+    'flex h-11 w-11 items-center justify-center rounded-full text-[var(--accent-text)] transition-opacity disabled:opacity-30'
+
   return (
     <div
       onTouchStart={(e) => {
@@ -71,35 +81,35 @@ export default memo(function MonthCalendar({
         else if (dx < -48 && canGoForward) shiftMonth(1)
       }}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => shiftMonth(-1)}
-          disabled={!canGoBack}
-          aria-label="Previous month"
-          className="press rounded-full bg-[var(--field-bg)] px-3 py-1.5 text-sm font-semibold disabled:opacity-30"
-        >
-          ‹
-        </button>
-        <span className="text-[0.9375rem] font-bold tracking-tight">
-          {formatMonthYear(monthStart)}
-        </span>
-        <button
-          type="button"
-          onClick={() => shiftMonth(1)}
-          disabled={!canGoForward}
-          aria-label="Next month"
-          className="press rounded-full bg-[var(--field-bg)] px-3 py-1.5 text-sm font-semibold disabled:opacity-30"
-        >
-          ›
-        </button>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="t-headline pl-1">{formatMonthYear(monthStart)}</span>
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => shiftMonth(-1)}
+            disabled={!canGoBack}
+            aria-label="Previous month"
+            className={navClass}
+          >
+            <IconChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            disabled={!canGoForward}
+            aria-label="Next month"
+            className={navClass}
+          >
+            <IconChevronRight className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">
         {WEEKDAY_LETTERS.map((letter, i) => (
           <span
             key={`${letter}-${i}`}
-            className="text-center text-[0.625rem] font-semibold text-[var(--text-3)]"
+            className="t-caption1 text-center font-semibold text-[var(--text-3)]"
           >
             {letter}
           </span>
@@ -118,11 +128,11 @@ export default memo(function MonthCalendar({
           const isResetDay = dayResets.length > 0
 
           const base =
-            'tabular flex aspect-square items-center justify-center rounded-xl text-[0.8125rem] font-semibold'
+            'tabular flex min-h-11 min-w-0 items-center justify-center text-[0.9375rem]'
 
           if (isFuture || beforeStart) {
             return (
-              <span key={key} className={`${base} text-[var(--text-3)] opacity-35`}>
+              <span key={key} className={`${base} text-[var(--text-3)]`}>
                 {dayNum}
               </span>
             )
@@ -142,45 +152,67 @@ export default memo(function MonthCalendar({
                     dayResets,
                   )
                 }
-                className={`${base} press relative text-white`}
-                style={{
-                  background: color,
-                  boxShadow: isToday ? `0 0 0 2px var(--bg), 0 0 0 4px ${color}` : undefined,
-                }}
-                aria-label={`${dayResets.length} reset${dayResets.length > 1 ? 's' : ''} on day ${dayNum}`}
+                className={`${base} relative font-semibold transition-transform active:scale-90`}
+                aria-current={isToday ? 'date' : undefined}
+                aria-label={`${dayResets.length} reset${dayResets.length > 1 ? 's' : ''} on ${date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`}
               >
-                {dayNum}
-                {dayResets.length > 1 ? (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--card)] px-0.5 text-[0.5625rem] font-bold text-[var(--text)]">
-                    {dayResets.length}
+                <span
+                  className="relative flex aspect-square w-full max-w-9 items-center justify-center rounded-full"
+                  style={{
+                    background: color,
+                    color: glyph,
+                    boxShadow: isToday ? todayRing : undefined,
+                  }}
+                >
+                  <span className="-translate-y-0.5">{dayNum}</span>
+                  <span aria-hidden className="absolute bottom-0.5 text-[0.625rem] leading-none">
+                    ↺
                   </span>
-                ) : null}
+                  {dayResets.length > 1 ? (
+                    <span className="t-caption2 absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--bg-2)] px-1 font-bold text-[var(--text)]">
+                      {dayResets.length}
+                    </span>
+                  ) : null}
+                </span>
               </button>
             )
           }
           return (
             <span
               key={key}
-              className={`${base} text-[var(--text-2)]`}
-              style={{
-                background: `${color}14`,
-                boxShadow: isToday ? `0 0 0 2px var(--bg), 0 0 0 4px ${color}` : undefined,
-              }}
+              aria-current={isToday ? 'date' : undefined}
+              className={`${base} text-[var(--text)]`}
+              style={{ fontWeight: isToday ? 600 : 400 }}
             >
-              {dayNum}
+              <span
+                className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full"
+                style={{
+                  background: tint(color, 14),
+                  boxShadow: isToday ? todayRing : undefined,
+                }}
+              >
+                {dayNum}
+              </span>
             </span>
           )
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-4 text-[0.6875rem] text-[var(--text-3)]">
+      <div className="t-caption1 mt-3 flex items-center gap-4 text-[var(--text-2)]">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: `${color}14` }} />
-          clean day
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{ background: tint(color, 14) }}
+          />
+          Clean day
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: color }} />
-          reset day
+          <span
+            aria-hidden
+            className="flex h-4 w-4 items-center justify-center rounded-full text-[0.625rem]"
+            style={{ background: color, color: glyph }}
+          >↺</span>
+          Reset day
         </span>
       </div>
     </div>

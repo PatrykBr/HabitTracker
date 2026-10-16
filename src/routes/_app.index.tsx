@@ -1,13 +1,21 @@
-import { useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import NewHabitSheet from '../components/NewHabitSheet'
+import { Chevron } from '../components/GroupedList'
+import { IconPerson } from '../components/Icons'
+import NavBar from '../components/NavBar'
+import StreakHero from '../components/StreakHero'
+import { habitColor, labelColor, tint } from '../lib/color'
+import { userMessage } from '../lib/errors'
 import { listHabits } from '../lib/habits.functions'
 import { useNow } from '../lib/hooks'
 import { currentStreakStart, nextMilestone } from '../lib/streaks'
-import { durationParts, formatClock, formatDurationShort } from '../lib/format'
+import { dominantUnit } from '../lib/format'
 import type { HabitSummary } from '../lib/types'
 
 export const Route = createFileRoute('/_app/')({
+  // Live counters, greeting and date formatting depend on the visitor's clock,
+  // timezone and locale - render them client-side only so SSR HTML can't
+  // disagree with the first client render. The loader still runs on the server.
+  ssr: 'data-only',
   loader: () => listHabits(),
   pendingComponent: DashboardPending,
   errorComponent: DashboardError,
@@ -16,34 +24,36 @@ export const Route = createFileRoute('/_app/')({
 
 function DashboardPending() {
   return (
-    <div className="pt-6">
-      <h1 className="text-[2rem] font-extrabold tracking-tight">Habits</h1>
-      <div className="mt-4 flex flex-col gap-3">
-        {[0, 1].map((i) => (
-          <div key={i} className="card h-24 animate-pulse opacity-60" />
-        ))}
-      </div>
-    </div>
+    <>
+      <NavBar title="Habits" />
+      <div className="cell h-40 animate-pulse opacity-60" />
+    </>
   )
 }
 
-function DashboardError({ error }: { error: Error }) {
+function DashboardError({ error }: { error: unknown }) {
   const router = useRouter()
   return (
-    <div className="flex flex-col items-center gap-3 pt-24 text-center">
-      <div className="text-4xl">🌧️</div>
-      <h1 className="text-lg font-bold">We couldn’t load your habits</h1>
-      <p className="max-w-xs text-[0.875rem] text-[var(--text-2)]">
-        {error.message || 'Something went wrong on our side.'}
-      </p>
-      <button
-        type="button"
-        onClick={() => router.invalidate()}
-        className="press mt-1 rounded-2xl bg-[var(--accent)] px-6 py-3 text-[0.9375rem] font-bold text-white"
-      >
-        Try again
-      </button>
-    </div>
+    <>
+      <NavBar title="Habits" />
+      <div className="flex flex-col items-center gap-3 pt-16 text-center">
+        <div className="text-4xl">🌧️</div>
+        <h2 className="t-title3 m-0">We couldn’t load your habits</h2>
+        <p className="t-subhead m-0 max-w-xs text-[var(--text-2)]">
+          {userMessage(
+            error,
+            'Something went wrong on our side — try again in a moment.',
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={() => router.invalidate()}
+          className="btn btn-tinted mt-2 w-auto"
+        >
+          Try Again
+        </button>
+      </div>
+    </>
   )
 }
 
@@ -57,237 +67,162 @@ function greeting(): string {
 
 function Dashboard() {
   const habits = Route.useLoaderData()
-  const router = useRouter()
-  const [addOpen, setAddOpen] = useState(false)
+  // One ticking clock for every row instead of one interval per row.
+  const now = useNow(1000)
 
   return (
-    <div className="pt-6">
-      <header className="anim-rise-in flex items-start justify-between">
-        <div>
-          <p className="text-[0.8125rem] font-semibold tracking-wide text-[var(--text-3)] uppercase">
-            {greeting()}
-          </p>
-          <h1 className="text-[2rem] font-extrabold tracking-tight">Habits</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          aria-label="Add a habit"
-          className="glass press flex h-11 w-11 items-center justify-center rounded-full text-2xl font-light text-[var(--accent)]"
-        >
-          +
-        </button>
-      </header>
+    <>
+      <NavBar
+        title="Habits"
+        subtitle={greeting()}
+        trailing={
+          <Link to="/you" aria-label="Your profile" className="glass glass-press flex h-11 w-11 items-center justify-center rounded-full">
+            <IconPerson className="h-5 w-5" />
+          </Link>
+        }
+      />
 
       {habits.length === 0 ? (
-        <EmptyState onAdd={() => setAddOpen(true)} />
+        <EmptyState />
       ) : habits.length === 1 ? (
-        <div className="anim-rise-in mt-4">
-          <HeroHabitCard habit={habits[0]} />
+        <div className="anim-rise-in">
+          <HeroHabitCell habit={habits[0]} now={now} />
         </div>
       ) : (
-        <ul className="mt-4 flex list-none flex-col gap-3 p-0">
-          {habits.map((habit, i) => (
-            <li
-              key={habit.id}
-              className="anim-rise-in"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <HabitCard habit={habit} />
-            </li>
+        <div className="habit-list dashboard-habits anim-rise-in">
+          {habits.map((habit) => (
+            <HabitRow key={habit.id} habit={habit} now={now} />
           ))}
-        </ul>
+        </div>
       )}
+    </>
+  )
+}
 
-      <NewHabitSheet
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        onCreated={() => router.invalidate()}
-      />
+function EmptyState() {
+  return (
+    <div className="anim-rise-in mt-14 flex flex-col items-center gap-3 px-4 text-center">
+      <div className="text-5xl">🌱</div>
+      <h2 className="t-title2 m-0">Ready when you are</h2>
+      <p className="t-subhead m-0 max-w-[18rem] text-[var(--text-2)]">
+        Pick one thing you want to stop doing. We’ll count every clean minute
+        from there — and resets are part of the journey, not the end of it.
+      </p>
+      <p className="t-footnote m-0 mt-2 text-[var(--text-3)]">
+        Tap <span className="font-semibold text-[var(--accent-text)]">+</span> below
+        to start.
+      </p>
     </div>
   )
 }
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function IconBadge({
+  habit,
+  size,
+}: {
+  habit: HabitSummary
+  size: 'sm' | 'lg'
+}) {
   return (
-    <div className="anim-rise-in mt-16 flex flex-col items-center gap-3 text-center">
-      <div className="text-5xl">🌱</div>
-      <h2 className="text-xl font-bold tracking-tight">
-        Ready when you are
-      </h2>
-      <p className="max-w-[17rem] text-[0.9375rem] leading-relaxed text-[var(--text-2)]">
-        Pick one thing you want to stop doing. We’ll count every clean minute
-        from there — and resets are part of the journey, not the end of it.
-      </p>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="press mt-2 rounded-2xl bg-[var(--accent)] px-6 py-3.5 text-[0.9375rem] font-bold text-white"
-      >
-        Track your first habit
-      </button>
-    </div>
+    <span
+      className={`habit-icon flex shrink-0 items-center justify-center ${
+        size === 'lg'
+          ? 'h-12 w-12 rounded-[14px] text-2xl'
+          : 'h-10 w-10 rounded-[11px] text-xl'
+      }`}
+      style={{ background: habitColor(habit.color) }}
+    >
+      {habit.icon}
+    </span>
   )
 }
 
 /**
  * When someone tracks exactly one habit, the dashboard is that habit's
- * moment — a big glanceable hero card instead of a lonely one-row list.
+ * moment — a big glanceable cell instead of a lonely one-row list.
  */
-function HeroHabitCard({ habit }: { habit: HabitSummary }) {
-  const now = useNow(1000)
+function HeroHabitCell({ habit, now }: { habit: HabitSummary; now: Date }) {
+  const color = habitColor(habit.color)
   const since = currentStreakStart(
     new Date(habit.startDate),
     habit.lastResetAt ? new Date(habit.lastResetAt) : null,
   )
   const ms = Math.max(0, now.getTime() - since.getTime())
-  const p = durationParts(ms)
-  const next = nextMilestone(ms)
-
-  let big: string
-  let unit: string
-  if (p.days >= 1) {
-    big = String(p.days)
-    unit = p.days === 1 ? 'day' : 'days'
-  } else if (p.hours >= 1) {
-    big = String(p.hours)
-    unit = p.hours === 1 ? 'hour' : 'hours'
-  } else {
-    big = String(Math.max(0, p.minutes))
-    unit = p.minutes === 1 ? 'minute' : 'minutes'
-  }
 
   return (
     <Link
       to="/habits/$habitId"
       params={{ habitId: habit.id }}
-      className="card press relative block overflow-hidden p-6 no-underline"
+      className="cell row-press block p-6 text-[var(--text)] no-underline"
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-44"
-        style={{
-          background: `radial-gradient(26rem 13rem at 50% -5rem, ${habit.color}30, transparent 70%)`,
-        }}
-      />
-
-      <span className="relative flex items-center justify-center gap-2.5">
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-lg"
-          style={{
-            background: `${habit.color}1f`,
-            border: `1px solid ${habit.color}44`,
-          }}
-        >
-          {habit.icon}
-        </span>
-        <span className="text-[1.0625rem] font-bold text-[var(--text)]">
-          {habit.name}
-        </span>
+      <span className="flex items-center justify-center gap-3">
+        <IconBadge habit={habit} size="sm" />
+        <span className="t-headline">{habit.name}</span>
       </span>
 
-      <span className="relative mt-6 block text-center">
-        <span
-          className="tabular block text-[5.5rem] leading-none font-extrabold tracking-tighter"
-          style={{ color: habit.color }}
-        >
-          {big}
-        </span>
-        <span className="mt-1 block text-[0.9375rem] font-semibold text-[var(--text-2)]">
-          {unit} clean
-        </span>
-        <span className="tabular mt-2 block font-mono text-[0.8125rem] text-[var(--text-3)]">
-          {formatClock(ms)}
-        </span>
-      </span>
+      <StreakHero sinceMs={ms} since={since} hadResets={habit.totalResets > 0} color={color} />
 
-      {next ? (
-        <span className="relative mt-7 block">
-          <span className="flex items-baseline justify-between text-[0.6875rem] font-semibold tracking-wide text-[var(--text-3)] uppercase">
-            <span>next: {next.label}</span>
-            <span className="tabular">
-              {formatDurationShort(next.ms - ms)} to go
-            </span>
-          </span>
-          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-[var(--field-bg)]">
-            <span
-              className="block h-full rounded-full"
-              style={{
-                width: `${Math.min(100, Math.max(1.5, (ms / next.ms) * 100))}%`,
-                background: habit.color,
-                transition: 'width 1s linear',
-              }}
-            />
-          </span>
-        </span>
-      ) : null}
-
-      <span className="relative mt-5 block text-center text-[0.75rem] text-[var(--text-3)]">
+      <span className="t-footnote mt-5 flex items-center justify-center gap-1 text-[var(--text-3)]">
         {habit.totalResets > 0
-          ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged · tap for stats & history`
-          : 'clean start · tap for stats & milestones'}
+          ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged · stats & history`
+          : 'Clean start · stats & milestones'}
+        <Chevron />
       </span>
     </Link>
   )
 }
 
-function HabitCard({ habit }: { habit: HabitSummary }) {
-  const now = useNow(1000)
+function HabitRow({ habit, now }: { habit: HabitSummary; now: Date }) {
+  const color = habitColor(habit.color)
   const since = currentStreakStart(
     new Date(habit.startDate),
     habit.lastResetAt ? new Date(habit.lastResetAt) : null,
   )
-  const ms = now.getTime() - since.getTime()
-  const p = durationParts(ms)
-
-  let big: string
-  let unit: string
-  if (p.days >= 1) {
-    big = String(p.days)
-    unit = p.days === 1 ? 'day' : 'days'
-  } else if (p.hours >= 1) {
-    big = String(p.hours)
-    unit = p.hours === 1 ? 'hour' : 'hours'
-  } else {
-    big = String(Math.max(0, p.minutes))
-    unit = 'min'
-  }
+  const ms = Math.max(0, now.getTime() - since.getTime())
+  const { value: big, short: unit } = dominantUnit(ms)
+  const next = nextMilestone(ms)
 
   return (
     <Link
       to="/habits/$habitId"
       params={{ habitId: habit.id }}
-      className="card press flex items-center gap-4 p-4 no-underline"
+      className="habit-row cell text-[var(--text)] no-underline"
     >
-      <span
-        className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl text-2xl"
-        style={{ background: `${habit.color}1f`, border: `1px solid ${habit.color}44` }}
-      >
-        {habit.icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.9375rem] font-semibold text-[var(--text)]">
-          {habit.name}
-        </span>
-        <span className="tabular mt-0.5 block font-mono text-[0.75rem] text-[var(--text-3)]">
-          {formatClock(ms)}
+      <IconBadge habit={habit} size="lg" />
+      <span className="habit-copy min-w-0 flex-1">
+        <span className="habit-name t-body block">{habit.name}</span>
+        <span className="habit-meta t-footnote block text-[var(--text-2)]">
           {habit.totalResets > 0
-            ? ` · ${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''}`
-            : ' · clean start'}
+            ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged`
+            : 'A fresh start'}
         </span>
       </span>
-      <span className="flex items-baseline gap-1.5">
+      <span
+        className="habit-streak flex shrink-0 items-baseline gap-1 rounded-full px-3 py-1"
+        style={{ background: tint(color, 12) }}
+      >
         <span
-          className="tabular text-4xl font-extrabold tracking-tight"
-          style={{ color: habit.color }}
+          className="t-rounded tabular text-[1.75rem] leading-none font-semibold"
+          style={{ color: labelColor(color) }}
         >
           {big}
         </span>
-        <span className="text-[0.8125rem] font-semibold text-[var(--text-2)]">
+        <span className="t-footnote font-semibold" style={{ color: labelColor(color) }}>
           {unit}
         </span>
       </span>
-      <span className="text-[var(--text-3)]">›</span>
+      <Chevron />
+      <span className="habit-progress">
+        <span className="habit-goal-label">
+          <span>{next ? 'Next milestone' : 'Every milestone reached'}</span>
+          <span className="font-semibold" style={{ color: labelColor(color) }}>
+            {next?.label ?? '1 year'}
+          </span>
+        </span>
+        <span className="habit-track">
+          <span style={{ background: color, width: `${next ? Math.min(100, (ms / next.ms) * 100) : 100}%` }} />
+        </span>
+      </span>
     </Link>
   )
 }

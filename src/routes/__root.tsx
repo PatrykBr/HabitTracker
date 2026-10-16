@@ -8,9 +8,8 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
+import { THEME_INIT_SCRIPT, watchSystemTheme } from '../lib/theme'
 import appCss from '../styles.css?url'
-
-const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
 
 const APPLE_SPLASH: Array<[string, string]> = [
   [
@@ -71,12 +70,12 @@ export const Route = createRootRoute({
       {
         name: 'theme-color',
         media: '(prefers-color-scheme: dark)',
-        content: '#07080c',
+        content: '#000000',
       },
       {
         name: 'theme-color',
         media: '(prefers-color-scheme: light)',
-        content: '#f2f3f7',
+        content: '#eff2f6',
       },
     ],
     links: [
@@ -92,22 +91,39 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: NotFound,
+  errorComponent: RootError,
   shellComponent: RootDocument,
 })
+
+function RootError() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
+      <h1 className="t-title2">We couldn’t open Reset</h1>
+      <p className="t-subhead text-[var(--text-2)]">
+        Check your connection and try again. Your streaks keep counting.
+      </p>
+      <button
+        type="button"
+        className="btn btn-tinted w-auto"
+        onClick={() => window.location.reload()}
+      >
+        Try again
+      </button>
+    </main>
+  )
+}
 
 function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="text-5xl">🧭</div>
-      <h1 className="text-xl font-bold tracking-tight">
-        This page isn’t here
-      </h1>
+      <h1 className="text-xl font-bold tracking-tight">This page isn’t here</h1>
       <p className="text-[0.9375rem] text-[var(--text-2)]">
         No worries — your streaks are safe.
       </p>
       <Link
         to="/"
-        className="press mt-2 rounded-2xl bg-[var(--accent)] px-6 py-3 text-[0.9375rem] font-bold text-white no-underline"
+        className="btn btn-tinted mt-2 w-auto no-underline"
       >
         Back to your habits
       </Link>
@@ -121,19 +137,26 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
+    return watchSystemTheme()
   }, [])
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Server and client bundles may print the inlined function slightly differently. */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <HeadContent />
       </head>
       <body className="font-sans antialiased">
+        <div className="app-canvas" aria-hidden />
         {children}
         <TanStackDevtools
           config={{
-            position: 'bottom-right',
+            position: 'top-right',
+            requireUrlFlag: true,
           }}
           plugins={[
             {

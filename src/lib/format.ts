@@ -17,6 +17,31 @@ export function durationParts(ms: number): DurationParts {
   }
 }
 
+export interface DominantUnit {
+  /** The number to show big. */
+  value: number
+  /** Full unit word, pluralized: "day" / "days" / "hour" / "minutes". */
+  unit: string
+  /** Compact unit for tight layouts: "day(s)" stays, "hours" → "hr", "minutes" → "min". */
+  short: string
+}
+
+/**
+ * The single most meaningful unit for a streak: days once a day has passed,
+ * then hours, then minutes. Used by every big streak number so they agree.
+ */
+export function dominantUnit(ms: number): DominantUnit {
+  const p = durationParts(ms)
+  if (p.days >= 1) {
+    const unit = p.days === 1 ? 'day' : 'days'
+    return { value: p.days, unit, short: unit }
+  }
+  if (p.hours >= 1) {
+    return { value: p.hours, unit: p.hours === 1 ? 'hour' : 'hours', short: 'hr' }
+  }
+  return { value: p.minutes, unit: p.minutes === 1 ? 'minute' : 'minutes', short: 'min' }
+}
+
 /** "12d 4h" · "4h 23m" · "23m" · "45s" */
 export function formatDurationShort(ms: number): string {
   const p = durationParts(ms)

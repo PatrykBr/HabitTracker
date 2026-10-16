@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 interface CelebrationProps {
   /** Bump this key (e.g. milestone label) to trigger a celebration. */
   trigger: string | null
+  /** Resolved CSS color (see `habitColor`). */
   color: string
   onDone: () => void
 }
 
 const PIECES = 18
+const CONFETTI = ['var(--c-yellow)', 'var(--c-blue)', 'var(--c-pink)']
 
 /** Small celebratory moment when a milestone is crossed. */
 export default function Celebration({ trigger, color, onDone }: CelebrationProps) {
@@ -37,25 +39,24 @@ export default function Celebration({ trigger, color, onDone }: CelebrationProps
           className="absolute top-0 block h-2.5 w-1.5 rounded-sm"
           style={{
             left: `${(i * 100) / PIECES + 2}%`,
-            background: i % 3 === 0 ? color : i % 3 === 1 ? '#FFB020' : '#4EA8FF',
+            background: i % 3 === 0 ? color : CONFETTI[i % CONFETTI.length],
             animation: `confetti-fall ${1.6 + (i % 5) * 0.25}s ease-in ${(i % 7) * 0.12}s both`,
           }}
         />
       ))}
-      <div className="flex h-full items-center justify-center">
-        <div className="glass anim-pop-in relative rounded-3xl px-8 py-6 text-center">
+      <div className="flex h-full items-center justify-center px-8">
+        <div className="glass-strong anim-pop-in relative rounded-[var(--r-cell)] px-8 py-6 text-center">
           <span
-            className="absolute inset-0 rounded-3xl"
+            aria-hidden
+            className="absolute inset-0 rounded-[var(--r-cell)]"
             style={{
               border: `2px solid ${color}`,
               animation: 'celebrate-ring 1.1s ease-out both',
             }}
           />
           <div className="text-4xl">🎉</div>
-          <div className="mt-2 text-lg font-extrabold tracking-tight">
-            {trigger}
-          </div>
-          <div className="mt-0.5 text-[0.8125rem] text-[var(--text-2)]">
+          <div className="t-title2 t-rounded mt-2">{trigger}</div>
+          <div className="t-footnote mt-1 text-[var(--text-2)]">
             One moment at a time. You earned this.
           </div>
         </div>
