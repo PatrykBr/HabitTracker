@@ -29,29 +29,22 @@ function serviceWorker(): Plugin {
       const { count, size, warnings } = await generateSW({
         swDest: path.join(clientDist, 'sw.js'),
         globDirectory: clientDist,
-        globPatterns: ['**/*.{js,css,svg,png,webmanifest,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,svg,png,webmanifest,woff2}',
+          'offline.html',
+        ],
+        importScripts: ['/sw-cleanup.js'],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         sourcemap: false,
         runtimeCaching: [
           {
-            // SSR'd pages: network first, cached copy when offline.
+            // SSR HTML contains private loader data. Never put it in Cache Storage.
             urlPattern: ({ request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
+            handler: 'NetworkOnly',
             options: {
-              cacheName: 'pages',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 60 * 24 * 14 },
-            },
-          },
-          {
-            urlPattern: ({ request }) =>
-              request.destination === 'image' || request.destination === 'font',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-media',
-              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              precacheFallback: { fallbackURL: '/offline.html' },
             },
           },
         ],
@@ -67,7 +60,7 @@ function serviceWorker(): Plugin {
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools(),
+    devtools({ consolePiping: { enabled: false } }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
