@@ -1,12 +1,15 @@
 // Starts a throwaway in-memory MongoDB for local dev/smoke-testing.
-// Run: node scripts/dev-mongo.mjs  → prints the URI and stays alive.
-import { MongoMemoryServer } from 'mongodb-memory-server'
+// Run: bun run dev:mongo → prints the URI and stays alive.
+import { MongoMemoryReplSet } from 'mongodb-memory-server'
 
-const server = await MongoMemoryServer.create({
-  instance: { port: 27017, ip: '127.0.0.1' },
+const server = await MongoMemoryReplSet.create({
+  instanceOpts: [{ port: 27017 }],
+  replSet: { count: 1, ip: '127.0.0.1' },
 })
 console.log(`MONGODB_URI=${server.getUri()}`)
-process.on('SIGINT', async () => {
+const stop = async () => {
   await server.stop()
   process.exit(0)
-})
+}
+process.on('SIGINT', stop)
+process.on('SIGTERM', stop)

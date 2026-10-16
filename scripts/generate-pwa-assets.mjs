@@ -1,5 +1,5 @@
 // One-off generator for PWA icons + iOS splash screens.
-// Run: pnpm generate:pwa-assets  (outputs are committed to public/)
+// Run: bun run generate:pwa-assets (outputs are committed to public/)
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
