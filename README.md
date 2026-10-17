@@ -40,6 +40,7 @@ bun run dev:mongo     # single-node replica set on port 27017
 ```bash
 bun run dev                  # Vite dev server running on Bun
 bun run build                # production build (includes service worker)
+bun run build:vercel         # Vercel functions and public assets in .vercel/output
 bun run start                # Bun production server; build first
 bun run preview              # same production server, for local preview
 bun run generate-routes      # regenerate route tree after adding routes
@@ -49,6 +50,7 @@ bun run test:watch            # rerun tests when files change
 bun run test:coverage        # unit tests with Bun coverage
 bun run smoke:data           # isolated Mongo/auth/import checks; starts its own DB
 bun run smoke:server         # production HTTP/auth/PWA checks; build first
+bun run smoke:vercel         # Vercel artifact, SSR and auth checks; build:vercel first
 bun run smoke:ui             # browser flows, focus, offline/PWA; build first
 bun run generate:pwa-assets  # regenerate PWA icons and splash screens
 bun audit                    # check dependency advisories
@@ -77,6 +79,34 @@ The server uses `Bun.serve`, streams public files with `Bun.file`, and delegates
 SSR/auth/RPC to TanStack Start. Hashed assets are immutable; service workers
 and other public files revalidate. App responses retain `private, no-store`.
 Platform-specific deployments need the corresponding TanStack adapter.
+
+### Vercel
+
+Use the TanStack Start framework preset, `bun run build` as the build command,
+and the default output directory setting. The Vercel build environment enables
+Nitro, which writes the server function and routing config to `.vercel/output`.
+Do not set the output directory to `dist/client`; it has no server function.
+Nitro uses TanStack Start's SSR entry. The root `server.ts` starts the standalone
+Bun server and must not be used as Nitro's server entry.
+
+Set `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` in the Vercel
+environment. For this project, the production auth URL is
+`https://habit-tracker-001-livid.vercel.app`. MongoDB must accept connections
+from the deployment and support transactions. Vercel supplies the client IP
+header for auth rate limits; `TRUST_PROXY` applies only to the standalone server.
+
+Check the Vercel artifact locally before deploying:
+
+```bash
+bun run build:vercel
+bun run smoke:vercel
+```
+
+The smoke check starts a temporary MongoDB replica set and calls the generated
+function. It checks the root redirect, login page, auth session endpoint,
+private cache headers, client asset links, and public PWA files. It does not
+contact the configured database. Push the changes and redeploy to update the
+production site.
 
 The Bun server limits request bodies to 64 KiB and uses the socket peer address
 for auth rate limits. When deploying behind a reverse proxy, set

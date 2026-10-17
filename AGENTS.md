@@ -72,11 +72,13 @@ bun run generate-routes      # Regenerate routeTree.gen.ts after adding routes.
 bun run typecheck            # Run Bun's native TypeScript checker.
 bun test                     # Run unit tests in src.
 bun run build                # Build production files and dist/client/sw.js.
+bun run build:vercel         # Build Vercel functions and public assets.
 bun run start                # Start the Bun production server after building.
 bun run test:watch           # Watch unit tests.
 bun run test:coverage        # Run unit tests with coverage.
 bun run smoke:data           # Run Mongo, auth, and import tests with an isolated database.
 bun run smoke:server         # Run HTTP, auth, and PWA checks after building.
+bun run smoke:vercel         # Check the Vercel artifact after build:vercel.
 bun run smoke:ui             # Run browser, focus, offline, and PWA checks after building.
 bun run generate:pwa-assets  # Regenerate icons and iPhone splash screens with Sharp.
 ```
@@ -238,6 +240,14 @@ revalidate. Private responses remain no-store.
 `package.json`, `bun.lock`, and production dependencies installed with
 `bun install --production --frozen-lockfile`. Other hosts need their TanStack
 Start adapter.
+
+Vercel builds enable Nitro when `VERCEL=1` or `NITRO_PRESET=vercel`. Nitro's
+`serverEntry: false` prevents it from choosing the standalone `server.ts`.
+It uses Start's SSR service and generates `.vercel/output`, including a
+catch-all server function route. Keep Vercel's output directory setting at its
+default. The service worker runs after Nitro builds and copies public assets,
+using `.vercel/output/static`. Ordinary builds keep the standalone `dist/`
+layout. `smoke:vercel` calls the generated function with an isolated replica set.
 
 - Set `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL`. The URL must
   match the public origin for auth cookies and redirects to work.
