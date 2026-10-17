@@ -248,6 +248,11 @@ catch-all server function route. Keep Vercel's output directory setting at its
 default. The service worker runs after Nitro builds and copies public assets,
 using `.vercel/output/static`. Ordinary builds keep the standalone `dist/`
 layout. `smoke:vercel` calls the generated function with an isolated replica set.
+Vercel functions use `vercel.functions.runtime: 'nodejs24.x'` explicitly. Nitro
+otherwise selects Bun because builds run on Bun. Vercel's Bun runtime lacks
+the V8 snapshot API called by BSON during import. Keep Bun for tooling and the
+standalone server. `smoke:vercel` requires Node.js 24 and runs the generated
+function in a Node subprocess, including MongoDB auth and dashboard checks.
 
 - Set `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL`. The URL must
   match the public origin for auth cookies and redirects to work.

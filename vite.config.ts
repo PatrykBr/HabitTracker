@@ -68,6 +68,8 @@ export default defineConfig({
       preset: 'vercel',
       // server.ts starts the standalone Bun server. Nitro uses Start's SSR service.
       serverEntry: false,
+      // Vercel's Bun runtime lacks the V8 snapshot API used by BSON.
+      vercel: { functions: { runtime: 'nodejs24.x' } },
       routeRules: {
         // Redirect responses can bypass Start's response headers.
         '/**': { headers: { 'cache-control': 'private, no-store' } },

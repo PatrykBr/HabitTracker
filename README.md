@@ -89,6 +89,11 @@ Do not set the output directory to `dist/client`; it has no server function.
 Nitro uses TanStack Start's SSR entry. The root `server.ts` starts the standalone
 Bun server and must not be used as Nitro's server entry.
 
+Vercel functions explicitly use Node.js 24. Nitro otherwise selects Bun when
+the build runs on Bun, but Vercel's Bun runtime lacks the V8 snapshot API that
+MongoDB's BSON dependency calls on import. Bun still manages packages, builds,
+and tests. Install Node.js 24 locally to run `smoke:vercel`.
+
 Set `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` in the Vercel
 environment. For this project, the production auth URL is
 `https://habit-tracker-001-livid.vercel.app`. MongoDB must accept connections
@@ -103,8 +108,9 @@ bun run smoke:vercel
 ```
 
 The smoke check starts a temporary MongoDB replica set and calls the generated
-function. It checks the root redirect, login page, auth session endpoint,
-private cache headers, client asset links, and public PWA files. It does not
+function under Node.js 24. It checks the root redirect, login page, signup,
+sign-in, session, dashboard, private cache headers, client asset links, and
+public PWA files. It does not
 contact the configured database. Push the changes and redeploy to update the
 production site.
 
