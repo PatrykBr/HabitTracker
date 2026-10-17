@@ -1,59 +1,95 @@
-# Relapse Ledger
+# Reset
 
-A mobile-first full-stack bad habit tracker for logging resets, backdating slips, seeing calendar history, and measuring progress.
+Reset tracks habits you're trying to quit. Each habit has a live streak counter,
+reset history, stats, milestones, and a calendar. You can log a reset now or enter
+when it happened earlier.
 
-## Stack
+The app uses Bun, TanStack Start, MongoDB, and Better Auth. You can install it
+as a PWA. The interface has a bottom tab bar, modal sheets, and light and dark
+themes. The offline fallback contains no private data.
 
-- Next.js 16 App Router
-- React 19 + TypeScript
-- Tailwind CSS 4
-- Better Auth email/password auth
-- MongoDB Atlas via the native MongoDB driver
-- date-fns and Zod
+## Quick start
 
-## Local setup
-
-1. Install dependencies:
-
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-2. Copy environment variables:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-3. Fill in:
-
-   - `MONGODB_URI` with your MongoDB Atlas connection string
-   - `MONGODB_DB` with the database name
-   - `MONGODB_ENABLE_TRANSACTIONS` set to `true` for Atlas/replica set deployments or `false` for standalone local MongoDB
-   - `MONGODB_OPERATION_TIMEOUT_MS` with the maximum time for short MongoDB operations; the example uses `10000` for this app's indexed CRUD/stat workload
-   - `BETTER_AUTH_SECRET` with a real 32+ character secret
-   - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` with the app origin
-   - `RESEND_API_KEY` and `EMAIL_FROM` for password reset and verification emails
-
-4. Create MongoDB indexes and validators:
-
-   ```bash
-   npm run db:indexes
-   ```
-
-5. Run the app:
-
-   ```bash
-   npm run dev
-   ```
-
-## Verification
+Install Bun 1.4.3 or newer. The tested version is pinned in `.bun-version`.
+Upgrade an existing installation with `bun upgrade`.
 
 ```bash
-npm run typecheck
-npm run lint
-npm run build
+bun install --frozen-lockfile
+cp .env.example .env   # set MONGODB_URI, BETTER_AUTH_SECRET and BETTER_AUTH_URL
+bun run dev           # http://localhost:3000
 ```
 
-For production builds, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` must be set.
-Password reset and email verification require `RESEND_API_KEY` and `EMAIL_FROM` in production.
+For local development, start a temporary MongoDB replica set in a separate terminal:
+
+```bash
+bun run dev:mongo     # single-node replica set on port 27017
+```
+
+## Environment variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `MONGODB_URI` | yes | MongoDB replica-set connection string (Atlas or local) |
+| `MONGODB_DB` | no | Database name (default `reset-tracker`) |
+| `BETTER_AUTH_SECRET` | yes | `openssl rand -base64 32` |
+| `BETTER_AUTH_URL` | yes | Exact app origin, e.g. `http://localhost:3000` |
+| `TRUST_PROXY` | no | Bun server only; default `false`. See proxy requirements below. |
+
+## Commands
+
+```bash
+bun run dev                  # Vite dev server running on Bun
+bun run build                # production build (includes service worker)
+bun run start                # Bun production server; build first
+bun run preview              # same production server, for local preview
+bun run generate-routes      # regenerate route tree after adding routes
+bun run typecheck            # Bun's native TypeScript check
+bun test                     # Bun unit tests
+bun run test:watch            # rerun tests when files change
+bun run test:coverage        # unit tests with Bun coverage
+bun run smoke:data           # isolated Mongo/auth/import checks; starts its own DB
+bun run smoke:server         # production HTTP/auth/PWA checks; build first
+bun run smoke:ui             # browser flows, focus, offline/PWA; build first
+bun run generate:pwa-assets  # regenerate PWA icons and splash screens
+bun audit                    # check dependency advisories
+```
+
+For browser checks, install Chromium once with `bunx playwright install chromium`.
+You can also set `PLAYWRIGHT_EXECUTABLE_PATH` to an installed Chromium or Edge
+executable. Smoke checks use temporary replica sets and fresh
+accounts; they never use the configured database or your browser profile.
+
+Bun manages packages through `bun.lock`, runs the tooling and TypeScript scripts,
+loads `.env`, and supplies the test runner, file I/O and subprocess APIs.
+Vite remains the bundler for TanStack Start's routing, server-function and SSR
+plugins. Bun's native `bun check` validates TypeScript. Sharp generates image
+assets.
+Router devtools are available in development at `?tanstack-devtools` and are
+excluded from production through a conditional import.
+Dependency install scripts are limited to the packages listed in
+`trustedDependencies` in `package.json`.
+
+For production, run `bun run build` followed by `bun run start`. Deploy
+`server.ts`, `dist/`, `package.json`, `bun.lock` and production dependencies
+installed with `bun install --production --frozen-lockfile`. Set the app's
+environment variables above; `PORT` defaults to 3000 and `HOST` to `0.0.0.0`.
+The server uses `Bun.serve`, streams public files with `Bun.file`, and delegates
+SSR/auth/RPC to TanStack Start. Hashed assets are immutable; service workers
+and other public files revalidate. App responses retain `private, no-store`.
+Platform-specific deployments need the corresponding TanStack adapter.
+
+The Bun server limits request bodies to 64 KiB and uses the socket peer address
+for auth rate limits. When deploying behind a reverse proxy, set
+`TRUST_PROXY=true` only if that proxy sets `X-Forwarded-For` to one verified
+client IP and the backend cannot be reached directly by untrusted clients.
+Otherwise leave it `false`; requests through a proxy then share that proxy's
+rate-limit bucket. Other server adapters must establish their own trusted
+client-IP policy.
+
+See [AGENTS.md](./AGENTS.md) for architecture, key decisions, deployment
+notes, and project constraints.
+
+MongoDB transactions require a replica set. Restart any older standalone
+`bun run dev:mongo` process after upgrading. Auth indexes are created on first
+access; an existing database with duplicate identities needs cleanup before
+those unique indexes can be installed.

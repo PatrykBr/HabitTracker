@@ -1,36 +1,66 @@
 {
-  "name": "habit-tracker-4",
-  "version": "0.1.0",
+  "name": "reset-tracker",
   "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.3",
+  "engines": {
+    "bun": ">=1.4.3"
+  },
+  "imports": {
+    "#/*": "./src/*"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "db:indexes": "node scripts/create-indexes.mjs"
+    "dev": "bun --bun vite dev --port 3000",
+    "generate-routes": "bun --bun tsr generate",
+    "build": "bun --bun vite build",
+    "start": "NODE_ENV=production bun server.ts",
+    "preview": "bun run start",
+    "typecheck": "bun check",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "dev:mongo": "bun scripts/dev-mongo.mjs",
+    "generate:pwa-assets": "bun scripts/generate-pwa-assets.mjs",
+    "smoke:data": "bun --no-env-file scripts/smoke-data.mjs",
+    "smoke:server": "bun --no-env-file scripts/smoke-server.mjs",
+    "smoke:ui": "bun --no-env-file scripts/smoke-ui.mjs"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "4.3.1",
-    "better-auth": "1.6.20",
-    "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
-    "date-fns": "4.4.0",
-    "lucide-react": "1.21.0",
-    "mongodb": "7.3.0",
-    "next": "16.2.9",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "tailwind-merge": "3.6.0",
-    "tailwindcss": "4.3.1",
-    "zod": "4.4.3"
+    "@tanstack/react-router": "^1.170.41",
+    "@tanstack/react-start": "^1.168.60",
+    "better-auth": "^1.6.25",
+    "mongodb": "^7.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "26.0.0",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
-    "eslint": "9.39.4",
-    "eslint-config-next": "16.2.9",
-    "typescript": "6.0.3"
-  }
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-router-devtools": "^1.167.2",
+    "@tanstack/router-cli": "^1.132.0",
+    "@tanstack/router-core": "1.171.34",
+    "@types/bun": "1.4.3",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "mongodb-memory-server": "^11.2.0",
+    "playwright": "1.64.1",
+    "seroval": "^1.6.9",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "workbox-build": "^7.4.1"
+  },
+  "overrides": {
+    "@tanstack/react-start": "1.168.60",
+    "seroval": "^1.6.9"
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "lightningcss",
+    "mongodb-memory-server",
+    "sharp"
+  ]
 }
