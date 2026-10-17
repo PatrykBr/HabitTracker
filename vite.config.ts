@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
+import { nitro } from 'nitro/vite'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
@@ -57,6 +58,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     tanstackStart(),
+    nitro(),
     viteReact(),
     serviceWorker(),
   ],
