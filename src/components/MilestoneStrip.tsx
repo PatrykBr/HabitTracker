@@ -9,7 +9,7 @@ interface MilestoneStripProps {
   color: string
 }
 
-/** Horizontal strip of milestone chips: 24h → 1 year. */
+/** Show milestones from 24 hours to 1 year. */
 export default function MilestoneStrip({ streakMs, color }: MilestoneStripProps) {
   const next = nextMilestone(streakMs)
   return (
@@ -44,11 +44,11 @@ export default function MilestoneStrip({ streakMs, color }: MilestoneStripProps)
       <p className="t-footnote mt-3 mb-0 text-(--text-2)">
         {next ? (
           <>
-            Next up: <span className="font-semibold text-(--text)">{next.label}</span>{' '}
-            — about {formatDurationHuman(next.ms - streakMs)} away.
+            Next milestone: <span className="font-semibold text-(--text)">{next.label}</span>{' '}
+            in about {formatDurationHuman(next.ms - streakMs)}.
           </>
         ) : (
-          <>Every milestone, reached. Extraordinary.</>
+          <>All milestones reached.</>
         )}
       </p>
     </div>

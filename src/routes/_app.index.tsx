@@ -38,11 +38,11 @@ function DashboardError({ error }: { error: unknown }) {
       <NavBar title="Habits" />
       <div className="flex flex-col items-center gap-3 pt-16 text-center">
         <div className="text-4xl">🌧️</div>
-        <h2 className="t-title3 m-0">We couldn’t load your habits</h2>
+        <h2 className="t-title3 m-0">We couldn't load your habits</h2>
         <p className="t-subhead m-0 max-w-xs text-(--text-2)">
           {userMessage(
             error,
-            'Something went wrong on our side — try again in a moment.',
+            'Try again to load your habits.',
           )}
         </p>
         <button
@@ -50,7 +50,7 @@ function DashboardError({ error }: { error: unknown }) {
           onClick={() => router.invalidate()}
           className="btn btn-tinted mt-2 w-auto"
         >
-          Try Again
+          Try again
         </button>
       </div>
     </>
@@ -59,7 +59,7 @@ function DashboardError({ error }: { error: unknown }) {
 
 function greeting(): string {
   const h = new Date().getHours()
-  if (h < 5) return 'Still going'
+  if (h < 5) return 'Good evening'
   if (h < 12) return 'Good morning'
   if (h < 18) return 'Good afternoon'
   return 'Good evening'
@@ -103,10 +103,10 @@ function EmptyState() {
   return (
     <div className="anim-rise-in mt-14 flex flex-col items-center gap-3 px-4 text-center">
       <div className="text-5xl">🌱</div>
-      <h2 className="t-title2 m-0">Ready when you are</h2>
+      <h2 className="t-title2 m-0">Add a habit</h2>
       <p className="t-subhead m-0 max-w-[18rem] text-(--text-2)">
-        Pick one thing you want to stop doing. We’ll count every clean minute
-        from there — and resets are part of the journey, not the end of it.
+        Choose a habit you're trying to quit. Reset tracks the time since you
+        started or last logged a reset.
       </p>
       <p className="t-footnote m-0 mt-2 text-(--text-3)">
         Tap <span className="font-semibold text-(--accent-text)">+</span> below
@@ -138,8 +138,7 @@ function IconBadge({
 }
 
 /**
- * When someone tracks exactly one habit, the dashboard is that habit's
- * moment — a big glanceable cell instead of a lonely one-row list.
+ * Show the full streak counter when the user tracks one habit.
  */
 function HeroHabitCell({ habit, now }: { habit: HabitSummary; now: Date }) {
   const color = habitColor(habit.color)
@@ -164,8 +163,8 @@ function HeroHabitCell({ habit, now }: { habit: HabitSummary; now: Date }) {
 
       <span className="t-footnote mt-5 flex items-center justify-center gap-1 text-(--text-3)">
         {habit.totalResets > 0
-          ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged · stats & history`
-          : 'Clean start · stats & milestones'}
+          ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged · stats and history`
+          : 'No resets logged · stats and milestones'}
         <Chevron />
       </span>
     </Link>
@@ -194,7 +193,7 @@ function HabitRow({ habit, now }: { habit: HabitSummary; now: Date }) {
         <span className="habit-meta t-footnote block text-(--text-2)">
           {habit.totalResets > 0
             ? `${habit.totalResets} reset${habit.totalResets > 1 ? 's' : ''} logged`
-            : 'A fresh start'}
+            : 'No resets logged'}
         </span>
       </span>
       <span

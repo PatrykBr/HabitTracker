@@ -7,7 +7,7 @@ import sharp from 'sharp'
 const BG = '#07080c'
 const ACCENT = '#2fd6a7'
 
-/** App glyph: a circular "reset" arrow with a fresh-start dot. */
+/** Draw a circular reset arrow with a dot. */
 function glyphSvg(size, { withBg = true, pad = 0.18 } = {}) {
   const s = size
   const c = s / 2

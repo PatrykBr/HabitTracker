@@ -20,7 +20,7 @@ export interface ResetDoc {
   _id: ObjectId
   habitId: ObjectId
   userId: string
-  /** When the reset actually happened (may be backdated). Stored in UTC. */
+  /** When the reset happened. May be backdated. Stored in UTC. */
   timestamp: Date
   trigger: string | null
   note: string | null
@@ -46,7 +46,7 @@ export function getDb(): Db {
 
 let indexesPromise: Promise<unknown> | undefined
 
-/** Await before serving requests: uniqueness is a constraint, not an optimization. */
+/** Wait for unique indexes before serving authentication or data requests. */
 export function ensureIndexes(): Promise<unknown> {
   const db = getDb()
   return (indexesPromise ??= Promise.all([

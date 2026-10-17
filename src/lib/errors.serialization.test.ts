@@ -17,8 +17,8 @@ describe('configured RPC error serialization', () => {
     try {
       for (const [error, expected] of [
         [
-          new UserFacingError('The start date can’t be in the future.'),
-          'The start date can’t be in the future.',
+          new UserFacingError('The start date can\'t be in the future.'),
+          'The start date can\'t be in the future.',
         ],
         [new Error('database-internals'), 'Try again.'],
       ] as const) {

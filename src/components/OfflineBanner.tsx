@@ -1,9 +1,7 @@
 import { useOnline } from '../lib/hooks'
 
 /**
- * Clear offline state as a floating glass capsule under the nav bar. Writes
- * are disabled while offline (v1 keeps it simple — no offline write queue),
- * so tell the user what's going on.
+ * Show offline status. Writes remain disabled until the browser reconnects.
  */
 export default function OfflineBanner() {
   const online = useOnline()
@@ -15,7 +13,7 @@ export default function OfflineBanner() {
       style={{ top: 'calc(env(safe-area-inset-top) + 3.75rem)' }}
     >
       <div className="glass anim-rise-in t-footnote pointer-events-auto max-w-sm rounded-full px-4 py-2 text-center font-medium text-(--text-2)">
-        You’re offline — streaks keep counting, logging is paused.
+        You're offline. Streaks keep counting. Reconnect to log a reset.
       </div>
     </div>
   )

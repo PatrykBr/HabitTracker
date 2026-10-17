@@ -21,9 +21,7 @@ interface JourneyTimelineProps {
 }
 
 /**
- * The habit's story as a vertical timeline: the live current streak at the
- * top, every reset in between, the start date at the bottom. Reads as a
- * journey rather than a bare list — even with zero or one reset.
+ * Show the current streak, recent resets, and tracking start date.
  */
 export default function JourneyTimeline({
   startDate,
@@ -35,7 +33,7 @@ export default function JourneyTimeline({
 }: JourneyTimelineProps) {
   return (
     <ol className="relative m-0 list-none p-0 before:absolute before:inset-y-2 before:left-1.5 before:w-px before:bg-(--separator) before:content-['']">
-      {/* Now — the live streak */}
+      {/* Current streak */}
       <li className="relative flex items-start gap-3.5 pb-5">
         <span className="relative mt-1 flex h-3.25 w-3.25 shrink-0">
           <span
@@ -45,10 +43,10 @@ export default function JourneyTimeline({
         </span>
         <div className="min-w-0 flex-1">
           <div className="tabular t-headline" style={{ color: labelColor(color) }}>
-            {formatDurationShort(currentStreakMs)} clean
+            {formatDurationShort(currentStreakMs)}
           </div>
           <div className="t-footnote text-(--text-2)">
-            Your streak right now — still going
+            Current streak
           </div>
         </div>
       </li>
@@ -88,7 +86,7 @@ const JourneyHistory = memo(function JourneyHistory({
             <div className="t-subhead font-semibold">Streak restarted</div>
             <div className="t-footnote text-(--text-2)">
               {formatDateTime(new Date(reset.timestamp))} · after{' '}
-              {formatDurationShort(brokenMs.get(reset.id) ?? 0)} clean
+              {formatDurationShort(brokenMs.get(reset.id) ?? 0)}
             </div>
             {reset.trigger ? (
               <span
@@ -100,7 +98,7 @@ const JourneyHistory = memo(function JourneyHistory({
             ) : null}
             {reset.note ? (
               <p className="t-footnote mt-1.5 mb-0 text-(--text-2)">
-                “{reset.note}”
+                {reset.note}
               </p>
             ) : null}
           </div>
@@ -146,14 +144,14 @@ const JourneyHistory = memo(function JourneyHistory({
         </li>
       ) : null}
 
-      {/* The day it all began */}
+      {/* Tracking start */}
       <li className="relative flex items-start gap-3.5">
         <span className="mt-1 h-3.25 w-3.25 shrink-0 rounded-full border-2 border-(--text-3) bg-(--bg-2)" />
         <div className="min-w-0 flex-1">
-          <div className="t-subhead font-semibold">Started the quit</div>
+          <div className="t-subhead font-semibold">Started tracking</div>
           <div className="t-footnote text-(--text-2)">
             {formatDate(startDate)}
-            {resets.length === 0 ? ' — clean ever since' : ''}
+            {resets.length === 0 ? ' · no resets logged' : ''}
           </div>
         </div>
       </li>

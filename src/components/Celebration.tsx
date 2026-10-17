@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent } from 'react'
 
 interface CelebrationProps {
-  /** Bump this key (e.g. milestone label) to trigger a celebration. */
+  /** A milestone label starts the animation. Null hides it. */
   trigger: string | null
   /** Resolved CSS color (see `habitColor`). */
   color: string
@@ -11,7 +11,7 @@ interface CelebrationProps {
 const PIECES = 18
 const CONFETTI = ['var(--c-yellow)', 'var(--c-blue)', 'var(--c-pink)']
 
-/** Small celebratory moment when a milestone is crossed. */
+/** Show a milestone message and confetti for 2.6 seconds. */
 export default function Celebration({ trigger, color, onDone }: CelebrationProps) {
   const finish = useEffectEvent(onDone)
 
@@ -49,7 +49,7 @@ export default function Celebration({ trigger, color, onDone }: CelebrationProps
           <div className="text-4xl">🎉</div>
           <div className="t-title2 t-rounded mt-2">{trigger}</div>
           <div className="t-footnote mt-1 text-(--text-2)">
-            One moment at a time. You earned this.
+            Milestone reached.
           </div>
         </div>
       </div>

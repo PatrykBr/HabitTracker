@@ -8,8 +8,7 @@ interface GroupProps {
 }
 
 /**
- * Inset grouped list section: Title-Case header, a borderless 26pt-radius
- * cell holding rows with hairline separators, optional footnote.
+ * Group form rows with a heading, separators, and an optional footer.
  */
 export function Group({
   title,

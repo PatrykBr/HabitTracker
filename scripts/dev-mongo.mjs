@@ -1,5 +1,5 @@
 // Starts a throwaway in-memory MongoDB for local dev/smoke-testing.
-// Run: bun run dev:mongo → prints the URI and stays alive.
+// Run bun run dev:mongo to print the URI and keep the replica set running.
 import { MongoMemoryReplSet } from 'mongodb-memory-server'
 
 const server = await MongoMemoryReplSet.create({

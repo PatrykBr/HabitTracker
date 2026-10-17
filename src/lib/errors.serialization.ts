@@ -13,7 +13,7 @@ export const errorAdapter = createSerializationAdapter({
       userFacing,
       message: userFacing
         ? error.message
-        : 'We couldn’t complete that request. Try again.',
+        : 'We couldn\'t complete that request. Try again.',
     }
   },
   fromSerializable: ({

@@ -2,9 +2,7 @@ import { z } from 'zod'
 import { UserFacingError } from './errors'
 
 /**
- * Validation schemas shared by the client (forms) and the server (server
- * functions). One home per rule and per message, so the copy the user sees
- * before submitting is exactly what the server would say.
+ * Forms and server functions share these validation schemas and messages.
  */
 
 export const USERNAME_MIN = 3
@@ -17,7 +15,7 @@ export const usernameSchema = z
   .trim()
   .regex(
     new RegExp(`^[a-zA-Z0-9_.]{${USERNAME_MIN},${USERNAME_MAX}}$`),
-    `Usernames are ${USERNAME_MIN}–${USERNAME_MAX} characters: letters, numbers, dots or underscores.`,
+    `Usernames must have ${USERNAME_MIN} to ${USERNAME_MAX} characters. Use letters, numbers, dots or underscores.`,
   )
 
 export const passwordSchema = z
@@ -51,15 +49,15 @@ export const habitFormSchema = z
     icon: z.string().min(1).max(8),
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
     startDate: z.iso.datetime({
-      error: 'That start date doesn’t look right — try again.',
+      error: 'Enter a valid start date.',
     }),
     costPerUnit: positiveNumber(1_000_000).nullable(),
     unitsPerDay: positiveNumber(10_000).nullable(),
   })
-  // Savings stats need both numbers - half-filled settings would silently do nothing.
+  // Savings estimates require both cost per unit and units per day.
   .refine((d) => (d.costPerUnit === null) === (d.unitsPerDay === null), {
     message:
-      'To track savings, fill in both cost per unit and units per day — or leave both empty.',
+      'Enter both cost per unit and units per day, or leave both empty.',
   })
 
 export type HabitFormInput = z.infer<typeof habitFormSchema>
@@ -81,7 +79,7 @@ const optionalText = (max: number) =>
 export const logResetSchema = z.object({
   habitId: z.string(),
   timestamp: z.iso.datetime({
-    error: 'That date and time doesn’t look right — try again.',
+    error: 'Enter a valid date and time.',
   }),
   trigger: optionalText(32),
   note: optionalText(500),
@@ -91,9 +89,7 @@ export type LogResetInput = z.infer<typeof logResetSchema>
 
 /** First validation message from a failed `safeParse`, for inline form errors. */
 export function firstIssueMessage(error: z.ZodError): string {
-  return (
-    error.issues[0]?.message ?? 'Something doesn’t look right — check the form.'
-  )
+  return error.issues[0]?.message ?? 'Check the form and try again.'
 }
 
 /** Form validation uses the same safe, inline error path as expected server errors. */

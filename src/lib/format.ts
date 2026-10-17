@@ -18,17 +18,17 @@ export function durationParts(ms: number): DurationParts {
 }
 
 export interface DominantUnit {
-  /** The number to show big. */
+  /** Value for the main streak counter. */
   value: number
   /** Full unit word, pluralized: "day" / "days" / "hour" / "minutes". */
   unit: string
-  /** Compact unit for tight layouts: "day(s)" stays, "hours" → "hr", "minutes" → "min". */
+  /** Compact unit label. Use "day" or "days", "hr" for hours, and "min" for minutes. */
   short: string
 }
 
 /**
- * The single most meaningful unit for a streak: days once a day has passed,
- * then hours, then minutes. Used by every big streak number so they agree.
+ * Use days for streaks of at least a day, then hours, then minutes.
+ * Share this unit selection across streak counters.
  */
 export function dominantUnit(ms: number): DominantUnit {
   const p = durationParts(ms)
@@ -42,7 +42,7 @@ export function dominantUnit(ms: number): DominantUnit {
   return { value: p.minutes, unit: p.minutes === 1 ? 'minute' : 'minutes', short: 'min' }
 }
 
-/** "12d 4h" · "4h 23m" · "23m" · "45s" */
+/** Format a duration with at most two units, such as "12d 4h". */
 export function formatDurationShort(ms: number): string {
   const p = durationParts(ms)
   if (p.days >= 1) return `${p.days}d ${p.hours}h`
@@ -62,13 +62,13 @@ export function formatDurationHuman(ms: number): string {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-/** "04:32:07" — the ticking sub-line under the hero number. */
+/** Format hours, minutes and seconds as "04:32:07". */
 export function formatClock(ms: number): string {
   const p = durationParts(ms)
   return `${pad(p.hours)}:${pad(p.minutes)}:${pad(p.seconds)}`
 }
 
-// Assumption: costs are formatted as USD. Swap the currency here if needed.
+// Format costs in USD.
 const moneyFormat = new Intl.NumberFormat(undefined, {
   style: 'currency',
   currency: 'USD',
@@ -92,8 +92,7 @@ export function formatUnits(n: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
-// Hoisted: Intl.DateTimeFormat construction is expensive and these run inside
-// components that re-render every second.
+// Reuse formatters because streak components render every second.
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
   timeStyle: 'short',

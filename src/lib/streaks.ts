@@ -108,10 +108,10 @@ export interface TimeBucket {
 /** Counts per local time-of-day bucket. */
 export function timeOfDayCounts(dates: Date[]): TimeBucket[] {
   const buckets: TimeBucket[] = [
-    { label: 'Morning', emoji: '🌅', count: 0 }, // 6–12
-    { label: 'Afternoon', emoji: '☀️', count: 0 }, // 12–18
-    { label: 'Evening', emoji: '🌆', count: 0 }, // 18–24
-    { label: 'Night', emoji: '🌙', count: 0 }, // 0–6
+    { label: 'Morning', emoji: '🌅', count: 0 }, // 06:00 to 12:00
+    { label: 'Afternoon', emoji: '☀️', count: 0 }, // 12:00 to 18:00
+    { label: 'Evening', emoji: '🌆', count: 0 }, // 18:00 to midnight
+    { label: 'Night', emoji: '🌙', count: 0 }, // Midnight to 06:00
   ]
   for (const d of dates) {
     const h = d.getHours()

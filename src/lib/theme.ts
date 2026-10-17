@@ -3,9 +3,8 @@ export type ThemeMode = 'auto' | 'light' | 'dark'
 const STORAGE_KEY = 'theme'
 
 /**
- * Applies a theme mode to <html>. Self-contained on purpose: `THEME_INIT_SCRIPT`
- * below inlines this function's source into <head> so the first paint has the
- * right theme, so it must not reference anything outside its own body.
+ * Apply the theme to <html>. THEME_INIT_SCRIPT inlines this function in <head>
+ * before first paint, so it must not reference values outside its body.
  */
 export function applyTheme(mode: ThemeMode): void {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -36,7 +35,7 @@ export function setTheme(mode: ThemeMode): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, mode)
   } catch {
-    // Private mode / storage disabled - the theme still applies for this visit.
+    // Apply the theme for this visit even when storage is unavailable.
   }
 }
 
@@ -51,8 +50,7 @@ export function watchSystemTheme(): () => void {
 }
 
 /**
- * Inline <head> script: reads the stored mode and applies it before first
- * paint. Derived from `applyTheme` so the two can't drift.
+ * Inline applyTheme in <head> to read and apply the stored mode before paint.
  */
 export const THEME_INIT_SCRIPT = `(function(){var m='auto';try{var s=window.localStorage.getItem(${JSON.stringify(
   STORAGE_KEY,

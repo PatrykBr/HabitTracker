@@ -51,8 +51,8 @@ const initialForm = (): FormState => ({
 })
 
 /**
- * Log a reset: defaults to now, supports backdating ("forgot to log this
- * earlier"), optional trigger tag and note, and a supportive confirm step.
+ * Log a reset now or at an earlier time, with an optional trigger and note.
+ * Confirm the time before submitting.
  */
 export default function ResetSheet({
   open,
@@ -89,14 +89,14 @@ export default function ResetSheet({
     try {
       await logResetFn({ data })
     } catch (err) {
-      // Whatever went wrong, the form is where the user can fix it.
+      // Return to the form so the user can correct the input or retry.
       set('step', 'form')
       throw err
     }
     haptic([12, 60, 12])
     onClose()
     await onLogged()
-  }, 'Something went wrong — mind trying again?')
+  }, "Couldn't log this reset. Try again.")
 
   // Reset once the close animation has finished; re-opening cancels the reset.
   const { clearError } = submit
@@ -118,17 +118,17 @@ export default function ResetSheet({
     submit.clearError()
     const ts = chosenTime()
     if (!ts) {
-      setStepError('That date and time doesn’t look right — try again.')
+      setStepError('Enter a valid date and time.')
       return
     }
     if (form.when === 'earlier' && ts.getTime() <= streakStart.getTime()) {
       setStepError(
-        `That’s before this streak started (${formatDateTime(streakStart)}) — pick a later time.`,
+        `Choose a time after this streak started at ${formatDateTime(streakStart)}.`,
       )
       return
     }
     if (ts.getTime() > Date.now()) {
-      setStepError('A reset can’t be in the future.')
+      setStepError('A reset can\'t be in the future.')
       return
     }
     set('step', 'confirm')
@@ -149,13 +149,13 @@ export default function ResetSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title={form.step === 'form' ? 'Log a Reset' : 'Ready?'}
+      title={form.step === 'form' ? 'Log a reset' : 'Log this reset?'}
       dismissible={!submit.busy}
     >
       {form.step === 'form' ? (
         <div className="flex flex-col gap-5">
           <p className="t-footnote mx-2 -mt-1 mb-0 text-center text-(--text-2)">
-            A reset is part of quitting — logging it honestly is the win here.
+            Choose when it happened. You can add a trigger or note below.
           </p>
 
           <SegmentedControl
@@ -195,7 +195,7 @@ export default function ResetSheet({
 
           <Group
             title="Trigger"
-            footer="Optional. Spotting patterns is half the battle."
+            footer="Optional. Use a tag to see patterns in your reset history."
           >
             <div className="flex flex-wrap gap-2 p-3">
               {TRIGGER_SUGGESTIONS.map((t) => {
@@ -224,7 +224,7 @@ export default function ResetSheet({
                 aria-label="Note"
                 rows={2}
                 maxLength={500}
-                placeholder="Anything worth remembering about this one? (optional)"
+                placeholder="What would you like to remember? (optional)"
                 value={form.note}
                 onChange={(e) => set('note', e.target.value)}
               />
@@ -235,7 +235,7 @@ export default function ResetSheet({
             {error ? <ErrorNote>{error}</ErrorNote> : null}
             {!online ? (
               <p className="t-footnote mb-3 text-center text-(--text-2)">
-                You’re offline — reconnect to log this reset.
+                You're offline. Reconnect to log this reset.
               </p>
             ) : null}
             <button
@@ -265,7 +265,7 @@ export default function ResetSheet({
                 </span>
               </>
             ) : null}{' '}
-            and starts a fresh one. No failure here — just honest tracking.
+            and starts a new streak from that time.
           </p>
           <button
             type="button"
@@ -274,7 +274,7 @@ export default function ResetSheet({
             className="btn btn-filled"
             style={tintVars}
           >
-            {submit.busy ? 'Logging…' : 'Restart My Streak'}
+            {submit.busy ? 'Logging…' : 'Log reset'}
           </button>
           <button
             type="button"

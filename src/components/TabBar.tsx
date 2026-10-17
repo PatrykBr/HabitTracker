@@ -18,10 +18,9 @@ const TAB_W_MIN = 56
 const TAB_H = 54
 
 /**
- * Floating Liquid Glass tab bar. A capsule with the tabs, a sliding
- * selection pill, and a detached circular accessory button. Minimizes to the
- * selected tab's icon while scrolling down and expands on scroll up
- * (disabled under reduced motion).
+ * Show tabs and an optional add-habit button. Collapse to the selected tab
+ * during downward scrolling and expand during upward scrolling.
+ * Disable collapsing when the user prefers reduced motion.
  */
 export default function TabBar({ showAdd, onAdd }: TabBarProps) {
   const { pathname } = useLocation()

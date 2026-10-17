@@ -11,9 +11,8 @@ export interface AsyncAction<Args extends unknown[]> {
 }
 
 /**
- * Busy/error state for one user-triggered request (submit, delete, sign out).
- * Only `UserFacingError` messages are shown verbatim; anything else - network
- * failures, driver errors - gets `fallbackMessage`.
+ * Track busy and error state for one user request. Show UserFacingError
+ * messages verbatim and use fallbackMessage for unexpected errors.
  */
 export function useAsyncAction<Args extends unknown[]>(
   action: (...args: Args) => Promise<unknown>,
@@ -47,7 +46,7 @@ export function useAsyncAction<Args extends unknown[]>(
   return { run, busy, error, clearError }
 }
 
-/** A Date that ticks on an interval — powers all live streak counters. */
+/** Return a Date updated at the given interval. */
 export function useNow(intervalMs = 1000): Date {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -77,7 +76,7 @@ export function haptic(pattern: number | number[] = 10): void {
     try {
       navigator.vibrate(pattern)
     } catch {
-      // not supported — fine
+      // Ignore unsupported vibration calls.
     }
   }
 }

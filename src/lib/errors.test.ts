@@ -9,7 +9,7 @@ describe('UserFacingError', () => {
     expect(isUserFacingError(err)).toBe(true)
   })
 
-  it('survives losing its prototype (server → client serialization)', () => {
+  it('survives losing its prototype (server-to-client serialization)', () => {
     const wire = JSON.parse(
       JSON.stringify({ name: 'UserFacingError', message: 'Nope.', userFacing: true }),
     )

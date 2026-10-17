@@ -12,9 +12,8 @@ import TabBar from '../components/TabBar'
 import { fetchSessionUser } from '../lib/session'
 
 /**
- * Authenticated shell: session guard (UX — every server function re-checks
- * auth itself), offline banner, centered column, floating tab bar with the
- * "add habit" accessory and the sheet it opens.
+ * Check the session before showing the app layout, tabs, and add-habit sheet.
+ * Server functions independently check authentication before accessing data.
  */
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {

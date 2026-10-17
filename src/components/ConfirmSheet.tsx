@@ -16,7 +16,7 @@ interface ConfirmSheetProps {
   error?: string | null
 }
 
-/** Confirmation sheet (iOS action-sheet pattern) — never native confirm(). */
+/** Confirm an action and show any request error in the sheet. */
 export default function ConfirmSheet({
   open,
   onClose,
@@ -48,7 +48,7 @@ export default function ConfirmSheet({
             ['--on-tint' as string]: onColor(color),
           }}
         >
-          {busy ? 'One moment…' : confirmLabel}
+          {busy ? 'Working…' : confirmLabel}
         </button>
         <button
           type="button"

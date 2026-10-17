@@ -11,8 +11,7 @@ interface StreakBarsProps {
 }
 
 /**
- * Glanceable comparison of current vs longest vs average streak as
- * horizontal bars on a shared scale. The current streak bar ticks live.
+ * Compare current, longest and average streaks on a shared scale.
  */
 export default function StreakBars({
   currentMs,
@@ -58,22 +57,21 @@ export default function StreakBars({
 
       <p className="t-footnote mt-3 mb-0 text-(--text-2)">
         {totalResets === 0 ? (
-          <>No resets yet — this run is the whole story so far.</>
+          <>No resets logged. This is your first streak.</>
         ) : atRecord ? (
           <>
             This is your{' '}
             <span className="font-semibold" style={{ color: labelColor(color) }}>
-              longest run ever
+              longest streak
             </span>
-            . Every second extends the record.
+            .
           </>
         ) : (
           <>
-            You’re{' '}
             <span className="font-semibold" style={{ color: labelColor(color) }}>
               {pct}%
             </span>{' '}
-            of the way to your record — you’ve done it before.
+            of your longest streak.
           </>
         )}
       </p>

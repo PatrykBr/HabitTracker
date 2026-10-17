@@ -1,10 +1,9 @@
 import { z } from 'zod'
 
 /**
- * Server environment, validated once on first use so a missing or malformed
- * variable fails fast with one clear message instead of a confusing error
- * deep inside a driver. Split in two so tooling that only needs the database
- * (e.g. `bun run smoke:data`) doesn't have to configure auth.
+ * Validate environment variables on first use and report invalid settings in one
+ * error. Keep database and authentication schemas separate so database tools
+ * do not need authentication settings.
  */
 
 /** Treats unset and blank the same, so `FOO=` in .env behaves like a missing FOO. */

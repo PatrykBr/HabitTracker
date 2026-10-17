@@ -1,4 +1,4 @@
-/** Client-safe DTOs shared between server functions and UI. Dates are ISO strings (UTC). */
+/** Data shared by server functions and the UI. Dates are UTC ISO strings. */
 import { SYSTEM_COLORS, SYSTEM_COLOR_NAMES } from './color'
 
 export interface HabitSummary {
@@ -27,7 +27,7 @@ export interface HabitDetail extends HabitSummary {
   resets: ResetEntry[]
 }
 
-/** Suggested trigger tags (free text up to 32 chars is also accepted). */
+/** Suggested trigger tags. The server also accepts text up to 32 characters. */
 export const TRIGGER_SUGGESTIONS = [
   'Stress',
   'Social',
@@ -39,8 +39,8 @@ export const TRIGGER_SUGGESTIONS = [
 ] as const
 
 /**
- * The 12 iOS system colors (light variants — the stored value). Rendering goes
- * through `habitColor()` in `color.ts`, which swaps in the dark variant via CSS.
+ * Store the light hex values of the 12 iOS system colors.
+ * habitColor() selects the theme variant through CSS variables.
  */
 export const HABIT_COLORS = SYSTEM_COLOR_NAMES.map(
   (name) => SYSTEM_COLORS[name].light,

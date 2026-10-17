@@ -18,12 +18,9 @@ interface MonthCalendarProps {
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 /**
- * Month grid in the user's local timezone. Clean days get a soft tint of the
- * habit color; reset days are solid. Tap a reset day for its details, swipe
- * or use the chevrons to move between months.
- *
- * Memoized: the parent re-renders every second for the live streak counter,
- * and regrouping hundreds of resets per tick is wasted work.
+ * Group resets by local day. Reset days use the solid habit color, and other
+ * tracked days use a tint. Select a reset day to view its details.
+ * Memoization avoids rebuilding the grid on every live counter tick.
  */
 export default memo(function MonthCalendar({
   startDate,
@@ -209,7 +206,7 @@ export default memo(function MonthCalendar({
             className="h-3 w-3 rounded-full"
             style={{ background: tint(color, 14) }}
           />
-          Clean day
+          No resets
         </span>
         <span className="flex items-center gap-1.5">
           <span
@@ -217,7 +214,7 @@ export default memo(function MonthCalendar({
             className="flex h-4 w-4 items-center justify-center rounded-full text-[0.625rem]"
             style={{ background: color, color: glyph }}
           >↺</span>
-          Reset day
+          Reset logged
         </span>
       </div>
     </div>

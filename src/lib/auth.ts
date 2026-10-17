@@ -16,11 +16,9 @@ import {
 } from './schemas'
 
 /**
- * Better Auth instance (server-only).
- *
- * Auth is username + password. Better Auth's email/password provider requires
- * an email, so we synthesize a non-routable internal one from the username -
- * no email is ever collected or sent (no verification / reset flows in v1).
+ * Configure server-side username and password authentication. Better Auth's
+ * email/password provider requires an email, so signup generates an internal
+ * address from the username. The app does not collect or send email.
  */
 export const auth = betterAuth({
   database: mongodbAdapter(getDb(), { client: getMongoClient() }),

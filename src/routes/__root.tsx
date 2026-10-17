@@ -57,11 +57,11 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1, viewport-fit=cover',
       },
-      { title: 'Reset — quit tracker' },
+      { title: 'Reset habit tracker' },
       {
         name: 'description',
         content:
-          'Track the habits you’re quitting: live streaks, honest resets, real progress.',
+          "Track habits you're quitting, log resets, and review your streaks and history.",
       },
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'mobile-web-app-capable', content: 'yes' },
@@ -101,7 +101,7 @@ export const Route = createRootRoute({
 function RootError() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="t-title2">We couldn’t open Reset</h1>
+      <h1 className="t-title2">We couldn't open Reset</h1>
       <p className="t-subhead text-(--text-2)">
         Check your connection and try again. Your streaks keep counting.
       </p>
@@ -120,9 +120,9 @@ function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="text-5xl">🧭</div>
-      <h1 className="text-xl font-bold tracking-tight">This page isn’t here</h1>
+      <h1 className="text-xl font-bold tracking-tight">This page isn't here</h1>
       <p className="text-[0.9375rem] text-(--text-2)">
-        No worries — your streaks are safe.
+        Check the address or return to your habits.
       </p>
       <Link
         to="/"
@@ -136,7 +136,7 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Service worker is progressive enhancement — production only, never blocks.
+    // Register the production worker without blocking the page.
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
     }

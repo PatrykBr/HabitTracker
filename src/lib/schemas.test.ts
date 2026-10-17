@@ -32,7 +32,7 @@ describe('parseForm', () => {
   it('uses friendly expected errors for invalid fields and cross-field rules', () => {
     for (const [input, message] of [
       [{ ...validHabit, name: '' }, 'Give your habit a name.'],
-      [{ ...validHabit, costPerUnit: 2 }, 'To track savings, fill in both cost per unit and units per day — or leave both empty.'],
+      [{ ...validHabit, costPerUnit: 2 }, 'Enter both cost per unit and units per day, or leave both empty.'],
     ] as const) {
       expect(() => parseForm(habitFormSchema, input)).toThrow(new UserFacingError(message))
     }
@@ -63,7 +63,7 @@ describe('credentialsSchema', () => {
     })
     expect(r.success).toBe(false)
     if (!r.success)
-      expect(firstIssueMessage(r.error)).toMatch(/3–30 characters/)
+      expect(firstIssueMessage(r.error)).toMatch(/3 to 30 characters/)
   })
   it('rejects short passwords', () => {
     const r = credentialsSchema.safeParse({

@@ -8,14 +8,10 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 /**
- * Service worker generation.
- *
- * vite-plugin-pwa's build step never runs alongside tanstackStart() (it
- * doesn't support Vite's environment API yet — TanStack/router#4988), so we
- * run Workbox's generateSW ourselves against dist/client once the ssr
- * environment (built after the client) finishes. The manifest is authored by
- * hand in public/manifest.webmanifest and linked from __root.tsx; the SW is
- * registered manually there too.
+ * Generate the service worker after the SSR build, which follows the client
+ * build. vite-plugin-pwa did not emit sw.js with this multi-environment build
+ * setup. See TanStack/router#4988. The root route links the public manifest
+ * and registers the worker.
  */
 function serviceWorker(): Plugin {
   return {
@@ -50,7 +46,7 @@ function serviceWorker(): Plugin {
       })
       for (const warning of warnings) console.warn('[workbox]', warning)
       console.log(
-        `[workbox] sw.js generated — ${count} precached files (${(size / 1024).toFixed(1)} KiB)`,
+        `[workbox] Generated sw.js with ${count} precached files, ${(size / 1024).toFixed(1)} KiB.`,
       )
     },
   }

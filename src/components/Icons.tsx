@@ -1,8 +1,7 @@
 import type { SVGProps } from 'react'
 
 /**
- * SF Symbols–style glyphs (24pt grid, 2pt strokes). Tab icons come in an
- * outline and a filled variant like iOS: filled when selected.
+ * Icons use a 24-unit grid and 2-unit strokes. Selected tabs use filled icons.
  */
 
 type IconProps = SVGProps<SVGSVGElement> & { filled?: boolean }

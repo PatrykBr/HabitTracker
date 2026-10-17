@@ -1,7 +1,7 @@
 {
-  "name": "Reset — quit tracker",
+  "name": "Reset habit tracker",
   "short_name": "Reset",
-  "description": "Track the habits you're quitting: live streaks, honest resets, real progress.",
+  "description": "Track habits you're quitting, log resets, and review your streaks and history.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

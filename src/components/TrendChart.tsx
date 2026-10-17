@@ -11,8 +11,8 @@ interface TrendChartProps {
 }
 
 /**
- * Simple bar chart of streak lengths over time (oldest → newest). The current,
- * ongoing streak is the highlighted last bar.
+ * Chart streak lengths from oldest to newest. Highlight the ongoing streak
+ * in the last bar.
  */
 export default function TrendChart({
   completed,
@@ -22,8 +22,7 @@ export default function TrendChart({
   if (completed.length === 0) {
     return (
       <p className="t-footnote m-0 py-2 text-center text-(--text-2)">
-        Once you’ve logged a reset, your streak lengths will chart here so you
-        can watch them grow.
+        Log a reset to compare streak lengths here.
       </p>
     )
   }

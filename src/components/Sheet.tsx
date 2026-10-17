@@ -34,9 +34,8 @@ interface DragState {
 }
 
 /**
- * iOS 26 sheet: inset floating glass panel with a grabber, drag-to-dismiss
- * from the header, and an inner scroll region. Centered dialog on wider
- * screens. Moves focus in, keeps Tab inside, restores focus on close.
+ * Show a modal with a draggable header and scrollable content. Center it
+ * on wider screens. Move focus in, trap Tab, and restore focus on close.
  */
 export default function Sheet({
   open,

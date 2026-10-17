@@ -2,7 +2,7 @@
  * Habit colors are the 12 iOS system colors. The database stores the light
  * variant's hex (see `HABIT_COLORS`); the UI renders through CSS custom
  * properties (`--c-<name>`) so the dark variant applies automatically.
- * Legacy hexes from the old palette snap to the nearest system color.
+ * Map legacy hex values to the nearest system color.
  */
 
 export const SYSTEM_COLOR_NAMES = [
@@ -47,7 +47,7 @@ function parseHex(hex: string): [number, number, number] | null {
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
 }
 
-/** Nearest system color (by RGB distance) to any stored hex. Unparseable → green. */
+/** Return the nearest system color by RGB distance. Use green for invalid hex. */
 export function systemColorName(hex: string): SystemColorName {
   const rgb = parseHex(hex)
   if (!rgb) return 'green'
@@ -97,7 +97,7 @@ export function onColor(color: string): string {
   return blackContrast >= whiteContrast ? '#000000' : '#ffffff'
 }
 
-/** `color` at `percent` opacity — works with CSS variables, unlike hex+alpha. */
+/** Set color opacity with color-mix, including for CSS variables. */
 export function tint(color: string, percent: number): string {
   return `color-mix(in srgb, ${color} ${percent}%, transparent)`
 }

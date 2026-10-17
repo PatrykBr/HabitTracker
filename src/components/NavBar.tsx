@@ -3,17 +3,15 @@ import type { ReactNode } from 'react'
 
 interface NavBarProps {
   title: string
-  /** iOS 26 large-title subtitle (e.g. a greeting or count). */
+  /** Subtitle below the large title, such as a greeting or count. */
   subtitle?: string
   leading?: ReactNode
   trailing?: ReactNode
 }
 
 /**
- * iOS 26 navigation bar: no bar background — just floating glass controls
- * over the content and a scroll-edge blur. The big title lives
- * in the scroll flow and the inline title fades in once it scrolls under the
- * controls. The component owns the top safe-area spacing for the page.
+ * Keep navigation controls fixed above the content. Show the inline title
+ * after the large title scrolls beneath them. Include top safe-area spacing.
  */
 export default function NavBar({
   title,

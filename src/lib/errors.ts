@@ -1,10 +1,9 @@
 /**
  * Errors whose message is written for the user and safe to show verbatim.
  *
- * Server functions throw these for expected failures (validation, "not
- * found"). Anything else that reaches the client - driver errors, Zod issue
- * JSON, network failures - is shown as generic copy instead of leaking
- * internals.
+ * Server functions throw these for expected validation and lookup errors.
+ * The client shows fallback copy for unexpected errors so driver messages,
+ * validation internals, and network details remain private.
  *
  * A dedicated serialization adapter in start.ts preserves these across RPCs;
  * the router's default Error adapter only keeps the message. The marker/name

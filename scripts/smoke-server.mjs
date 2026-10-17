@@ -79,8 +79,8 @@ await withSmokeApp(async ({ origin, request }) => {
   assert.match(dashboard.headers.get('cache-control'), /private, no-store/)
   console.log('✓ signup, sign-in, cookie session and authenticated dashboard over HTTP')
 
-  // Exercise the built transport, not just the data functions behind it. Read
-  // compiler-generated IDs so the tests follow source/route changes.
+  // Call the built RPC transport. Read compiler-generated IDs so the tests
+  // follow source and route changes.
   const entry = await Bun.file('dist/server/server.js').text()
   const ids = Object.fromEntries(
     [...entry.matchAll(/"([a-f0-9]{64})": \{\s*functionName: "(\w+)_createServerFn_handler"/g)]
@@ -135,14 +135,14 @@ await withSmokeApp(async ({ origin, request }) => {
   assert.equal(habit.name, fields.name)
   const malformed = await rpc('createHabit', 'POST', { ...fields, costPerUnit: 5 })
   assert.ok(malformed.value.error instanceof Error)
-  assert.equal(malformed.value.error.message, 'We couldn’t complete that request. Try again.')
+  assert.equal(malformed.value.error.message, 'We couldn\'t complete that request. Try again.')
   assert.ok(!malformed.text.includes('stack'))
   assert.equal((await rpc('listHabits', 'GET')).value.result.length, 1)
   const future = await rpc('logReset', 'POST', {
     habitId: habit.id, timestamp: new Date(Date.now() + 86_400_000).toISOString(), trigger: null, note: null,
   })
   assert.ok(future.value.error instanceof UserFacingError)
-  assert.equal(future.value.error.message, 'A reset can’t be in the future.')
+  assert.equal(future.value.error.message, 'A reset can\'t be in the future.')
   assert.ok(!future.text.includes('stack'))
   const reset = (await rpc('logReset', 'POST', {
     habitId: habit.id, timestamp: new Date().toISOString(), trigger: 'Stress', note: 'A test note.',

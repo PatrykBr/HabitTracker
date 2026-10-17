@@ -20,8 +20,7 @@ interface PatternsCardProps {
 }
 
 /**
- * When do resets happen? Day-of-week and time-of-day histograms (in the
- * user's local timezone) — genuinely useful for spotting triggers.
+ * Count resets by local weekday and time of day.
  */
 export default memo(function PatternsCard({
   resetDates,
@@ -30,7 +29,7 @@ export default memo(function PatternsCard({
   if (resetDates.length === 0) {
     return (
       <p className="t-footnote m-0 py-2 text-center text-(--text-2)">
-        No resets logged — no patterns to spot yet. That’s a good thing.
+        No resets logged yet. Patterns will appear here after you log a reset.
       </p>
     )
   }

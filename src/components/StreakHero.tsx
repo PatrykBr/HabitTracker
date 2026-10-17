@@ -11,8 +11,8 @@ interface StreakHeroProps {
 }
 
 /**
- * The hero: a huge, live-updating streak counter in SF Rounded. Days
- * dominate once the streak is a day old; before that, hours or minutes lead.
+ * Show the current streak in days, hours or minutes, with a live clock
+ * and progress toward the next milestone.
  */
 export default function StreakHero({
   sinceMs,
@@ -43,7 +43,7 @@ export default function StreakHero({
         </svg>
         <div className="relative grid justify-items-center gap-1">
           <div className="streak-value tabular">{value}</div>
-          <div className="t-title3 text-(--text-2)">{unit} clean</div>
+          <div className="t-title3 text-(--text-2)">{unit}</div>
         </div>
       </div>
       <div className="streak-goal">

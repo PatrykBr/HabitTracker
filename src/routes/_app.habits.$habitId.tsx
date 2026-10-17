@@ -65,10 +65,9 @@ function DetailNotFound() {
   return (
     <div className="flex flex-col items-center gap-3 pt-24 text-center">
       <div className="text-4xl">🔍</div>
-      <h1 className="text-lg font-bold">This habit isn’t here</h1>
+      <h1 className="text-lg font-bold">This habit isn't here</h1>
       <p className="max-w-xs text-[0.875rem] text-(--text-2)">
-        It may have been removed. Your other habits are right where you left
-        them.
+        Check the address or return to your habits.
       </p>
       <Link
         to="/"
@@ -85,11 +84,11 @@ function DetailError({ error }: { error: unknown }) {
   return (
     <div className="flex flex-col items-center gap-3 pt-24 text-center">
       <div className="text-4xl">🌧️</div>
-      <h1 className="text-lg font-bold">We couldn’t load this habit</h1>
+      <h1 className="text-lg font-bold">We couldn't load this habit</h1>
       <p className="max-w-xs text-[0.875rem] text-(--text-2)">
         {userMessage(
           error,
-          'Something went wrong on our side — try again in a moment.',
+          'Try again to load this habit.',
         )}
       </p>
       <button
@@ -180,9 +179,8 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
 
   const startDate = useMemo(() => new Date(habit.startDate), [habit.startDate])
 
-  // Everything derivable from the (per-load static) reset history is computed
-  // once here — the component re-renders every second for the live counter,
-  // and this must not be O(resets) per tick.
+  // Recompute history summaries only when the data changes. The live counter
+  // updates every second and must not scan the reset history on each tick.
   const history = useMemo(
     () => summarizeHistory(startDate, habit.resets),
     [habit.resets, startDate],
@@ -193,7 +191,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
 
   const since = currentStreakStart(startDate, lastResetAt)
   const streakMs = Math.max(0, now.getTime() - since.getTime())
-  // Only the ongoing segment depends on "now" — O(1) per tick.
+  // Only the ongoing segment depends on "now", with O(1) work per tick.
   const ongoing: Segment = {
     start: since,
     end: now,
@@ -211,7 +209,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
     if (previous?.since === since.getTime() && previous.ms < streakMs) {
       const crossed = milestoneCrossed(previous.ms, streakMs)
       if (crossed) {
-        setCelebration(`${crossed.label} clean`)
+        setCelebration(crossed.label)
         haptic([15, 80, 15, 80, 15])
       }
     }
@@ -229,13 +227,13 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
     await deleteResetFn({ data: { resetId: reset.id } })
     setResetToDelete(null)
     await router.invalidate()
-  }, 'We couldn’t remove that reset — mind trying again?')
+  }, "Couldn't remove this reset. Try again.")
 
   const removeHabit = useAsyncAction(async () => {
     await deleteHabitFn({ data: { habitId: habit.id } })
     await router.navigate({ to: '/' })
     await router.invalidate()
-  }, 'We couldn’t delete this habit — mind trying again?')
+  }, "Couldn't delete this habit. Try again.")
 
   const openDayDetail = useCallback((label: string, entries: ResetEntry[]) => {
     setDayDetail({ label, entries })
@@ -289,7 +287,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
         <span>Log a reset</span>
       </button>
       <p className="mt-2 text-center text-[0.75rem] text-(--text-3)">
-        Honest logging beats perfect streaks.
+        You can log a reset now or enter an earlier time.
       </p>
 
       <div className="mt-6 flex flex-col gap-3">
@@ -317,12 +315,12 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
                   value={formatUnits(savings.unitsAvoided)}
                 />
                 <StatTile
-                  label="saved this streak"
+                  label="estimated savings"
                   value={formatMoney(savings.moneySaved)}
                   color={color}
                 />
                 <StatTile
-                  label="you’d have spent per week"
+                  label="usual weekly spending"
                   value={formatMoney(savings.weeklySpend)}
                 />
               </>
@@ -330,7 +328,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
           </div>
           {!savings ? (
             <p className="mt-2 text-[0.6875rem] text-(--text-3)">
-              Add cost per unit and units per day (tap Edit) to see money saved.
+              Tap Edit and add cost per unit and units per day to estimate savings.
             </p>
           ) : null}
         </SectionCard>
@@ -357,7 +355,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
           />
         </SectionCard>
 
-        <SectionCard title="Journey">
+        <SectionCard title="Reset history">
           <JourneyTimeline
             startDate={startDate}
             resets={habit.resets}
@@ -415,7 +413,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
               ) : null}
               {entry.note ? (
                 <p className="mt-1.5 mb-0 text-[0.8125rem] leading-snug text-(--text-2)">
-                  “{entry.note}”
+                  {entry.note}
                 </p>
               ) : null}
             </li>
@@ -447,8 +445,8 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
           removeHabit.clearError()
         }}
         onConfirm={() => void removeHabit.run()}
-        title={`Stop tracking “${habit.name}”?`}
-        message="This deletes the habit and its whole history. There’s no undo — but you can always start tracking it again."
+        title={`Stop tracking ${habit.name}?`}
+        message="This deletes the habit and all its resets. You cannot undo this."
         confirmLabel="Delete habit"
         danger
         busy={removeHabit.busy}

@@ -55,13 +55,13 @@ function LoginPage() {
       // Better Auth's messages are written for end users ("Invalid username or password").
       throw new UserFacingError(
         result.error.message ??
-          'That didn’t work — check your details and try again.',
+          'Check your username and password, then try again.',
       )
     }
     haptic(10)
     // Start with an empty router cache when the account changes.
     window.location.replace('/')
-  }, 'Something went wrong — check your connection and try again.')
+  }, 'Check your connection and try again.')
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-10 safe-top safe-bottom">
@@ -77,7 +77,7 @@ function LoginPage() {
           </div>
           <h1 className="t-rounded mt-4 text-[2.5rem] font-bold tracking-tight">Reset</h1>
           <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] leading-relaxed text-(--text-2)">
-            Quit hard things, one streak at a time.
+            Track the habits you're quitting.
           </p>
         </div>
 
@@ -135,18 +135,18 @@ function LoginPage() {
               style={{ ['--on-tint' as string]: onColor('var(--accent)') }}
             >
               {submit.busy
-                ? 'One moment…'
+                ? mode === 'signup'
+                  ? 'Creating account…'
+                  : 'Signing in…'
                 : mode === 'signup'
-                  ? 'Start fresh'
-                  : 'Welcome back'}
+                  ? 'Create account'
+                  : 'Sign in'}
             </button>
           </form>
         </div>
 
         <p className="mt-4 text-center text-[0.75rem] leading-relaxed text-(--text-3)">
-          No email needed — just a username and password.
-          <br />
-          Your data stays yours.
+          Use a username and password. No email required.
         </p>
       </div>
     </main>

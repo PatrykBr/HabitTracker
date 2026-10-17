@@ -51,12 +51,12 @@ function initialForm(habit: HabitSummary | undefined): FormState {
   }
 }
 
-/** Empty → null; otherwise a number (NaN for junk, which the schema rejects). */
+/** Return null for empty input. The schema rejects invalid numbers. */
 function optionalNumber(raw: string): number | null {
   return raw.trim() === '' ? null : Number(raw)
 }
 
-/** Create a habit to quit, or edit an existing one: name, icon, color, start date, optional cost tracking. */
+/** Create or edit a habit, including optional savings estimates. */
 export default function HabitSheet({
   open,
   onClose,
@@ -96,7 +96,7 @@ export default function HabitSheet({
     haptic(12)
     onClose()
     await onSaved()
-  }, 'Something went wrong — mind trying again?')
+  }, "Couldn't save this habit. Try again.")
 
   // Reset once the close animation has finished; re-opening cancels the reset.
   const { clearError } = save
@@ -122,7 +122,7 @@ export default function HabitSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title={editing ? 'Edit Habit' : 'New Habit'}
+      title={editing ? 'Edit habit' : 'New habit'}
       dismissible={!save.busy}
     >
       <form
@@ -218,11 +218,11 @@ export default function HabitSheet({
         </Group>
 
         <Group
-          title="Clean Since"
+          title="Streak start"
           footer={
             editing
-              ? 'Has to stay on or before your first logged reset.'
-              : 'Defaults to now — set it earlier if you already have a streak going.'
+              ? 'Choose a time on or before your first logged reset.'
+              : 'Defaults to now. Set it earlier if you have already started.'
           }
         >
           <Row className="adaptive-form-row flex-col items-stretch gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-3">
@@ -242,8 +242,8 @@ export default function HabitSheet({
         </Group>
 
         <Group
-          title="Money & Usage"
-          footer="Optional — powers the “saved” stats. e.g. $0.50 per cigarette, 15 per day."
+          title="Savings"
+          footer="Optional. Estimate savings from your usual usage, such as $0.50 per cigarette and 15 cigarettes per day."
         >
           <Row className="adaptive-form-row">
             <label htmlFor="habit-cost" className="flex-1">
@@ -279,7 +279,7 @@ export default function HabitSheet({
           {save.error ? <ErrorNote>{save.error}</ErrorNote> : null}
           {!online ? (
             <p className="t-footnote mb-3 text-center text-(--text-2)">
-              You’re offline — reconnect to{' '}
+              You're offline. Reconnect to{' '}
               {editing ? 'save changes' : 'add a habit'}.
             </p>
           ) : null}
@@ -295,8 +295,8 @@ export default function HabitSheet({
             {save.busy
               ? 'Saving…'
               : editing
-                ? 'Save Changes'
-                : 'Start Tracking'}
+                ? 'Save changes'
+                : 'Start tracking'}
           </button>
         </div>
       </form>

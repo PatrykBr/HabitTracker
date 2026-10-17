@@ -7,8 +7,7 @@ interface SegmentedControlProps<T extends string> {
 }
 
 /**
- * iOS segmented control: a capsule track with a sliding glass knob.
- * Announced as a radio group.
+ * Show mutually exclusive options as a radio group with a sliding selection.
  */
 export default function SegmentedControl<T extends string>({
   options,

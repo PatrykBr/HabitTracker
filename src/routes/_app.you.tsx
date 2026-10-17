@@ -43,7 +43,7 @@ function YouPage() {
     if (result.error) throw new Error(result.error.message)
     // Discard private loader data and pending preloads for the signed-out user.
     window.location.replace('/login')
-  }, 'Couldn’t sign out. Check your connection and try again.')
+  }, 'Couldn\'t sign out. Check your connection and try again.')
 
   const chooseTheme = (mode: ThemeMode) => {
     setThemeState(mode)
@@ -63,7 +63,7 @@ function YouPage() {
             {user.username}
           </span>
           <span className="block text-[0.8125rem] text-(--text-2)">
-            Taking it back since {formatDate(new Date(user.createdAt))}
+            Joined {formatDate(new Date(user.createdAt))}
           </span>
         </span>
       </div>
@@ -82,7 +82,7 @@ function YouPage() {
           />
         </div>
         <p className="mt-2 mb-0 text-[0.75rem] text-(--text-2)">
-          Auto follows your device’s light or dark appearance.
+          Auto follows your device's light or dark appearance.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ function YouPage() {
       </div>
 
       <p className="mt-8 text-center text-[0.75rem] leading-relaxed text-(--text-3)">
-        Reset v1 · quitting is hard, tracking it shouldn’t be
+        Reset v1
       </p>
 
       <ConfirmSheet
@@ -108,7 +108,7 @@ function YouPage() {
         }}
         onConfirm={() => void signOut.run()}
         title="Sign out?"
-        message="Your streaks keep counting while you’re away. Come back any time."
+        message="Your streaks keep counting while you're signed out."
         confirmLabel="Sign out"
         busy={signOut.busy}
         error={signOut.error}
