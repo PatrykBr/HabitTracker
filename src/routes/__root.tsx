@@ -1,15 +1,18 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import {
   HeadContent,
   Link,
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import { THEME_INIT_SCRIPT, watchSystemTheme } from '../lib/theme'
 import appCss from '../styles.css?url'
+
+// Vite drops this entire module graph from production without a stripping plugin.
+const Devtools = import.meta.env.DEV
+  ? lazy(() => import('../components/Devtools'))
+  : null
 
 const APPLE_SPLASH: Array<[string, string]> = [
   [
@@ -153,18 +156,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className="font-sans antialiased">
         <div className="app-canvas" aria-hidden />
         {children}
-        <TanStackDevtools
-          config={{
-            position: 'top-right',
-            requireUrlFlag: true,
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {Devtools ? (
+          <Suspense fallback={null}>
+            <Devtools />
+          </Suspense>
+        ) : null}
         <Scripts />
       </body>
     </html>

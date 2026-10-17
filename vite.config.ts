@@ -1,7 +1,6 @@
 import path from 'node:path'
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
@@ -57,15 +56,12 @@ function serviceWorker(): Plugin {
   }
 }
 
-const config = defineConfig({
+export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools({ consolePiping: { enabled: false } }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
     serviceWorker(),
   ],
 })
-
-export default config
