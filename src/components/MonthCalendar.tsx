@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { IconChevronLeft, IconChevronRight } from './Icons'
 import { onColor, tint } from '../lib/color'
 import { formatMonthYear } from '../lib/format'
@@ -33,19 +33,24 @@ export default memo(function MonthCalendar({
   todayKey,
 }: MonthCalendarProps) {
   const today = new Date()
-  const [viewYear, setViewYear] = useState(today.getFullYear())
-  const [viewMonth, setViewMonth] = useState(today.getMonth())
+  const [monthStart, setMonthStart] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  )
+  const viewYear = monthStart.getFullYear()
+  const viewMonth = monthStart.getMonth()
   const touchStartX = useRef<number | null>(null)
 
-  const resetsByDay = new Map<string, ResetEntry[]>()
-  for (const r of resets) {
-    const key = localDayKey(new Date(r.timestamp))
-    const list = resetsByDay.get(key)
-    if (list) list.push(r)
-    else resetsByDay.set(key, [r])
-  }
+  const resetsByDay = useMemo(() => {
+    const byDay = new Map<string, ResetEntry[]>()
+    for (const r of resets) {
+      const key = localDayKey(new Date(r.timestamp))
+      const list = byDay.get(key)
+      if (list) list.push(r)
+      else byDay.set(key, [r])
+    }
+    return byDay
+  }, [resets])
 
-  const monthStart = new Date(viewYear, viewMonth, 1)
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const leadingBlanks = monthStart.getDay()
   const startKey = localDayKey(startDate)
@@ -60,9 +65,9 @@ export default memo(function MonthCalendar({
     (viewYear === today.getFullYear() && viewMonth < today.getMonth())
 
   const shiftMonth = (delta: number) => {
-    const next = new Date(viewYear, viewMonth + delta, 1)
-    setViewYear(next.getFullYear())
-    setViewMonth(next.getMonth())
+    setMonthStart(
+      (month) => new Date(month.getFullYear(), month.getMonth() + delta, 1),
+    )
   }
 
   const navClass =

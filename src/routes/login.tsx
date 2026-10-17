@@ -5,7 +5,7 @@ import { UserFacingError } from '../lib/errors'
 import { haptic, useAsyncAction } from '../lib/hooks'
 import {
   credentialsSchema,
-  firstIssueMessage,
+  parseForm,
   internalEmailFor,
 } from '../lib/schemas'
 import { clearSessionCache, fetchSessionUser } from '../lib/session'
@@ -36,22 +36,19 @@ function LoginPage() {
   const [password, setPassword] = useState('')
 
   const submit = useAsyncAction(async () => {
-    const parsed = credentialsSchema.safeParse({ username, password })
-    if (!parsed.success) {
-      throw new UserFacingError(firstIssueMessage(parsed.error))
-    }
-    const u = parsed.data.username
+    const data = parseForm(credentialsSchema, { username, password })
+    const u = data.username
     const result =
       mode === 'signup'
         ? await authClient.signUp.email({
             email: internalEmailFor(u),
             name: u,
             username: u,
-            password: parsed.data.password,
+            password: data.password,
           })
         : await authClient.signIn.username({
             username: u,
-            password: parsed.data.password,
+            password: data.password,
           })
 
     if (result.error) {

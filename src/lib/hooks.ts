@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { userMessage } from './errors'
 
 export interface AsyncAction<Args extends unknown[]> {
@@ -57,23 +57,18 @@ export function useNow(intervalMs = 1000): Date {
   return now
 }
 
-/** Tracks navigator.onLine so we can show a clear offline state. */
+function subscribeOnline(onChange: () => void) {
+  window.addEventListener('online', onChange)
+  window.addEventListener('offline', onChange)
+  return () => {
+    window.removeEventListener('online', onChange)
+    window.removeEventListener('offline', onChange)
+  }
+}
+
+/** Hydration uses a consistent snapshot; client-only renders read the status immediately. */
 export function useOnline(): boolean {
-  // SSR and the first browser render must agree. Node also exposes navigator,
-  // but has no onLine property; read the actual connection after mounting.
-  const [online, setOnline] = useState(true)
-  useEffect(() => {
-    setOnline(navigator.onLine)
-    const goOnline = () => setOnline(true)
-    const goOffline = () => setOnline(false)
-    window.addEventListener('online', goOnline)
-    window.addEventListener('offline', goOffline)
-    return () => {
-      window.removeEventListener('online', goOnline)
-      window.removeEventListener('offline', goOffline)
-    }
-  }, [])
-  return online
+  return useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true)
 }
 
 /** Light haptic tap where the platform supports it. */

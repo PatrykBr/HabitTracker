@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { UserFacingError } from './errors'
 
 /**
  * Validation schemas shared by the client (forms) and the server (server
@@ -93,4 +94,11 @@ export function firstIssueMessage(error: z.ZodError): string {
   return (
     error.issues[0]?.message ?? 'Something doesn’t look right — check the form.'
   )
+}
+
+/** Form validation uses the same safe, inline error path as expected server errors. */
+export function parseForm<T extends z.ZodType>(schema: T, input: unknown): z.output<T> {
+  const result = schema.safeParse(input)
+  if (!result.success) throw new UserFacingError(firstIssueMessage(result.error))
+  return result.data
 }

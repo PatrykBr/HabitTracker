@@ -5,7 +5,9 @@ import {
   habitFormSchema,
   logResetSchema,
   internalEmailFor,
+  parseForm,
 } from './schemas'
+import { UserFacingError } from './errors'
 
 const validHabit = {
   name: 'Coffee',
@@ -15,6 +17,27 @@ const validHabit = {
   costPerUnit: null,
   unitsPerDay: null,
 }
+
+describe('parseForm', () => {
+  it('returns normalized form values', () => {
+    expect(parseForm(credentialsSchema, {
+      username: '  Alice  ', password: 'longenough',
+    })).toEqual({ username: 'Alice', password: 'longenough' })
+    expect(parseForm(logResetSchema, {
+      habitId: 'abc', timestamp: validHabit.startDate, trigger: '  ', note: ' note ',
+    })).toEqual({
+      habitId: 'abc', timestamp: validHabit.startDate, trigger: null, note: 'note',
+    })
+  })
+  it('uses friendly expected errors for invalid fields and cross-field rules', () => {
+    for (const [input, message] of [
+      [{ ...validHabit, name: '' }, 'Give your habit a name.'],
+      [{ ...validHabit, costPerUnit: 2 }, 'To track savings, fill in both cost per unit and units per day — or leave both empty.'],
+    ] as const) {
+      expect(() => parseForm(habitFormSchema, input)).toThrow(new UserFacingError(message))
+    }
+  })
+})
 
 describe('credentialsSchema', () => {
   it('caps passwords before hashing', () => {

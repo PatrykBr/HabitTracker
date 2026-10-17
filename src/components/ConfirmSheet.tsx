@@ -68,7 +68,7 @@ export function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="t-footnote mx-1 mt-0 mb-3 rounded-(--r-inner) px-3.5 py-2.5 font-medium text-(--danger)"
+      className="t-footnote mx-1 mt-0 mb-3 rounded-(--r-inner) px-3.5 py-2.5 font-medium text-(--danger-text)"
       style={{
         background: 'color-mix(in srgb, var(--danger) 12%, transparent)',
       }}

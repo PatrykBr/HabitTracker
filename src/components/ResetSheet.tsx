@@ -5,7 +5,6 @@ import { Group, Row } from './GroupedList'
 import SegmentedControl from './SegmentedControl'
 import Sheet, { SHEET_CLOSE_MS } from './Sheet'
 import { onColor } from '../lib/color'
-import { UserFacingError } from '../lib/errors'
 import { logReset } from '../lib/habits.functions'
 import { haptic, useAsyncAction, useOnline } from '../lib/hooks'
 import {
@@ -14,7 +13,7 @@ import {
   toDatetimeLocalValue,
 } from '../lib/format'
 import { TRIGGER_SUGGESTIONS } from '../lib/types'
-import { firstIssueMessage, logResetSchema } from '../lib/schemas'
+import { logResetSchema, parseForm } from '../lib/schemas'
 
 interface ResetSheetProps {
   open: boolean
@@ -81,23 +80,14 @@ export default function ResetSheet({
 
   const submit = useAsyncAction(async () => {
     const timestamp = chosenTime()
-    if (!timestamp) {
-      throw new UserFacingError(
-        'That date and time doesn’t look right — try again.',
-      )
-    }
-    const parsed = logResetSchema.safeParse({
+    const data = parseForm(logResetSchema, {
       habitId,
-      timestamp: timestamp.toISOString(),
+      timestamp: timestamp?.toISOString() ?? '',
       trigger: form.trigger,
       note: form.note,
     })
-    if (!parsed.success)
-      throw new UserFacingError(firstIssueMessage(parsed.error))
     try {
-      await logResetFn({
-        data: parsed.data,
-      })
+      await logResetFn({ data })
     } catch (err) {
       // Whatever went wrong, the form is where the user can fix it.
       set('step', 'form')

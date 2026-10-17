@@ -5,11 +5,10 @@ import { Group, Row } from './GroupedList'
 import { IconCheck } from './Icons'
 import Sheet, { SHEET_CLOSE_MS } from './Sheet'
 import { habitColor, onColor, systemColorName, tint } from '../lib/color'
-import { UserFacingError } from '../lib/errors'
 import { toDatetimeLocalValue } from '../lib/format'
 import { createHabit, updateHabit } from '../lib/habits.functions'
 import { haptic, useAsyncAction, useOnline } from '../lib/hooks'
-import { firstIssueMessage, habitFormSchema } from '../lib/schemas'
+import { habitFormSchema, parseForm } from '../lib/schemas'
 import { HABIT_COLORS, HABIT_ICONS } from '../lib/types'
 import type { HabitSummary } from '../lib/types'
 
@@ -73,7 +72,7 @@ export default function HabitSheet({
 
   const save = useAsyncAction(async () => {
     const startDate = new Date(form.startValue)
-    const parsed = habitFormSchema.safeParse({
+    const data = parseForm(habitFormSchema, {
       name: form.name,
       icon: form.icon,
       color: form.color,
@@ -89,13 +88,10 @@ export default function HabitSheet({
       costPerUnit: optionalNumber(form.costPerUnit),
       unitsPerDay: optionalNumber(form.unitsPerDay),
     })
-    if (!parsed.success) {
-      throw new UserFacingError(firstIssueMessage(parsed.error))
-    }
     if (habit) {
-      await updateFn({ data: { habitId: habit.id, patch: parsed.data } })
+      await updateFn({ data: { habitId: habit.id, patch: data } })
     } else {
-      await createFn({ data: parsed.data })
+      await createFn({ data })
     }
     haptic(12)
     onClose()
@@ -129,7 +125,14 @@ export default function HabitSheet({
       title={editing ? 'Edit Habit' : 'New Habit'}
       dismissible={!save.busy}
     >
-      <div className="flex flex-col gap-5">
+      <form
+        className="flex flex-col gap-5"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (online) void save.run()
+        }}
+      >
         <Group>
           <Row>
             <span
@@ -281,9 +284,8 @@ export default function HabitSheet({
             </p>
           ) : null}
           <button
-            type="button"
+            type="submit"
             disabled={save.busy || !online}
-            onClick={() => void save.run()}
             className="btn btn-filled"
             style={{
               ['--tint' as string]: color,
@@ -297,7 +299,7 @@ export default function HabitSheet({
                 : 'Start Tracking'}
           </button>
         </div>
-      </div>
+      </form>
     </Sheet>
   )
 }

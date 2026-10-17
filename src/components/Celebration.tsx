@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 
 interface CelebrationProps {
   /** Bump this key (e.g. milestone label) to trigger a celebration. */
@@ -13,23 +13,15 @@ const CONFETTI = ['var(--c-yellow)', 'var(--c-blue)', 'var(--c-pink)']
 
 /** Small celebratory moment when a milestone is crossed. */
 export default function Celebration({ trigger, color, onDone }: CelebrationProps) {
-  const [visible, setVisible] = useState(false)
-  // Keep the latest callback in a ref so a parent re-render (the streak
-  // counter ticks every second) doesn't restart the timeout below.
-  const onDoneRef = useRef(onDone)
-  onDoneRef.current = onDone
+  const finish = useEffectEvent(onDone)
 
   useEffect(() => {
     if (!trigger) return
-    setVisible(true)
-    const t = window.setTimeout(() => {
-      setVisible(false)
-      onDoneRef.current()
-    }, 2600)
+    const t = window.setTimeout(() => finish(), 2600)
     return () => window.clearTimeout(t)
   }, [trigger])
 
-  if (!trigger || !visible) return null
+  if (!trigger) return null
 
   return (
     <div className="pointer-events-none fixed inset-0 z-60 overflow-hidden">

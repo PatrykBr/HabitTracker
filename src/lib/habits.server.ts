@@ -150,15 +150,11 @@ export async function updateHabitForUser(
     const { habits, resets } = collections()
     // Moving the start later than an existing reset would put that reset
     // before the habit began - the same rule logging enforces, from the other side.
-    const earliest = await resets
-      .find({ habitId: habit._id, userId }, { session })
-      .sort({ timestamp: 1 })
-      .limit(1)
-      .toArray()
-    if (
-      earliest.length > 0 &&
-      startDate.getTime() > earliest[0].timestamp.getTime()
-    ) {
+    const earliest = await resets.findOne(
+      { habitId: habit._id, userId },
+      { session, sort: { timestamp: 1 }, projection: { timestamp: 1 } },
+    )
+    if (earliest && startDate.getTime() > earliest.timestamp.getTime()) {
       throw new UserFacingError(
         'The start date has to be on or before your first logged reset.',
       )
@@ -221,15 +217,11 @@ export async function logResetForUser(
       )
     }
     const { resets } = collections()
-    const latest = await resets
-      .find({ habitId: habit._id, userId }, { session })
-      .sort({ timestamp: -1 })
-      .limit(1)
-      .toArray()
-    if (
-      latest.length > 0 &&
-      timestamp.getTime() <= latest[0].timestamp.getTime()
-    ) {
+    const latest = await resets.findOne(
+      { habitId: habit._id, userId },
+      { session, sort: { timestamp: -1 }, projection: { timestamp: 1 } },
+    )
+    if (latest && timestamp.getTime() <= latest.timestamp.getTime()) {
       throw new UserFacingError(
         'That’s earlier than a reset you already logged. Pick a time after your most recent reset.',
       )

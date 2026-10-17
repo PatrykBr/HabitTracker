@@ -48,7 +48,6 @@ export const Route = createFileRoute('/_app/habits/$habitId')({
 function HabitDetailRoute() {
   const { habitId } = Route.useParams()
   const habit = Route.useLoaderData()
-  if (!habit) return <DetailNotFound />
   return <HabitDetailPage key={habitId} habit={habit} />
 }
 
@@ -350,7 +349,6 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
 
         <SectionCard title="Calendar">
           <MonthCalendar
-            key={habit.id}
             startDate={startDate}
             resets={habit.resets}
             color={color}
@@ -361,7 +359,6 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
 
         <SectionCard title="Journey">
           <JourneyTimeline
-            key={habit.id}
             startDate={startDate}
             resets={habit.resets}
             brokenMs={history.brokenByResetId}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { IconXmark } from './Icons'
 import { labelColor, tint } from '../lib/color'
 import { formatDate, formatDateTime, formatDurationShort } from '../lib/format'
@@ -33,17 +33,8 @@ export default function JourneyTimeline({
   color,
   onDeleteReset,
 }: JourneyTimelineProps) {
-  const [shownCount, setShownCount] = useState(INITIAL_SHOWN)
-  const shown = resets.slice(0, shownCount)
-  const hidden = resets.length - shown.length
-
   return (
-    <ol className="relative m-0 list-none p-0">
-      <span
-        aria-hidden
-        className="absolute top-2 bottom-2 left-1.5 w-px bg-(--separator)"
-      />
-
+    <ol className="relative m-0 list-none p-0 before:absolute before:inset-y-2 before:left-1.5 before:w-px before:bg-(--separator) before:content-['']">
       {/* Now — the live streak */}
       <li className="relative flex items-start gap-3.5 pb-5">
         <span className="relative mt-1 flex h-3.25 w-3.25 shrink-0">
@@ -62,6 +53,31 @@ export default function JourneyTimeline({
         </div>
       </li>
 
+      <JourneyHistory
+        startDate={startDate}
+        resets={resets}
+        brokenMs={brokenMs}
+        color={color}
+        onDeleteReset={onDeleteReset}
+      />
+    </ol>
+  )
+}
+
+// Expanding the history must not add work to each tick of the live counter.
+const JourneyHistory = memo(function JourneyHistory({
+  startDate,
+  resets,
+  brokenMs,
+  color,
+  onDeleteReset,
+}: Omit<JourneyTimelineProps, 'currentStreakMs'>) {
+  const [shownCount, setShownCount] = useState(INITIAL_SHOWN)
+  const shown = resets.slice(0, shownCount)
+  const hidden = resets.length - shown.length
+
+  return (
+    <>
       {shown.map((reset) => (
         <li key={reset.id} className="relative flex items-start gap-3.5 pb-5">
           <span
@@ -141,6 +157,6 @@ export default function JourneyTimeline({
           </div>
         </div>
       </li>
-    </ol>
+    </>
   )
-}
+})
