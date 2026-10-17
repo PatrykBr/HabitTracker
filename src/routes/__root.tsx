@@ -99,7 +99,7 @@ function RootError() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
       <h1 className="t-title2">We couldn’t open Reset</h1>
-      <p className="t-subhead text-[var(--text-2)]">
+      <p className="t-subhead text-(--text-2)">
         Check your connection and try again. Your streaks keep counting.
       </p>
       <button
@@ -118,7 +118,7 @@ function NotFound() {
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="text-5xl">🧭</div>
       <h1 className="text-xl font-bold tracking-tight">This page isn’t here</h1>
-      <p className="text-[0.9375rem] text-[var(--text-2)]">
+      <p className="text-[0.9375rem] text-(--text-2)">
         No worries — your streaks are safe.
       </p>
       <Link

@@ -29,7 +29,7 @@ export default memo(function PatternsCard({
 }: PatternsCardProps) {
   if (resetDates.length === 0) {
     return (
-      <p className="t-footnote m-0 py-2 text-center text-[var(--text-2)]">
+      <p className="t-footnote m-0 py-2 text-center text-(--text-2)">
         No resets logged — no patterns to spot yet. That’s a good thing.
       </p>
     )
@@ -73,7 +73,7 @@ export default memo(function PatternsCard({
           {DAY_LABELS.map((label) => (
             <span
               key={label}
-              className="t-caption1 flex-1 text-center font-medium text-[var(--text-2)]"
+              className="t-caption1 flex-1 text-center font-medium text-(--text-2)"
             >
               {label}
             </span>
@@ -87,7 +87,7 @@ export default memo(function PatternsCard({
           return (
             <div
               key={bucket.label}
-              className="flex flex-col items-center gap-0.5 rounded-[var(--r-inner)] py-2"
+              className="flex flex-col items-center gap-0.5 rounded-(--r-inner) py-2"
               style={{
                 background: isPeak ? tint(color, 18) : 'var(--fill-4)',
                 color: isPeak ? labelColor(color) : 'var(--text)',
@@ -97,7 +97,7 @@ export default memo(function PatternsCard({
               <span className="tabular t-subhead font-semibold">
                 {bucket.count}
               </span>
-              <span className="t-caption2 text-[var(--text-2)]">
+              <span className="t-caption2 text-(--text-2)">
                 {bucket.label}
               </span>
             </div>
@@ -105,7 +105,7 @@ export default memo(function PatternsCard({
         })}
       </div>
 
-      <p className="t-footnote m-0 text-[var(--text-2)]">
+      <p className="t-footnote m-0 text-(--text-2)">
         Most frequent days: {peakDays.join(', ')}. Most frequent times:{' '}
         {peakTimes.map((bucket) => bucket.label.toLowerCase()).join(', ')}.{' '}
         Knowing your pattern can help you plan ahead.

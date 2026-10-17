@@ -36,10 +36,10 @@ export default function StreakBars({
       <div className="flex flex-col gap-2.5">
         {rows.map((row) => (
           <div key={row.label} className="flex items-center gap-3">
-            <span className="t-footnote w-14 shrink-0 text-[var(--text-2)]">
+            <span className="t-footnote w-14 shrink-0 text-(--text-2)">
               {row.label}
             </span>
-            <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-[var(--fill-4)]">
+            <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-(--fill-4)">
               <div
                 className="absolute inset-y-0 left-0 rounded-full"
                 style={{
@@ -56,7 +56,7 @@ export default function StreakBars({
         ))}
       </div>
 
-      <p className="t-footnote mt-3 mb-0 text-[var(--text-2)]">
+      <p className="t-footnote mt-3 mb-0 text-(--text-2)">
         {totalResets === 0 ? (
           <>No resets yet — this run is the whole story so far.</>
         ) : atRecord ? (

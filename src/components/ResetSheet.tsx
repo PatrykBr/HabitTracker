@@ -164,7 +164,7 @@ export default function ResetSheet({
     >
       {form.step === 'form' ? (
         <div className="flex flex-col gap-5">
-          <p className="t-footnote mx-2 -mt-1 mb-0 text-center text-[var(--text-2)]">
+          <p className="t-footnote mx-2 -mt-1 mb-0 text-center text-(--text-2)">
             A reset is part of quitting — logging it honestly is the win here.
           </p>
 
@@ -189,7 +189,7 @@ export default function ResetSheet({
                 <input
                   id="reset-when"
                   type="datetime-local"
-                  className="field min-w-0 text-right text-[var(--text-2)] min-[380px]:w-auto"
+                  className="field min-w-0 text-right text-(--text-2) min-[380px]:w-auto"
                   name="timestamp"
                   value={form.earlierValue}
                   min={toDatetimeLocalValue(streakStart)}
@@ -244,7 +244,7 @@ export default function ResetSheet({
           <div>
             {error ? <ErrorNote>{error}</ErrorNote> : null}
             {!online ? (
-              <p className="t-footnote mb-3 text-center text-[var(--text-2)]">
+              <p className="t-footnote mb-3 text-center text-(--text-2)">
                 You’re offline — reconnect to log this reset.
               </p>
             ) : null}
@@ -261,16 +261,16 @@ export default function ResetSheet({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="t-subhead mx-2 mt-0 mb-4 text-center text-[var(--text-2)]">
+          <p className="t-subhead mx-2 mt-0 mb-4 text-center text-(--text-2)">
             This closes a {formatDurationHuman(endedMs)} streak on{' '}
-            <span className="font-semibold text-[var(--text)]">
+            <span className="font-semibold text-(--text)">
               {habitName}
             </span>
             {form.when === 'earlier' && confirmTime ? (
               <>
                 {' '}
                 as of{' '}
-                <span className="font-semibold text-[var(--text)]">
+                <span className="font-semibold text-(--text)">
                   {formatDateTime(confirmTime)}
                 </span>
               </>

@@ -33,7 +33,7 @@ export default function ConfirmSheet({
   const color = danger ? 'var(--danger)' : 'var(--accent)'
   return (
     <Sheet open={open} onClose={onClose} title={title} dismissible={!busy}>
-      <p className="t-subhead mx-2 mt-0 mb-5 text-center text-[var(--text-2)]">
+      <p className="t-subhead mx-2 mt-0 mb-5 text-center text-(--text-2)">
         {message}
       </p>
       {error ? <ErrorNote>{error}</ErrorNote> : null}
@@ -68,7 +68,7 @@ export function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="t-footnote mx-1 mt-0 mb-3 rounded-[var(--r-inner)] px-3.5 py-2.5 font-medium text-[var(--danger)]"
+      className="t-footnote mx-1 mt-0 mb-3 rounded-(--r-inner) px-3.5 py-2.5 font-medium text-(--danger)"
       style={{
         background: 'color-mix(in srgb, var(--danger) 12%, transparent)',
       }}

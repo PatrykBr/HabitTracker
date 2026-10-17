@@ -41,14 +41,14 @@ export default function JourneyTimeline({
     <ol className="relative m-0 list-none p-0">
       <span
         aria-hidden
-        className="absolute top-2 bottom-2 left-[6px] w-px bg-[var(--separator)]"
+        className="absolute top-2 bottom-2 left-1.5 w-px bg-(--separator)"
       />
 
       {/* Now — the live streak */}
       <li className="relative flex items-start gap-3.5 pb-5">
-        <span className="relative mt-1 flex h-[13px] w-[13px] shrink-0">
+        <span className="relative mt-1 flex h-3.25 w-3.25 shrink-0">
           <span
-            className="relative h-[13px] w-[13px] rounded-full"
+            className="relative h-3.25 w-3.25 rounded-full"
             style={{ background: color }}
           />
         </span>
@@ -56,7 +56,7 @@ export default function JourneyTimeline({
           <div className="tabular t-headline" style={{ color: labelColor(color) }}>
             {formatDurationShort(currentStreakMs)} clean
           </div>
-          <div className="t-footnote text-[var(--text-2)]">
+          <div className="t-footnote text-(--text-2)">
             Your streak right now — still going
           </div>
         </div>
@@ -65,12 +65,12 @@ export default function JourneyTimeline({
       {shown.map((reset) => (
         <li key={reset.id} className="relative flex items-start gap-3.5 pb-5">
           <span
-            className="mt-1 h-[13px] w-[13px] shrink-0 rounded-full border-2 bg-[var(--bg-2)]"
+            className="mt-1 h-3.25 w-3.25 shrink-0 rounded-full border-2 bg-(--bg-2)"
             style={{ borderColor: tint(color, 60) }}
           />
           <div className="min-w-0 flex-1">
             <div className="t-subhead font-semibold">Streak restarted</div>
-            <div className="t-footnote text-[var(--text-2)]">
+            <div className="t-footnote text-(--text-2)">
               {formatDateTime(new Date(reset.timestamp))} · after{' '}
               {formatDurationShort(brokenMs.get(reset.id) ?? 0)} clean
             </div>
@@ -83,7 +83,7 @@ export default function JourneyTimeline({
               </span>
             ) : null}
             {reset.note ? (
-              <p className="t-footnote mt-1.5 mb-0 text-[var(--text-2)]">
+              <p className="t-footnote mt-1.5 mb-0 text-(--text-2)">
                 “{reset.note}”
               </p>
             ) : null}
@@ -92,7 +92,7 @@ export default function JourneyTimeline({
             type="button"
             aria-label="Remove this reset"
             onClick={() => onDeleteReset(reset)}
-            className="-mt-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--text-3)] transition-transform active:scale-90"
+            className="-mt-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-(--text-3) transition-transform active:scale-90"
           >
             <IconXmark className="h-4 w-4" />
           </button>
@@ -103,7 +103,7 @@ export default function JourneyTimeline({
         <li className="relative flex items-center gap-3.5 pb-5">
           <span
             aria-hidden
-            className="flex w-[13px] shrink-0 justify-center text-[var(--text-3)]"
+            className="flex w-3.25 shrink-0 justify-center text-(--text-3)"
           >
             ⋮
           </span>
@@ -121,7 +121,7 @@ export default function JourneyTimeline({
               <button
                 type="button"
                 onClick={() => setShownCount(INITIAL_SHOWN)}
-                className="chip t-footnote text-[var(--text-2)]"
+                className="chip t-footnote text-(--text-2)"
               >
                 Show fewer
               </button>
@@ -132,10 +132,10 @@ export default function JourneyTimeline({
 
       {/* The day it all began */}
       <li className="relative flex items-start gap-3.5">
-        <span className="mt-1 h-[13px] w-[13px] shrink-0 rounded-full border-2 border-[var(--text-3)] bg-[var(--bg-2)]" />
+        <span className="mt-1 h-3.25 w-3.25 shrink-0 rounded-full border-2 border-(--text-3) bg-(--bg-2)" />
         <div className="min-w-0 flex-1">
           <div className="t-subhead font-semibold">Started the quit</div>
-          <div className="t-footnote text-[var(--text-2)]">
+          <div className="t-footnote text-(--text-2)">
             {formatDate(startDate)}
             {resets.length === 0 ? ' — clean ever since' : ''}
           </div>

@@ -66,7 +66,7 @@ export default memo(function MonthCalendar({
   }
 
   const navClass =
-    'flex h-11 w-11 items-center justify-center rounded-full text-[var(--accent-text)] transition-opacity disabled:opacity-30'
+    'flex h-11 w-11 items-center justify-center rounded-full text-(--accent-text) transition-opacity disabled:opacity-30'
 
   return (
     <div
@@ -109,7 +109,7 @@ export default memo(function MonthCalendar({
         {WEEKDAY_LETTERS.map((letter, i) => (
           <span
             key={`${letter}-${i}`}
-            className="t-caption1 text-center font-semibold text-[var(--text-3)]"
+            className="t-caption1 text-center font-semibold text-(--text-3)"
           >
             {letter}
           </span>
@@ -132,7 +132,7 @@ export default memo(function MonthCalendar({
 
           if (isFuture || beforeStart) {
             return (
-              <span key={key} className={`${base} text-[var(--text-3)]`}>
+              <span key={key} className={`${base} text-(--text-3)`}>
                 {dayNum}
               </span>
             )
@@ -169,7 +169,7 @@ export default memo(function MonthCalendar({
                     ↺
                   </span>
                   {dayResets.length > 1 ? (
-                    <span className="t-caption2 absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--bg-2)] px-1 font-bold text-[var(--text)]">
+                    <span className="t-caption2 absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--bg-2) px-1 font-bold text-(--text)">
                       {dayResets.length}
                     </span>
                   ) : null}
@@ -181,7 +181,7 @@ export default memo(function MonthCalendar({
             <span
               key={key}
               aria-current={isToday ? 'date' : undefined}
-              className={`${base} text-[var(--text)]`}
+              className={`${base} text-(--text)`}
               style={{ fontWeight: isToday ? 600 : 400 }}
             >
               <span
@@ -198,7 +198,7 @@ export default memo(function MonthCalendar({
         })}
       </div>
 
-      <div className="t-caption1 mt-3 flex items-center gap-4 text-[var(--text-2)]">
+      <div className="t-caption1 mt-3 flex items-center gap-4 text-(--text-2)">
         <span className="flex items-center gap-1.5">
           <span
             className="h-3 w-3 rounded-full"

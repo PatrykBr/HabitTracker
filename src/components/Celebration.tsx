@@ -32,7 +32,7 @@ export default function Celebration({ trigger, color, onDone }: CelebrationProps
   if (!trigger || !visible) return null
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-60 overflow-hidden">
       {Array.from({ length: PIECES }, (_, i) => (
         <span
           key={i}
@@ -45,10 +45,10 @@ export default function Celebration({ trigger, color, onDone }: CelebrationProps
         />
       ))}
       <div className="flex h-full items-center justify-center px-8">
-        <div className="glass-strong anim-pop-in relative rounded-[var(--r-cell)] px-8 py-6 text-center">
+        <div className="glass-strong anim-pop-in relative rounded-(--r-cell) px-8 py-6 text-center">
           <span
             aria-hidden
-            className="absolute inset-0 rounded-[var(--r-cell)]"
+            className="absolute inset-0 rounded-(--r-cell)"
             style={{
               border: `2px solid ${color}`,
               animation: 'celebrate-ring 1.1s ease-out both',
@@ -56,7 +56,7 @@ export default function Celebration({ trigger, color, onDone }: CelebrationProps
           />
           <div className="text-4xl">🎉</div>
           <div className="t-title2 t-rounded mt-2">{trigger}</div>
-          <div className="t-footnote mt-1 text-[var(--text-2)]">
+          <div className="t-footnote mt-1 text-(--text-2)">
             One moment at a time. You earned this.
           </div>
         </div>

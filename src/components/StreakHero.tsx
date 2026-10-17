@@ -43,16 +43,16 @@ export default function StreakHero({
         </svg>
         <div className="relative grid justify-items-center gap-1">
           <div className="streak-value tabular">{value}</div>
-          <div className="t-title3 text-[var(--text-2)]">{unit} clean</div>
+          <div className="t-title3 text-(--text-2)">{unit} clean</div>
         </div>
       </div>
       <div className="streak-goal">
         {next ? `${Math.floor(progress * 100)}% to ${next.label}` : 'One year and counting'}
       </div>
-      <div className="tabular mt-4 font-mono text-[0.9375rem] text-[var(--text-2)]">
+      <div className="tabular mt-4 font-mono text-[0.9375rem] text-(--text-2)">
         {formatClock(sinceMs)}
       </div>
-      <div className="t-footnote mt-1 text-[var(--text-2)]">
+      <div className="t-footnote mt-1 text-(--text-2)">
         {hadResets ? 'Since your last reset' : 'Tracking since'}
         <br />
         {formatDateTime(since)}

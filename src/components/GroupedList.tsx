@@ -32,10 +32,10 @@ interface RowProps {
 
 /** Form row. Navigation rows use a typed Link directly. */
 export function Row({ children, className = '' }: RowProps) {
-  return <div className={`row text-[var(--text)] ${className}`}>{children}</div>
+  return <div className={`row text-(--text) ${className}`}>{children}</div>
 }
 
 /** Disclosure indicator for navigation rows. */
 export function Chevron() {
-  return <IconChevronRight className="h-4 w-4 shrink-0 text-[var(--text-3)]" />
+  return <IconChevronRight className="h-4 w-4 shrink-0 text-(--text-3)" />
 }

@@ -71,7 +71,7 @@ function LoginPage() {
       <div className="anim-rise-in">
         <div className="mb-8 flex flex-col items-center text-center">
           <div
-            className="glass flex h-18 w-18 items-center justify-center rounded-[1.5rem]"
+            className="glass flex h-18 w-18 items-center justify-center rounded-3xl"
             style={{
               color: 'var(--accent-text)',
             }}
@@ -79,7 +79,7 @@ function LoginPage() {
             <IconReset className="h-9 w-9" />
           </div>
           <h1 className="t-rounded mt-4 text-[2.5rem] font-bold tracking-tight">Reset</h1>
-          <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] leading-relaxed text-[var(--text-2)]">
+          <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] leading-relaxed text-(--text-2)">
             Quit hard things, one streak at a time.
           </p>
         </div>
@@ -146,7 +146,7 @@ function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-[0.75rem] leading-relaxed text-[var(--text-3)]">
+        <p className="mt-4 text-center text-[0.75rem] leading-relaxed text-(--text-3)">
           No email needed — just a username and password.
           <br />
           Your data stays yours.

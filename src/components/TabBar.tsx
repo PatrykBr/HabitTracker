@@ -63,17 +63,17 @@ export default function TabBar({ showAdd, onAdd }: TabBarProps) {
       <div className="scroll-edge scroll-edge-bottom z-30" aria-hidden />
       <nav
         aria-label="Main"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-center gap-[12px] px-[16px] safe-x"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-center gap-3 px-4 safe-x"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
       >
         <div
-          className="glass pointer-events-auto relative flex shrink-0 rounded-full p-[6px]"
+          className="glass pointer-events-auto relative flex shrink-0 rounded-full p-1.5"
           style={{ transition }}
         >
           {/* Selection pill slides between tabs */}
           <span
             aria-hidden
-            className="tab-selection absolute top-[6px] bottom-[6px] left-[6px] rounded-full"
+            className="tab-selection absolute top-1.5 bottom-1.5 left-1.5 rounded-full"
             style={{
               width: tabWidth,
               transform: `translateX(${minimized || activeIndex === 0 ? '0px' : TAB_W})`,
@@ -121,7 +121,7 @@ export default function TabBar({ showAdd, onAdd }: TabBarProps) {
             type="button"
             onClick={onAdd}
             aria-label="Add a habit"
-            className="glass glass-press anim-pop-in pointer-events-auto flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full text-[var(--accent-text)]"
+            className="glass glass-press anim-pop-in pointer-events-auto flex h-16.5 w-16.5 shrink-0 items-center justify-center rounded-full text-(--accent-text)"
           >
             <IconPlus className="h-7 w-7" />
           </button>

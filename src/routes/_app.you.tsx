@@ -62,7 +62,7 @@ function YouPage() {
           <span className="block truncate text-lg font-bold tracking-tight">
             {user.username}
           </span>
-          <span className="block text-[0.8125rem] text-[var(--text-2)]">
+          <span className="block text-[0.8125rem] text-(--text-2)">
             Taking it back since {formatDate(new Date(user.createdAt))}
           </span>
         </span>
@@ -81,7 +81,7 @@ function YouPage() {
             onChange={chooseTheme}
           />
         </div>
-        <p className="mt-2 mb-0 text-[0.75rem] text-[var(--text-2)]">
+        <p className="mt-2 mb-0 text-[0.75rem] text-(--text-2)">
           Auto follows your device’s light or dark appearance.
         </p>
       </div>
@@ -90,13 +90,13 @@ function YouPage() {
         <button
           type="button"
           onClick={() => setConfirmSignOut(true)}
-          className="cell row-press w-full p-4 text-center text-[0.9375rem] font-semibold text-[var(--danger-text)]"
+          className="cell row-press w-full p-4 text-center text-[0.9375rem] font-semibold text-(--danger-text)"
         >
           Sign out
         </button>
       </div>
 
-      <p className="mt-8 text-center text-[0.75rem] leading-relaxed text-[var(--text-3)]">
+      <p className="mt-8 text-center text-[0.75rem] leading-relaxed text-(--text-3)">
         Reset v1 · quitting is hard, tracking it shouldn’t be
       </p>
 

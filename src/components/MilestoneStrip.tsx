@@ -34,17 +34,17 @@ export default function MilestoneStrip({ streakMs, color }: MilestoneStripProps)
               >
                 {achieved ? <IconCheck className="h-5 w-5" /> : m.short}
               </span>
-              <span className="t-caption1 text-[var(--text-2)]">
+              <span className="t-caption1 text-(--text-2)">
                 {m.label}
               </span>
             </div>
           )
         })}
       </div>
-      <p className="t-footnote mt-3 mb-0 text-[var(--text-2)]">
+      <p className="t-footnote mt-3 mb-0 text-(--text-2)">
         {next ? (
           <>
-            Next up: <span className="font-semibold text-[var(--text)]">{next.label}</span>{' '}
+            Next up: <span className="font-semibold text-(--text)">{next.label}</span>{' '}
             — about {formatDurationHuman(next.ms - streakMs)} away.
           </>
         ) : (

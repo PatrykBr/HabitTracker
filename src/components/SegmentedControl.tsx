@@ -26,7 +26,7 @@ export default function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className="relative flex min-h-12 w-full rounded-full bg-[var(--fill-3)] p-0.5"
+      className="relative flex min-h-12 w-full rounded-full bg-(--fill-3) p-0.5"
     >
       <span
         aria-hidden
@@ -65,7 +65,7 @@ export default function SegmentedControl<T extends string>({
               buttons?.[next].focus()
             }}
             onClick={() => onChange(v)}
-            className="t-subhead relative z-10 flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full px-[8px] py-1.5 text-center font-medium transition-colors duration-200"
+            className="t-subhead relative z-10 flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full px-2 py-1.5 text-center font-medium transition-colors duration-200"
             style={{ color: selected ? 'var(--text)' : 'var(--text-2)' }}
           >
             {label}

@@ -46,7 +46,7 @@ export default function NavBar({
         className="pointer-events-none fixed inset-x-0 top-0 z-40 safe-top"
       >
         <div className="mx-auto flex h-13 w-full max-w-lg items-center justify-between gap-2 px-4 safe-x">
-          <div className="flex min-w-11 items-center gap-2 [&>*]:pointer-events-auto">
+          <div className="flex min-w-11 items-center gap-2 *:pointer-events-auto">
             {leading}
           </div>
           <div
@@ -56,7 +56,7 @@ export default function NavBar({
           >
             {title}
           </div>
-          <div className="flex min-w-11 items-center justify-end gap-2 [&>*]:pointer-events-auto">
+          <div className="flex min-w-11 items-center justify-end gap-2 *:pointer-events-auto">
             {trailing}
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function NavBar({
           {title}
         </h1>
         {subtitle ? (
-          <p className="t-subhead m-0 mt-0.5 text-[var(--text-2)]">{subtitle}</p>
+          <p className="t-subhead m-0 mt-0.5 text-(--text-2)">{subtitle}</p>
         ) : null}
       </div>
     </>

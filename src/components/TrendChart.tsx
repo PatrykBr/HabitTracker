@@ -21,7 +21,7 @@ export default function TrendChart({
 }: TrendChartProps) {
   if (completed.length === 0) {
     return (
-      <p className="t-footnote m-0 py-2 text-center text-[var(--text-2)]">
+      <p className="t-footnote m-0 py-2 text-center text-(--text-2)">
         Once you’ve logged a reset, your streak lengths will chart here so you
         can watch them grow.
       </p>
@@ -61,7 +61,7 @@ export default function TrendChart({
           )
         })}
       </svg>
-      <div className="t-caption1 mt-2 flex justify-between text-[var(--text-2)]">
+      <div className="t-caption1 mt-2 flex justify-between text-(--text-2)">
         <span>{formatDate(shown[0].start)}</span>
         <span>
           Longest {formatDurationShort(Math.max(...shown.map((s) => s.ms)))}
@@ -69,7 +69,7 @@ export default function TrendChart({
         <span>Now</span>
       </div>
       {total > shown.length ? (
-        <p className="t-caption1 mt-1 mb-0 text-[var(--text-3)]">
+        <p className="t-caption1 mt-1 mb-0 text-(--text-3)">
           Showing the most recent {shown.length} streaks (of {total}).
         </p>
       ) : null}

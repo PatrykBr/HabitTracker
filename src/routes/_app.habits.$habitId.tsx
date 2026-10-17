@@ -55,8 +55,8 @@ function HabitDetailRoute() {
 function DetailPending() {
   return (
     <div className="pt-6">
-      <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--fill-3)]" />
-      <div className="mx-auto mt-10 h-40 w-56 animate-pulse rounded-3xl bg-[var(--fill-3)]" />
+      <div className="h-10 w-24 animate-pulse rounded-full bg-(--fill-3)" />
+      <div className="mx-auto mt-10 h-40 w-56 animate-pulse rounded-3xl bg-(--fill-3)" />
       <div className="cell mt-10 h-28 animate-pulse opacity-60" />
     </div>
   )
@@ -67,7 +67,7 @@ function DetailNotFound() {
     <div className="flex flex-col items-center gap-3 pt-24 text-center">
       <div className="text-4xl">🔍</div>
       <h1 className="text-lg font-bold">This habit isn’t here</h1>
-      <p className="max-w-xs text-[0.875rem] text-[var(--text-2)]">
+      <p className="max-w-xs text-[0.875rem] text-(--text-2)">
         It may have been removed. Your other habits are right where you left
         them.
       </p>
@@ -87,7 +87,7 @@ function DetailError({ error }: { error: unknown }) {
     <div className="flex flex-col items-center gap-3 pt-24 text-center">
       <div className="text-4xl">🌧️</div>
       <h1 className="text-lg font-bold">We couldn’t load this habit</h1>
-      <p className="max-w-xs text-[0.875rem] text-[var(--text-2)]">
+      <p className="max-w-xs text-[0.875rem] text-(--text-2)">
         {userMessage(
           error,
           'Something went wrong on our side — try again in a moment.',
@@ -129,14 +129,14 @@ function StatTile({
   color?: string
 }) {
   return (
-    <div className="rounded-2xl bg-[var(--fill-4)] px-3.5 py-3">
+    <div className="rounded-2xl bg-(--fill-4) px-3.5 py-3">
       <div
         className="tabular text-xl font-extrabold tracking-tight"
         style={color ? { color: labelColor(color) } : undefined}
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[0.6875rem] font-medium text-[var(--text-2)]">
+      <div className="mt-0.5 text-[0.6875rem] font-medium text-(--text-2)">
         {label}
       </div>
     </div>
@@ -252,7 +252,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
           <Link
             to="/"
             aria-label="Back to habits"
-            className="glass glass-press flex h-11 w-11 items-center justify-center rounded-full text-[var(--text)] no-underline"
+            className="glass glass-press flex h-11 w-11 items-center justify-center rounded-full text-(--text) no-underline"
           >
             <IconChevronLeft className="h-6 w-6" />
           </Link>
@@ -262,7 +262,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
             type="button"
             onClick={() => setEditOpen(true)}
             disabled={!online}
-            className="glass glass-press t-body flex min-h-11 items-center justify-center rounded-full px-4 text-[var(--text)] disabled:opacity-50"
+            className="glass glass-press t-body flex min-h-11 items-center justify-center rounded-full px-4 text-(--text) disabled:opacity-50"
           >
             Edit
           </button>
@@ -289,7 +289,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
         <IconReset className="h-5 w-5" />
         <span>Log a reset</span>
       </button>
-      <p className="mt-2 text-center text-[0.75rem] text-[var(--text-3)]">
+      <p className="mt-2 text-center text-[0.75rem] text-(--text-3)">
         Honest logging beats perfect streaks.
       </p>
 
@@ -330,7 +330,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
             ) : null}
           </div>
           {!savings ? (
-            <p className="mt-2 text-[0.6875rem] text-[var(--text-3)]">
+            <p className="mt-2 text-[0.6875rem] text-(--text-3)">
               Add cost per unit and units per day (tap Edit) to see money saved.
             </p>
           ) : null}
@@ -374,7 +374,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
         <button
           type="button"
           onClick={() => setConfirmDeleteHabit(true)}
-          className="mx-auto mt-2 min-h-11 rounded-full px-4 py-2 text-[0.9375rem] font-semibold text-[var(--danger-text)]"
+          className="mx-auto mt-2 min-h-11 rounded-full px-4 py-2 text-[0.9375rem] font-semibold text-(--danger-text)"
         >
           Stop tracking this habit
         </button>
@@ -404,7 +404,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
       >
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {dayDetail?.entries.map((entry) => (
-            <li key={entry.id} className="rounded-2xl bg-[var(--fill-4)] p-3.5">
+            <li key={entry.id} className="rounded-2xl bg-(--fill-4) p-3.5">
               <div className="text-[0.875rem] font-semibold">
                 {formatDateTime(new Date(entry.timestamp))}
               </div>
@@ -417,7 +417,7 @@ function HabitDetailPage({ habit }: { habit: HabitDetail }) {
                 </div>
               ) : null}
               {entry.note ? (
-                <p className="mt-1.5 mb-0 text-[0.8125rem] leading-snug text-[var(--text-2)]">
+                <p className="mt-1.5 mb-0 text-[0.8125rem] leading-snug text-(--text-2)">
                   “{entry.note}”
                 </p>
               ) : null}

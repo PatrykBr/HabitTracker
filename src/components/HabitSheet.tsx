@@ -161,7 +161,7 @@ export default function HabitSheet({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => set('icon', emoji)}
-                  className="flex aspect-square items-center justify-center rounded-[var(--r-inner)] text-2xl transition-[background-color,transform] duration-200 active:scale-95"
+                  className="flex aspect-square items-center justify-center rounded-(--r-inner) text-2xl transition-[background-color,transform] duration-200 active:scale-95"
                   style={{
                     background: selected ? tint(color, 22) : 'var(--fill-4)',
                     boxShadow: selected
@@ -229,7 +229,7 @@ export default function HabitSheet({
             <input
               id="habit-start"
               type="datetime-local"
-              className="field min-w-0 text-right text-[var(--text-2)] min-[380px]:w-auto"
+              className="field min-w-0 text-right text-(--text-2) min-[380px]:w-auto"
               name="startDate"
               value={form.startValue}
               max={toDatetimeLocalValue(new Date())}
@@ -275,7 +275,7 @@ export default function HabitSheet({
         <div>
           {save.error ? <ErrorNote>{save.error}</ErrorNote> : null}
           {!online ? (
-            <p className="t-footnote mb-3 text-center text-[var(--text-2)]">
+            <p className="t-footnote mb-3 text-center text-(--text-2)">
               You’re offline — reconnect to{' '}
               {editing ? 'save changes' : 'add a habit'}.
             </p>

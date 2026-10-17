@@ -183,12 +183,12 @@ export default function Sheet({
         aria-label="Close"
         tabIndex={-1}
         onClick={dismissible ? onClose : undefined}
-        className={`absolute inset-0 bg-[var(--scrim)] ${open ? 'anim-fade-in' : 'anim-fade-out'}`}
+        className={`absolute inset-0 bg-(--scrim) ${open ? 'anim-fade-in' : 'anim-fade-out'}`}
       />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className={`glass-strong relative mx-2 mb-2 flex w-full max-w-lg flex-col overflow-hidden rounded-[var(--r-sheet)] outline-none sm:mb-0 sm:rounded-[1.75rem] ${
+        className={`glass-strong relative mx-2 mb-2 flex w-full max-w-lg flex-col overflow-hidden rounded-(--r-sheet) outline-none sm:mb-0 sm:rounded-[1.75rem] ${
           open
             ? 'anim-sheet-up sm:anim-pop-in'
             : 'anim-sheet-down sm:anim-fade-out'
@@ -213,7 +213,7 @@ export default function Sheet({
         >
           <div
             aria-hidden
-            className="mx-auto mb-3.5 h-[5px] w-9 rounded-full bg-[var(--text-4)] sm:hidden"
+            className="mx-auto mb-3.5 h-1.25 w-9 rounded-full bg-(--text-4) sm:hidden"
           />
           <h2 id={titleId} className="t-title3 m-0 px-11 py-2 text-center">
             {title}
@@ -223,7 +223,7 @@ export default function Sheet({
             aria-label="Close sheet"
             disabled={!dismissible}
             onClick={onClose}
-            className="absolute right-3 bottom-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-2)] disabled:opacity-30"
+            className="absolute right-3 bottom-2 flex h-11 w-11 items-center justify-center rounded-full text-(--text-2) disabled:opacity-30"
           >
             <span className="glass flex h-8 w-8 items-center justify-center rounded-full">
               <IconXmark className="h-4 w-4" />
