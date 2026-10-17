@@ -1,28 +1,28 @@
 # Reset
 
-A supportive habit-quitting tracker PWA. Track a live streak since your last
-reset (relapse), log resets when they happen — including backdated — and see
-real history, stats, milestones, and a calendar per habit.
+Reset tracks habits you're trying to quit. Each habit has a live streak counter,
+reset history, stats, milestones, and a calendar. You can log a reset now or enter
+when it happened earlier.
 
-Built with Bun, TanStack Start, MongoDB, and Better Auth. Installable as a PWA
-with an iOS-native feel: bottom tab bar, bottom sheets, safe areas, dark-first
-Liquid-Glass styling, and a private-data-free offline fallback.
+The app uses Bun, TanStack Start, MongoDB, and Better Auth. You can install it
+as a PWA. The interface has a bottom tab bar, modal sheets, and light and dark
+themes. The offline fallback contains no private data.
 
 ## Quick start
 
-Install Bun 1.4.3 or newer (the tested version is pinned in `.bun-version`).
+Install Bun 1.4.3 or newer. The tested version is pinned in `.bun-version`.
 Upgrade an existing installation with `bun upgrade`.
 
 ```bash
 bun install --frozen-lockfile
-cp .env.example .env   # fill in MONGODB_URI and BETTER_AUTH_SECRET
+cp .env.example .env   # set MONGODB_URI, BETTER_AUTH_SECRET and BETTER_AUTH_URL
 bun run dev           # http://localhost:3000
 ```
 
-No MongoDB handy? Run a throwaway in-memory one:
+For local development, start a temporary MongoDB replica set in a separate terminal:
 
 ```bash
-bun run dev:mongo     # separate terminal; single-node replica set on port 27017
+bun run dev:mongo     # single-node replica set on port 27017
 ```
 
 ## Environment variables
@@ -55,15 +55,17 @@ bun audit                    # check dependency advisories
 ```
 
 For browser checks, install Chromium once with `bunx playwright install chromium`.
-Alternatively, set `PLAYWRIGHT_EXECUTABLE_PATH` in the shell to an installed
-Chromium/Edge executable. Smoke checks use temporary replica sets and fresh
+You can also set `PLAYWRIGHT_EXECUTABLE_PATH` to an installed Chromium or Edge
+executable. Smoke checks use temporary replica sets and fresh
 accounts; they never use the configured database or your browser profile.
 
-Bun manages packages (`bun.lock`), runs the tooling and TypeScript scripts,
+Bun manages packages through `bun.lock`, runs the tooling and TypeScript scripts,
 loads `.env`, and supplies the test runner, file I/O and subprocess APIs.
 Vite remains the bundler for TanStack Start's routing, server-function and SSR
-plugins. Bun's native `bun check` validates TypeScript; Sharp generates image
+plugins. Bun's native `bun check` validates TypeScript. Sharp generates image
 assets.
+Router devtools are available in development at `?tanstack-devtools` and are
+excluded from production through a conditional import.
 Dependency install scripts are limited to the packages listed in
 `trustedDependencies` in `package.json`.
 
@@ -81,11 +83,11 @@ for auth rate limits. When deploying behind a reverse proxy, set
 `TRUST_PROXY=true` only if that proxy sets `X-Forwarded-For` to one verified
 client IP and the backend cannot be reached directly by untrusted clients.
 Otherwise leave it `false`; requests through a proxy then share that proxy's
-rate-limit bucket. Other server
-adapters must establish their own trusted client-IP policy.
+rate-limit bucket. Other server adapters must establish their own trusted
+client-IP policy.
 
 See [AGENTS.md](./AGENTS.md) for architecture, key decisions, deployment
-notes, and known gotchas.
+notes, and project constraints.
 
 MongoDB transactions require a replica set. Restart any older standalone
 `bun run dev:mongo` process after upgrading. Auth indexes are created on first
