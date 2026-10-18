@@ -8,6 +8,14 @@ The app uses Bun, TanStack Start, MongoDB, and Better Auth. You can install it
 as a PWA. The interface has a bottom tab bar, modal sheets, and light and dark
 themes. The offline fallback contains no private data.
 
+## Mobile screenshots
+
+Sample habits in light and dark themes, captured at a 390 × 844 mobile viewport.
+
+| Habits | Live streak | Calendar and history |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/habits-light.png" alt="Light theme habit list with streak counters and progress toward each milestone" width="260"> | <img src="docs/screenshots/streak-dark.png" alt="Dark theme smoking habit with a five-day streak and milestone progress" width="260"> | <img src="docs/screenshots/history-light.png" alt="Light theme calendar with reset days and a history of triggers and notes" width="260"> |
+
 ## Quick start
 
 Install Bun 1.4.3 or newer. The tested version is pinned in `.bun-version`.
